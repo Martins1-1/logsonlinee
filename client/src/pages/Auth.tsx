@@ -28,7 +28,7 @@ const Auth = () => {
 
     // Mock authentication - in real app this would call backend
     const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = mockUsers.find((u: any) => u.email === signInEmail && u.password === signInPassword);
+    const user = mockUsers.find((u: { email: string; password: string }) => u.email === signInEmail && u.password === signInPassword);
     
     if (user) {
       localStorage.setItem("currentUser", JSON.stringify(user));
@@ -60,7 +60,7 @@ const Auth = () => {
     // Mock registration - in real app this would call backend
     const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
     
-    if (mockUsers.find((u: any) => u.email === signUpEmail)) {
+    if (mockUsers.find((u: { email: string }) => u.email === signUpEmail)) {
       toast.error("Email already registered");
       return;
     }
@@ -90,7 +90,7 @@ const Auth = () => {
 
     // Mock password reset - in real app this would call backend API
     const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    const userExists = mockUsers.find((u: any) => u.email === resetEmail);
+    const userExists = mockUsers.find((u: { email: string }) => u.email === resetEmail);
     
     if (userExists) {
       // In a real app, this would send an email with a reset link

@@ -5,7 +5,7 @@ type User = {
   _id: string;
   email: string;
   name?: string;
-  payments?: any[];
+  payments?: Array<Record<string, unknown>>;
   createdAt?: string;
 };   
 
