@@ -61,7 +61,7 @@ async function start() {
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server listening on all interfaces, port ${PORT}`);
       console.log(`Try accessing: http://localhost:${PORT}/api/health`);
-    }).on('error', (error) => {
+    }).on('error', (error: Error) => {
       console.error("Failed to start server:", error);
       console.error("Port:", PORT);
       console.error("Error details:", error.message);
@@ -74,7 +74,7 @@ async function start() {
 }
 
 // Admin login
-app.post("/api/admin/login", async (req, res) => {
+app.post("/api/admin/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) return res.status(400).json({ error: "Missing fields" });
   const admin = await Admin.findOne({ email }).exec();
@@ -86,7 +86,7 @@ app.post("/api/admin/login", async (req, res) => {
 });
 
 // Users
-app.get("/api/users", requireAdmin, async (req, res) => {
+app.get("/api/users", requireAdmin, async (req: Request, res: Response) => {
   try {
     console.log("Fetching users...");
     const users = await User.find().lean();
@@ -98,7 +98,7 @@ app.get("/api/users", requireAdmin, async (req, res) => {
   }
 });
 
-app.get("/api/users/:id", requireAdmin, async (req, res) => {
+app.get("/api/users/:id", requireAdmin, async (req: Request, res: Response) => {
   const id = req.params.id;
   const user = await User.findById(id).lean();
   if (!user) return res.status(404).json({ error: "Not found" });
@@ -108,19 +108,19 @@ app.get("/api/users/:id", requireAdmin, async (req, res) => {
 });
 
 // Payments
-app.get("/api/payments", requireAdmin, async (req, res) => {
+app.get("/api/payments", requireAdmin, async (req: Request, res: Response) => {
   const payments = await Payment.find().populate("user").lean();
   res.json(payments);
 });
 
 // Carts
-app.get("/api/carts", requireAdmin, async (req, res) => {
+app.get("/api/carts", requireAdmin, async (req: Request, res: Response) => {
   const carts = await Cart.find().populate("user").lean();
   res.json(carts);
 });
 
 // Health check
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (req: Request, res: Response) => {
   console.log("Health check endpoint hit");
   const state = mongoose.connection.readyState; // 0 disconnected, 1 connected
   const states = ["disconnected", "connected", "connecting", "disconnecting"];
@@ -128,8 +128,9 @@ app.get("/api/health", (req, res) => {
   console.log("Health check response sent");
 });
 
+
 // Initialize Paystack transaction
-app.post("/api/payments/initialize", async (req, res) => {
+app.post("/api/payments/initialize", async (req: Request, res: Response) => {
   const { amount, email, userId } = req.body;
   if (!amount || !email || !userId) return res.status(400).json({ error: "Missing fields" });
   const reference = `ref_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
@@ -156,7 +157,7 @@ app.post("/api/payments/initialize", async (req, res) => {
 });
 
 // Verify Paystack transaction
-app.get("/api/payments/verify/:reference", async (req, res) => {
+app.get("/api/payments/verify/:reference", async (req: Request, res: Response) => {
   const { reference } = req.params;
   try {
     const resp = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } });
