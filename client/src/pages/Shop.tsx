@@ -219,52 +219,52 @@ const Shop = () => {
       <div className="pt-24 px-6 relative z-10">
         <div className="container mx-auto">
           {/* Welcome Message */}
-          <div className="flex items-center justify-end mb-6 animate-in fade-in slide-in-from-top duration-500">
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg px-6 py-3 rounded-full shadow-lg border-2 border-white/60 dark:bg-gray-900/80 dark:border-gray-800">
-              <span className="text-gray-700 dark:text-gray-300 font-medium">
+          <div className="flex items-center justify-end mb-4 md:mb-6 animate-in fade-in slide-in-from-top duration-500">
+            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg px-3 md:px-6 py-2 md:py-3 rounded-full shadow-lg border-2 border-white/60 dark:bg-gray-900/80 dark:border-gray-800">
+              <span className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
                 {user.name || user.email.split('@')[0]}
               </span>
-              <BadgeCheck className="h-5 w-5 text-blue-600" />
-              <span className="text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
+              <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
+              <span className="text-xs md:text-base text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
             </div>
           </div>
           
           {/* Header Section */}
-          <div className="text-center mb-12 animate-in fade-in slide-in-from-top duration-700">
+          <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700">
             <h1 
-              className="text-5xl md:text-6xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400"
+              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               Shop Premium Products
             </h1>
-            <p className="text-xl text-gray-700 dark:text-gray-300">Discover our curated collection of high-quality social media accounts</p>
+            <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300">Discover our curated collection of high-quality social media accounts</p>
           </div>
 
           {/* Wallet Section */}
-          <Card className="mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                    <Wallet className="h-6 w-6 text-white" />
+          <Card className="mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
+            <CardHeader className="pb-3 md:pb-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
+                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
-                    <CardDescription className="text-lg font-semibold text-gray-700 dark:text-gray-300">Current balance: <span className="text-green-600">${(user.balance || 0).toFixed(2)}</span></CardDescription>
+                    <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
+                    <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">${(user.balance || 0).toFixed(2)}</span></CardDescription>
                   </div>
                 </div>
                 <Button 
                   variant="ghost" 
                   onClick={handleSignOut} 
-                  className="hover:bg-red-50 hover:text-red-600 transition-all duration-300 flex items-center gap-2"
+                  className="hover:bg-red-50 hover:text-red-600 transition-all duration-300 flex items-center gap-2 text-sm md:text-base h-9 md:h-auto"
                 >
-                  <LogOut className="h-5 w-5" />
+                  <LogOut className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Sign Out</span>
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="flex gap-3">
+            <CardContent className="pt-0">
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                 <Input
                   type="number"
                   placeholder="Enter amount"
@@ -272,13 +272,13 @@ const Shop = () => {
                   onChange={(e) => setAddFundsAmount(e.target.value)}
                   min="0"
                   step="0.01"
-                  className="h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 transition-all duration-300 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  className="h-10 md:h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 transition-all duration-300 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
                 />
                 <Button 
                   onClick={handleAddFunds}
-                  className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
+                  className="h-10 md:h-12 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm md:text-base w-full sm:w-auto"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                   Add Funds
                 </Button>
               </div>
@@ -290,65 +290,65 @@ const Shop = () => {
             {/* Products Grid */}
             <div className="lg:col-span-2">
               <h2 
-                className="text-4xl md:text-5xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
+                className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
                 style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
               >
                 Our Products
               </h2>
               {/* Category Filters */}
-              <div className="flex flex-wrap gap-3 mb-8 animate-in fade-in slide-in-from-left duration-500">
+              <div className="flex flex-wrap gap-2 md:gap-3 mb-6 md:mb-8 animate-in fade-in slide-in-from-left duration-500">
                 {categories.map(cat => (
                   <Button
                     key={cat}
                     variant={activeCategory === cat ? "default" : "outline"}
                     onClick={() => setActiveCategory(cat)}
-                    className={`rounded-full px-5 py-2 text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
+                    className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
                   >
                     {cat}
                   </Button>
                 ))}
               </div>
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {displayedProducts.map((product, index) => (
                   <Card 
                     key={product.id} 
                     className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-4">
+                    <CardContent className="p-3 md:p-4">
+                      <div className="flex items-center gap-3 md:gap-4">
                         {/* Small Product Image */}
                         <div className="relative overflow-hidden rounded-lg flex-shrink-0">
                           <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="w-16 h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                            className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>
                         
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 mb-1">
-                            <Badge variant="outline" className="px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
+                          <div className="flex items-start gap-2 mb-0.5 md:mb-1">
+                            <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
                               {product.category}
                             </Badge>
                           </div>
-                          <h3 className="font-bold text-lg mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate">{product.name}</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                          <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate">{product.name}</h3>
+                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
                         </div>
                         
                         {/* Price and Add to Cart */}
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <Badge className="text-lg px-3 py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold">
+                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 md:gap-3 flex-shrink-0">
+                          <Badge className="text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold">
                             ${product.price}
                           </Badge>
                           <Button 
                             onClick={() => addToCart(product)}
                             size="sm"
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg"
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
                           >
-                            <ShoppingCart className="h-4 w-4 mr-1" />
+                            <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1" />
                             Add
                           </Button>
                         </div>
@@ -369,55 +369,55 @@ const Shop = () => {
                     </div>
                     Shopping Cart
                   </CardTitle>
-                  <CardDescription className="text-base font-medium text-gray-600 dark:text-gray-400">
+                  <CardDescription className="text-sm md:text-base font-medium text-gray-600 dark:text-gray-400">
                     {cart.length} {cart.length === 1 ? 'item' : 'items'}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   {cart.length === 0 ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">Your cart is empty</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-6 md:py-8 text-sm md:text-base">Your cart is empty</p>
                   ) : (
-                    <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <div className="space-y-3 md:space-y-4 max-h-96 overflow-y-auto pr-2">
                       {cart.map(item => (
-                        <div key={item.id} className="flex gap-4 pb-4 border-b border-gray-200 dark:border-gray-800 last:border-0 group">
+                        <div key={item.id} className="flex gap-3 md:gap-4 pb-3 md:pb-4 border-b border-gray-200 dark:border-gray-800 last:border-0 group">
                           <div className="relative overflow-hidden rounded-xl">
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/10 group-hover:to-purple-400/10 transition-all duration-300"></div>
                             <img
                               src={item.image}
                               alt={item.name}
-                              className="w-20 h-20 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
                             />
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-sm mb-1 text-gray-800 dark:text-gray-200">{item.name}</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 font-medium">
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-xs md:text-sm mb-1 text-gray-800 dark:text-gray-200 truncate">{item.name}</h4>
+                            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1.5 md:mb-2 font-medium">
                               ${item.price} × {item.quantity}
                             </p>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1.5 md:gap-2">
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8 rounded-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-blue-400"
+                                className="h-7 w-7 md:h-8 md:w-8 rounded-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-blue-400"
                                 onClick={() => updateQuantity(item.id, -1)}
                               >
-                                <Minus className="h-3 w-3" />
+                                <Minus className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               </Button>
-                              <span className="text-sm font-bold w-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{item.quantity}</span>
+                              <span className="text-xs md:text-sm font-bold w-6 md:w-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{item.quantity}</span>
                               <Button
                                 size="icon"
                                 variant="outline"
-                                className="h-8 w-8 rounded-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-purple-400"
+                                className="h-7 w-7 md:h-8 md:w-8 rounded-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-purple-400"
                                 onClick={() => updateQuantity(item.id, 1)}
                               >
-                                <Plus className="h-3 w-3" />
+                                <Plus className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
-                                className="h-8 w-8 ml-auto rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-300 dark:hover:bg-red-950 dark:hover:text-red-400"
+                                className="h-7 w-7 md:h-8 md:w-8 ml-auto rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-300 dark:hover:bg-red-950 dark:hover:text-red-400"
                                 onClick={() => removeFromCart(item.id)}
                               >
-                                <Trash2 className="h-3 w-3" />
+                                <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
                               </Button>
                             </div>
                           </div>
@@ -427,13 +427,13 @@ const Shop = () => {
                   )}
                 </CardContent>
                 {cart.length > 0 && (
-                  <CardFooter className="flex-col gap-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-b-xl">
-                    <div className="w-full flex justify-between text-xl font-bold">
+                  <CardFooter className="flex-col gap-3 md:gap-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-b-xl">
+                    <div className="w-full flex justify-between text-base md:text-lg lg:text-xl font-bold">
                       <span className="text-gray-700 dark:text-gray-300">Total:</span>
                       <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">${cartTotal.toFixed(2)}</span>
                     </div>
                     <Button 
-                      className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02]" 
+                      className="w-full h-10 md:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-sm md:text-base lg:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02]" 
                       size="lg"
                       onClick={handleCheckout}
                       disabled={!user.balance || user.balance < cartTotal}
