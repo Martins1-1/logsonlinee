@@ -27,39 +27,39 @@ const Index = () => {
       {/* 🏠 Hero Section */}
       <section
         id="home"
-        className="relative pt-32 pb-20 px-6 overflow-hidden"
+        className="relative pt-24 md:pt-32 pb-12 md:pb-20 px-6 overflow-hidden"
         aria-label="Welcome to LegitStore"
       >
         <div className="container mx-auto relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             {/* 📝 Hero Text */}
-            <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
-              <div className="space-y-4">
-                <h3 className="text-xl md:text-2xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+            <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-left duration-700">
+              <div className="space-y-3 md:space-y-4">
+                <h3 className="text-lg md:text-xl lg:text-2xl font-medium bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
                   Welcome to
                 </h3>
                 <h1
-                  className="text-6xl md:text-7xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 drop-shadow-2xl"
+                  className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 drop-shadow-2xl"
                   style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
                 >
                   Legit Store
                 </h1>
               </div>
 
-              <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed">
+              <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 max-w-lg leading-relaxed">
                 Your trusted marketplace for <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">authentic social media accounts</span> designed to last and serve you better.
               </p>
 
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4">
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth")}
                   aria-label="Get started on LegitStore"
-                  className="h-14 px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-lg font-semibold shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-[1.05] rounded-xl"
+                  className="h-12 md:h-14 px-6 md:px-8 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-base md:text-lg font-semibold shadow-2xl shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-[1.05] rounded-xl w-full sm:w-auto"
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 justify-center">
                     Get Started
-                    <ShoppingBag className="w-5 h-5" />
+                    <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" />
                   </span>
                 </Button>
                 <Button
@@ -71,7 +71,7 @@ const Index = () => {
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
                   aria-label="Learn more about LegitStore"
-                  className="h-14 px-8 text-lg font-semibold border-2 border-purple-300 hover:bg-white/80 backdrop-blur-sm transition-all duration-300 rounded-xl"
+                  className="h-12 md:h-14 px-6 md:px-8 text-base md:text-lg font-semibold border-2 border-purple-300 hover:bg-white/80 backdrop-blur-sm transition-all duration-300 rounded-xl w-full sm:w-auto"
                 >
                   Learn More
                 </Button>
@@ -81,11 +81,11 @@ const Index = () => {
             {/* 🖼 Hero Image */}
             <figure className="relative group animate-in fade-in slide-in-from-right duration-700">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-2xl border-2 border-white/60">
+              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60">
                 <img
                   src={heroImage}
                   alt="Modern shopping experience on LegitStore"
-                  className="rounded-2xl w-full object-cover animate-float shadow-xl"
+                  className="rounded-2xl w-full h-48 md:h-auto object-cover animate-float shadow-xl"
                   loading="lazy"
                 />
               </div>
@@ -95,32 +95,32 @@ const Index = () => {
       </section>
 
       {/* ℹ️ About Section */}
-      <section id="about" className="py-24 px-6 relative" aria-labelledby="about-title">
+      <section id="about" className="py-16 md:py-24 px-6 relative" aria-labelledby="about-title">
         <div className="container mx-auto relative z-10">
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Features Grid */}
-            <div className="order-2 md:order-1 grid grid-cols-2 gap-6 animate-in fade-in slide-in-from-left duration-700">
+            <div className="order-2 md:order-1 grid grid-cols-2 gap-4 md:gap-6 animate-in fade-in slide-in-from-left duration-700">
               {[
                 {
-                  icon: <ShoppingBag className="h-10 w-10 mb-4" />,
+                  icon: <ShoppingBag className="h-6 w-6 md:h-10 md:w-10 mb-3 md:mb-4" />,
                   title: "Quality Products",
                   desc: "Curated selection of premium items.",
                   gradient: "from-blue-500 to-cyan-500"
                 },
                 {
-                  icon: <Shield className="h-10 w-10 mb-4" />,
+                  icon: <Shield className="h-6 w-6 md:h-10 md:w-10 mb-3 md:mb-4" />,
                   title: "Secure Shopping",
                   desc: "Your data is always protected.",
                   gradient: "from-purple-500 to-pink-500"
                 },
                 {
-                  icon: <Zap className="h-10 w-10 mb-4" />,
+                  icon: <Zap className="h-6 w-6 md:h-10 md:w-10 mb-3 md:mb-4" />,
                   title: "Fast Delivery",
                   desc: "We deliver immediately after purchase.",
                   gradient: "from-orange-500 to-red-500"
                 },
                 {
-                  icon: <CreditCard className="h-10 w-10 mb-4" />,
+                  icon: <CreditCard className="h-6 w-6 md:h-10 md:w-10 mb-3 md:mb-4" />,
                   title: "Easy Payments",
                   desc: "Multiple payment options.",
                   gradient: "from-green-500 to-emerald-500"
@@ -128,38 +128,38 @@ const Index = () => {
               ].map((feature, i) => (
                 <article
                   key={i}
-                  className="group bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl border-2 border-white/60 transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 relative overflow-hidden"
+                  className="group bg-white/80 backdrop-blur-xl p-4 md:p-8 rounded-2xl shadow-xl border-2 border-white/60 transition-all duration-300 hover:shadow-2xl hover:scale-105 hover:-translate-y-2 relative overflow-hidden"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
                   <div className={`text-transparent bg-clip-text bg-gradient-to-br ${feature.gradient} relative z-10`}>
                     {feature.icon}
                   </div>
-                  <h3 className="font-bold text-lg mb-2 text-gray-800 relative z-10">{feature.title}</h3>
-                  <p className="text-sm text-gray-600 relative z-10">{feature.desc}</p>
+                  <h3 className="font-bold text-sm md:text-lg mb-1 md:mb-2 text-gray-800 relative z-10">{feature.title}</h3>
+                  <p className="text-xs md:text-sm text-gray-600 relative z-10 leading-snug">{feature.desc}</p>
                 </article>
               ))}
             </div>
 
             {/* About Text */}
-            <div className="order-1 md:order-2 space-y-8 animate-in fade-in slide-in-from-right duration-700">
+            <div className="order-1 md:order-2 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right duration-700">
               <div className="relative inline-block">
                 <h2 
                   id="about-title" 
-                  className="text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 relative z-10"
+                  className="text-3xl md:text-5xl lg:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 relative z-10"
                   style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
                 >
                   About LegitStore
                 </h2>
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-400/30 via-purple-400/30 to-pink-400/30 blur-2xl rounded-lg -z-10 animate-pulse"></div>
               </div>
-              <p className="text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
                 We offer a wide range of accounts tailored to various needs. Professional social media growth services
                 <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">   Foreign & local Facebook • Instagram • TikTok • YouTube • Twitter,
                   Virtual numbers for verification WhatsApp • Telegram • SMS • OTP. </span>, We will help you gain more followers and boost your account.
                  We also sell, Discord Accounts, Old email, Twitch, and many more.
               </p>
               <p
-                className="text-base md:text-lg text-gray-700 dark:text-gray-300 leading-relaxed tracking-wide"
+                className="text-sm md:text-base lg:text-lg text-gray-700 dark:text-gray-300 leading-relaxed tracking-wide"
                 style={{ fontFamily: '"Times New Roman", Times, serif' }}
               >
                 With thousands of satisfied customers worldwide, we've built a
@@ -171,23 +171,23 @@ const Index = () => {
       </section>
 
       {/* 💎 Features Section */}
-      <section id="features" className="py-24 px-6 relative" aria-labelledby="features-title">
+      <section id="features" className="py-16 md:py-24 px-6 relative" aria-labelledby="features-title">
         <div className="container mx-auto relative z-10">
-          <header className="text-center mb-20 animate-in fade-in slide-in-from-top duration-700">
+          <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
               id="features-title" 
-              className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
+              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               Powerful Features
             </h2>
-            <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Everything you need for a <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">seamless shopping experience</span>.
             </p>
           </header>
 
-          <div className="grid md:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8 animate-in fade-in slide-in-from-left duration-700">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
+            <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-left duration-700">
               {[
                 {
                   title: "Smart Shopping Cart",
@@ -205,21 +205,21 @@ const Index = () => {
                   gradient: "from-orange-600 to-red-600"
                 },
               ].map((item, i) => (
-                <div key={i} className="group bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl border-2 border-white/60 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                <div key={i} className="group bg-white/80 backdrop-blur-xl p-5 md:p-8 rounded-2xl shadow-xl border-2 border-white/60 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                   <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}></div>
-                  <h3 className={`text-2xl md:text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r ${item.gradient}`}>{item.title}</h3>
-                  <p className="text-lg text-gray-600 leading-relaxed">{item.desc}</p>
+                  <h3 className={`text-lg md:text-2xl lg:text-3xl font-bold mb-2 md:mb-4 bg-clip-text text-transparent bg-gradient-to-r ${item.gradient}`}>{item.title}</h3>
+                  <p className="text-sm md:text-lg text-gray-600 leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
 
             <figure className="relative group animate-in fade-in slide-in-from-right duration-700">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-2xl border-2 border-white/60">
-                <img
+              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60">
+                                <img
                   src={featuresImage}
-                  alt="Shopping features at LegitStore"
-                  className="rounded-2xl shadow-xl w-full object-cover"
+                  alt="Features overview"
+                  className="rounded-2xl shadow-xl w-full h-48 md:h-auto object-cover"
                   loading="lazy"
                 />
               </div>
@@ -229,35 +229,35 @@ const Index = () => {
       </section>
 
       {/* ⚙️ How It Works */}
-      <section id="how-it-works" className="py-24 px-6 relative" aria-labelledby="how-title">
+      <section id="how-it-works" className="py-16 md:py-24 px-6 relative" aria-labelledby="how-title">
         <div className="container mx-auto relative z-10">
-          <header className="text-center mb-20 animate-in fade-in slide-in-from-top duration-700">
+          <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
               id="how-title" 
-              className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
+              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               How It Works
             </h2>
-            <p className="text-xl md:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Getting started is <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">simple and intuitive</span>. Follow these easy steps.
             </p>
           </header>
 
-          <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             <figure className="relative group animate-in fade-in slide-in-from-left duration-700">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-6 rounded-3xl shadow-2xl border-2 border-white/60">
+              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60">
                 <img
                   src={howItWorksImage}
                   alt="How LegitStore works"
-                  className="rounded-2xl shadow-xl w-full object-cover"
+                  className="rounded-2xl shadow-xl w-full h-48 md:h-auto object-cover"
                   loading="lazy"
                 />
               </div>
             </figure>
 
-            <ol className="space-y-10 animate-in fade-in slide-in-from-right duration-700" aria-label="Steps to start using LegitStore">
+            <ol className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-right duration-700" aria-label="Steps to start using LegitStore">
               {[
                 {
                   step: 1,
@@ -284,13 +284,13 @@ const Index = () => {
                   desc: "Relax while we prepare and ship your order directly to your door.",
                 },
               ].map(({ step, title, desc, gradient }) => (
-                <li key={step} className="flex gap-6 group">
-                  <div className={`flex-shrink-0 w-16 h-16 rounded-2xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center font-bold text-2xl shadow-xl group-hover:scale-110 transition-transform duration-300`}>
+                <li key={step} className="flex gap-4 md:gap-6 group">
+                  <div className={`flex-shrink-0 w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br ${gradient} text-white flex items-center justify-center font-bold text-lg md:text-2xl shadow-xl group-hover:scale-110 transition-transform duration-300`}>
                     {step}
                   </div>
                   <div className="flex-1">
-                    <h3 className={`text-2xl md:text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r ${gradient}`}>{title}</h3>
-                    <p className="text-lg text-gray-600 leading-relaxed">{desc}</p>
+                    <h3 className={`text-lg md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3 bg-clip-text text-transparent bg-gradient-to-r ${gradient}`}>{title}</h3>
+                    <p className="text-sm md:text-lg text-gray-600 leading-relaxed">{desc}</p>
                   </div>
                 </li>
               ))}
