@@ -20,7 +20,7 @@ app.use(cors({
 }));
 app.use(express.json());
 
-const PORT = process.env.PORT || 4000;
+const PORT = parseInt(process.env.PORT || "4000", 10);
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
 const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/joybuy";
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET || "";
