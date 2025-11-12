@@ -184,103 +184,109 @@ const Shop = () => {
       
       <Navbar isShopPage cartItemCount={0} />
       
-      <div className="pt-24 px-6 relative z-10">
-        <div className="container mx-auto">
-          {/* Welcome Message */}
-          <div className="flex items-center justify-end mb-4 md:mb-6 animate-in fade-in slide-in-from-top duration-500">
-            <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg px-3 md:px-6 py-2 md:py-3 rounded-full shadow-lg border-2 border-white/60 dark:bg-gray-900/80 dark:border-gray-800">
-              <span className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
-                {user.name || user.email.split('@')[0]}
-              </span>
-              <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
-              <span className="text-xs md:text-base text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
+      <div className="pt-24 relative z-10">
+        <div className="px-6">
+          <div className="container mx-auto">
+            {/* Welcome Message */}
+            <div className="flex items-center justify-end mb-4 md:mb-6 animate-in fade-in slide-in-from-top duration-500">
+              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-lg px-3 md:px-6 py-2 md:py-3 rounded-full shadow-lg border-2 border-white/60 dark:bg-gray-900/80 dark:border-gray-800">
+                <span className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
+                  {user.name || user.email.split('@')[0]}
+                </span>
+                <BadgeCheck className="h-4 w-4 md:h-5 md:w-5 text-blue-600" />
+                <span className="text-xs md:text-base text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
+              </div>
             </div>
-          </div>
-          
-          {/* Header Section */}
-          <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700">
-            <h1 
-              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400"
-              style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
-            >
-              Shop Premium Products
-            </h1>
-            <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300">Discover our curated collection of high-quality social media accounts</p>
-          </div>
-
-          {/* Wallet Section */}
-          <Card className="mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
-            <CardHeader className="pb-3 md:pb-6">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
-                    <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
-                    <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
-                  </div>
-                </div>
-                <Button 
-                  variant="ghost" 
-                  onClick={handleSignOut} 
-                  className="hover:bg-red-50 hover:text-red-600 transition-all duration-300 flex items-center gap-2 text-sm md:text-base h-9 md:h-auto"
-                >
-                  <LogOut className="h-4 w-4 md:h-5 md:w-5" />
-                  <span>Sign Out</span>
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                <Input
-                  type="number"
-                  placeholder="Enter amount"
-                  value={addFundsAmount}
-                  onChange={(e) => setAddFundsAmount(e.target.value)}
-                  min="0"
-                  step="0.01"
-                  className="h-10 md:h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 transition-all duration-300 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
-                />
-                <Button 
-                  onClick={handleAddFunds}
-                  className="h-10 md:h-12 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm md:text-base w-full sm:w-auto"
-                >
-                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                  Add Funds
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Products and Buy Dialog */}
-          <div className="grid lg:grid-cols-1 gap-8">
-            {/* Products Grid */}
-            <div className="lg:col-span-1">
-              <h2 
-                className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
+            
+            {/* Header Section */}
+            <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700">
+              <h1 
+                className="text-3xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400"
                 style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
               >
-                Our Products
-              </h2>
-              {/* Category Filters */}
-              <div className="flex flex-wrap gap-2 md:gap-3 mb-6 md:mb-8 animate-in fade-in slide-in-from-left duration-500">
-                {categories.map(cat => (
-                  <Button
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "outline"}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
+                Shop Premium Products
+              </h1>
+              <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300">Discover our curated collection of high-quality social media accounts</p>
+            </div>
+
+            {/* Wallet Section */}
+            <Card className="mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
+              <CardHeader className="pb-3 md:pb-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+                      <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
+                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    onClick={handleSignOut} 
+                    className="hover:bg-red-50 hover:text-red-600 transition-all duration-300 flex items-center gap-2 text-sm md:text-base h-9 md:h-auto"
                   >
-                    {cat}
+                    <LogOut className="h-4 w-4 md:h-5 md:w-5" />
+                    <span>Sign Out</span>
                   </Button>
-                ))}
-              </div>
-              <div className="space-y-3 md:space-y-4">
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                  <Input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={addFundsAmount}
+                    onChange={(e) => setAddFundsAmount(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    className="h-10 md:h-12 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 transition-all duration-300 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm md:text-base"
+                  />
+                  <Button 
+                    onClick={handleAddFunds}
+                    className="h-10 md:h-12 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm md:text-base w-full sm:w-auto"
+                  >
+                    <Plus className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                    Add Funds
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Products Section - Full Width on Mobile */}
+        <div className="px-0 md:px-6">
+          <div className="container mx-auto">
+            {/* Products and Buy Dialog */}
+            <div className="grid lg:grid-cols-1 gap-8">
+              {/* Products Grid */}
+              <div className="lg:col-span-1">
+                <h2 
+                  className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0"
+                  style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
+                >
+                  Our Products
+                </h2>
+                {/* Category Filters */}
+                <div className="flex flex-wrap gap-2 md:gap-3 mb-6 md:mb-8 animate-in fade-in slide-in-from-left duration-500 px-3 md:px-0">
+                  {categories.map(cat => (
+                    <Button
+                      key={cat}
+                      variant={activeCategory === cat ? "default" : "outline"}
+                      onClick={() => setActiveCategory(cat)}
+                      className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
+                    >
+                      {cat}
+                    </Button>
+                  ))}
+                </div>
+                <div className="space-y-3 md:space-y-4">
                 {displayedProducts.map((product, index) => (
                   <Card 
                     key={product.id} 
-                    className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0"
+                    className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-l-0 border-r-0 md:border-l-2 md:border-r-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0 rounded-none md:rounded-lg"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
                     <CardContent className="p-0">
@@ -334,6 +340,7 @@ const Shop = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
       </div>
 
