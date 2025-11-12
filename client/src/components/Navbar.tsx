@@ -7,9 +7,10 @@ import logo from "@/assets/logo.png";
 interface NavbarProps {
   isShopPage?: boolean;
   cartItemCount?: number;
+  onCartClick?: () => void;
 }
 
-const Navbar = ({ isShopPage = false, cartItemCount = 0 }: NavbarProps) => {
+const Navbar = ({ isShopPage = false, cartItemCount = 0, onCartClick }: NavbarProps) => {
   const navigate = useNavigate();
 
   const scrollToSection = (sectionId: string) => {
@@ -78,7 +79,7 @@ const Navbar = ({ isShopPage = false, cartItemCount = 0 }: NavbarProps) => {
           <div className="flex items-center gap-4">
             <ThemeToggle />
             {isShopPage ? (
-              <div className="relative group cursor-pointer">
+              <div className="relative group cursor-pointer" onClick={onCartClick}>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300"></div>
                 <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <ShoppingCart className="h-6 w-6 text-white" />

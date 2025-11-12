@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Wallet, LogOut, BadgeCheck, X } from "lucide-react";
+import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
@@ -109,7 +109,19 @@ const Shop = () => {
       navigate("/auth");
       return;
     }
-    setUser(JSON.parse(currentUser) as User);
+    const parsedUser = JSON.parse(currentUser) as User;
+    setUser(parsedUser);
+    
+    // Load purchase history
+    const historyKey = `purchase_history_${parsedUser.id}`;
+    const storedHistory = localStorage.getItem(historyKey);
+    if (storedHistory) {
+      try {
+        setPurchaseHistory(JSON.parse(storedHistory));
+      } catch (e) {
+        // ignore parse errors
+      }
+    }
   }, [navigate]);
 
   const handleBuyClick = (product: Product) => {
@@ -139,6 +151,16 @@ const Shop = () => {
     const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
     const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
+    
+    // Add to purchase history
+    const purchaseItem = {
+      ...selectedProduct,
+      purchaseDate: new Date().toISOString()
+    };
+    const updatedHistory = [purchaseItem, ...purchaseHistory];
+    setPurchaseHistory(updatedHistory);
+    const historyKey = `purchase_history_${user.id}`;
+    localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     
     toast.success(`Purchase successful! You bought ${selectedProduct.name}`);
     setShowBuyDialog(false);
@@ -182,7 +204,11 @@ const Shop = () => {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
       
-      <Navbar isShopPage cartItemCount={0} />
+      <Navbar 
+        isShopPage 
+        cartItemCount={purchaseHistory.length} 
+        onCartClick={() => setShowPurchaseHistory(true)}
+      />
       
       <div className="pt-24 relative z-10">
         <div className="px-6">
@@ -424,6 +450,78 @@ const Shop = () => {
             >
               <span className="mr-1 md:mr-2">₦</span>
               {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Purchase History Dialog */}
+      <Dialog open={showPurchaseHistory} onOpenChange={setShowPurchaseHistory}>
+        <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-4 md:p-6">
+          <DialogHeader className="pb-3 md:pb-4">
+            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
+              Purchase History
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+              View all your purchased items
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-3 py-2">
+            {purchaseHistory.length === 0 ? (
+              <div className="text-center py-12">
+                <ShoppingCart className="h-16 w-16 mx-auto text-gray-300 dark:text-gray-700 mb-4" />
+                <p className="text-sm text-gray-500 dark:text-gray-400">No purchases yet</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Your purchased items will appear here</p>
+              </div>
+            ) : (
+              purchaseHistory.map((item, index) => (
+                <Card key={index} className="bg-white/80 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700">
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      {/* Product Image */}
+                      <div className="relative overflow-hidden rounded-lg flex-shrink-0">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      </div>
+                      
+                      {/* Product Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
+                            {item.name}
+                          </h4>
+                          <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 font-bold whitespace-nowrap flex-shrink-0">
+                            ₦{item.price}
+                          </Badge>
+                        </div>
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none mb-1">
+                          {item.category}
+                        </Badge>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
+                          {item.description}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                          Purchased: {new Date(item.purchaseDate).toLocaleDateString()} at {new Date(item.purchaseDate).toLocaleTimeString()}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+          
+          <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
+            <Button
+              onClick={() => setShowPurchaseHistory(false)}
+              className="w-full h-10 md:h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
