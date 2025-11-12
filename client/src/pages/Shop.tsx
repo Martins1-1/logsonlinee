@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { DollarSign, Plus, Wallet, LogOut, BadgeCheck, X } from "lucide-react";
+import { Plus, Wallet, LogOut, BadgeCheck, X } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
@@ -163,7 +163,7 @@ const Shop = () => {
     const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
     
-    toast.success(`$${amount.toFixed(2)} added to your wallet`);
+    toast.success(`₦${amount.toFixed(2)} added to your wallet`);
     setAddFundsAmount("");
   };
 
@@ -218,7 +218,7 @@ const Shop = () => {
                   </div>
                   <div>
                     <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
-                    <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">${(user.balance || 0).toFixed(2)}</span></CardDescription>
+                    <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
                   </div>
                 </div>
                 <Button 
@@ -280,43 +280,50 @@ const Shop = () => {
                 {displayedProducts.map((product, index) => (
                   <Card 
                     key={product.id} 
-                    className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800"
+                    className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0"
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
-                    <CardContent className="p-3 md:p-4">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        {/* Small Product Image */}
-                        <div className="relative overflow-hidden rounded-lg flex-shrink-0">
-                          <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                          />
-                        </div>
-                        
-                        {/* Product Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start gap-2 mb-0.5 md:mb-1">
-                            <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
-                              {product.category}
-                            </Badge>
+                    <CardContent className="p-0">
+                      <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
+                        {/* Top Section: Image and Info (Mobile Full Width) */}
+                        <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
+                          {/* Small Product Image */}
+                          <div className="relative overflow-hidden rounded-lg flex-shrink-0">
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                            />
                           </div>
-                          <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate">{product.name}</h3>
-                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                          
+                          {/* Product Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 mb-0.5 md:mb-1">
+                              <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
+                                {product.category}
+                              </Badge>
+                            </div>
+                            <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                          </div>
                         </div>
                         
-                        {/* Price and Buy Button */}
-                        <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 md:gap-3 flex-shrink-0">
-                          <Badge className="text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold">
-                            ${product.price}
+                        {/* Description Section (Full Width on Mobile) */}
+                        <div className="px-3 pb-2 md:p-0 md:flex-1">
+                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-3 md:line-clamp-2 leading-relaxed">{product.description}</p>
+                        </div>
+                        
+                        {/* Price and Buy Button (Full Width on Mobile, Fixed to Edges) */}
+                        <div className="flex items-center justify-between gap-2 px-3 pb-3 md:p-0 md:flex-shrink-0 md:flex-col md:gap-2 border-t md:border-t-0 border-gray-200 dark:border-gray-800 pt-2 md:pt-0">
+                          <Badge className="text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold whitespace-nowrap">
+                            ₦{product.price}
                           </Badge>
                           <Button 
                             onClick={() => handleBuyClick(product)}
                             size="sm"
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-3 md:px-3 text-xs md:text-sm"
                           >
-                            <DollarSign className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                            <span className="mr-1">₦</span>
                             Buy
                           </Button>
                         </div>
@@ -373,14 +380,14 @@ const Shop = () => {
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
                   <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Price:</span>
                   <Badge className="text-lg px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
-                    ${selectedProduct.price}
+                    ₦{selectedProduct.price}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
                   <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    ${(user?.balance || 0).toFixed(2)}
+                    ₦{(user?.balance || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -408,7 +415,7 @@ const Shop = () => {
               disabled={!user?.balance || user.balance < (selectedProduct?.price || 0)}
               className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <DollarSign className="h-4 w-4 mr-2" />
+              <span className="mr-2">₦</span>
               {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
             </Button>
           </DialogFooter>
