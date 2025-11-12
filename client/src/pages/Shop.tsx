@@ -346,33 +346,33 @@ const Shop = () => {
 
       {/* Buy Confirmation Dialog */}
       <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
-        <DialogContent className="sm:max-w-[500px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-4 md:p-6">
+          <DialogHeader className="pb-2 md:pb-4">
+            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
               Confirm Purchase
             </DialogTitle>
-            <DialogDescription className="text-gray-600 dark:text-gray-400">
+            <DialogDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Review the product details below before completing your purchase.
             </DialogDescription>
           </DialogHeader>
           
           {selectedProduct && (
-            <div className="space-y-4 py-4">
+            <div className="space-y-3 md:space-y-4 py-2 md:py-4">
               {/* Product Image */}
               <div className="flex justify-center">
                 <div className="relative overflow-hidden rounded-xl shadow-lg">
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
-                    className="w-48 h-48 object-cover rounded-xl"
+                    className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl"
                   />
                 </div>
               </div>
               
               {/* Product Details */}
-              <div className="space-y-3">
+              <div className="space-y-2 md:space-y-3">
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                  <h3 className="text-base md:text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                     {selectedProduct.name}
                   </h3>
                   <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none">
@@ -380,49 +380,49 @@ const Shop = () => {
                   </Badge>
                 </div>
                 
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                   {selectedProduct.description}
                 </p>
                 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
-                  <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Price:</span>
-                  <Badge className="text-lg px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
+                  <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Price:</span>
+                  <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
                     ₦{selectedProduct.price}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between pt-1">
-                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                  <span className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
+                  <span className="text-xs md:text-sm font-bold text-green-600 dark:text-green-400">
                     ₦{(user?.balance || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
               
               {/* Confirmation Message */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
-                <p className="text-center text-sm font-medium text-blue-900 dark:text-blue-300">
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-900">
+                <p className="text-center text-xs md:text-sm font-medium text-blue-900 dark:text-blue-300">
                   Do you want to pay for this item?
                 </p>
               </div>
             </div>
           )}
           
-          <DialogFooter className="flex flex-row gap-3 sm:gap-3">
+          <DialogFooter className="flex flex-row gap-2 md:gap-3 pt-2 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
             <Button
               variant="outline"
               onClick={handleCancelPurchase}
-              className="flex-1 h-11 border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold"
+              className="flex-1 h-10 md:h-11 text-sm md:text-base border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold"
             >
-              <X className="h-4 w-4 mr-2" />
+              <X className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
               Cancel
             </Button>
             <Button
               onClick={handleConfirmPurchase}
               disabled={!user?.balance || user.balance < (selectedProduct?.price || 0)}
-              className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-10 md:h-11 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <span className="mr-2">₦</span>
+              <span className="mr-1 md:mr-2">₦</span>
               {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
             </Button>
           </DialogFooter>
