@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { ShoppingCart, Plus, Minus, Trash2, Wallet, LogOut, BadgeCheck } from "lucide-react";
+import { DollarSign, Plus, Wallet, LogOut, BadgeCheck, X } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
@@ -19,10 +20,6 @@ interface Product {
   image: string;
   description: string;
   category: string;
-}
-
-interface CartItem extends Product {
-  quantity: number;
 }
 
 // Basic user shape for typing localStorage data. Additional dynamic keys allowed as unknown.
@@ -72,10 +69,10 @@ const initialProducts: Product[] = [
 const Shop = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState<User | null>(null);
-  const [cart, setCart] = useState<CartItem[]>([]);
   const [addFundsAmount, setAddFundsAmount] = useState("");
-  const [showCart, setShowCart] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showBuyDialog, setShowBuyDialog] = useState(false);
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = localStorage.getItem("catalog_products");
     if (stored) {
@@ -115,43 +112,38 @@ const Shop = () => {
     setUser(JSON.parse(currentUser) as User);
   }, [navigate]);
 
-  const addToCart = (product: Product) => {
-    setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: 1 }];
-    });
-    toast.success(`${product.name} added to cart`);
+  const handleBuyClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowBuyDialog(true);
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
-    setCart(prevCart => {
-      return prevCart.map(item => {
-        if (item.id === productId) {
-          const newQuantity = item.quantity + delta;
-          if (newQuantity <= 0) {
-            toast.info("Item removed from cart");
-            return null;
-          }
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      }).filter(Boolean) as CartItem[];
-    });
+  const handleCancelPurchase = () => {
+    setShowBuyDialog(false);
+    setSelectedProduct(null);
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
-    toast.info("Item removed from cart");
-  };
+  const handleConfirmPurchase = () => {
+    if (!selectedProduct || !user) return;
 
-  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (!user.balance || user.balance < selectedProduct.price) {
+      toast.error("Insufficient balance. Please add funds to your wallet.");
+      setShowBuyDialog(false);
+      setSelectedProduct(null);
+      return;
+    }
+
+    const updatedUser: User = { ...user, balance: (user.balance || 0) - selectedProduct.price };
+    setUser(updatedUser);
+    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+    
+    const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+    const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
+    
+    toast.success(`Purchase successful! You bought ${selectedProduct.name}`);
+    setShowBuyDialog(false);
+    setSelectedProduct(null);
+  };
 
   // Derive products to display based on active category
   const displayedProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);
@@ -175,30 +167,6 @@ const Shop = () => {
     setAddFundsAmount("");
   };
 
-  const handleCheckout = () => {
-    if (cart.length === 0) {
-      toast.error("Your cart is empty");
-      return;
-    }
-
-    if (!user.balance || user.balance < cartTotal) {
-      toast.error("Insufficient balance. Please add funds to your wallet.");
-      return;
-    }
-
-    const updatedUser: User = { ...user!, balance: (user?.balance || 0) - cartTotal };
-    setUser(updatedUser);
-    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    
-    const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-    const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
-    toast.success("Purchase successful! Thank you for shopping with us.");
-    setCart([]);
-    setShowCart(false);
-  };
-
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
     toast.info("Signed out successfully");
@@ -214,7 +182,7 @@ const Shop = () => {
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
       
-      <Navbar isShopPage cartItemCount={cart.reduce((sum, item) => sum + item.quantity, 0)} />
+      <Navbar isShopPage cartItemCount={0} />
       
       <div className="pt-24 px-6 relative z-10">
         <div className="container mx-auto">
@@ -285,10 +253,10 @@ const Shop = () => {
             </CardContent>
           </Card>
 
-          {/* Products and Cart */}
-          <div className="grid lg:grid-cols-3 gap-8">
+          {/* Products and Buy Dialog */}
+          <div className="grid lg:grid-cols-1 gap-8">
             {/* Products Grid */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-1">
               <h2 
                 className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400"
                 style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
@@ -338,18 +306,18 @@ const Shop = () => {
                           <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
                         </div>
                         
-                        {/* Price and Add to Cart */}
+                        {/* Price and Buy Button */}
                         <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 md:gap-3 flex-shrink-0">
                           <Badge className="text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold">
                             ${product.price}
                           </Badge>
                           <Button 
-                            onClick={() => addToCart(product)}
+                            onClick={() => handleBuyClick(product)}
                             size="sm"
                             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-2 md:px-3 text-xs md:text-sm"
                           >
-                            <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1" />
-                            Add
+                            <DollarSign className="h-3 w-3 md:h-4 md:w-4 mr-1" />
+                            Buy
                           </Button>
                         </div>
                       </div>
@@ -358,95 +326,94 @@ const Shop = () => {
                 ))}
               </div>
             </div>
-
-            {/* Cart Sidebar */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-24 bg-white/90 backdrop-blur-xl shadow-2xl border-2 border-white/60 animate-in fade-in slide-in-from-right duration-700 dark:bg-gray-900/90 dark:border-gray-800">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                      <ShoppingCart className="h-5 w-5 text-white" />
-                    </div>
-                    Shopping Cart
-                  </CardTitle>
-                  <CardDescription className="text-sm md:text-base font-medium text-gray-600 dark:text-gray-400">
-                    {cart.length} {cart.length === 1 ? 'item' : 'items'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {cart.length === 0 ? (
-                    <p className="text-center text-gray-500 dark:text-gray-400 py-6 md:py-8 text-sm md:text-base">Your cart is empty</p>
-                  ) : (
-                    <div className="space-y-3 md:space-y-4 max-h-96 overflow-y-auto pr-2">
-                      {cart.map(item => (
-                        <div key={item.id} className="flex gap-3 md:gap-4 pb-3 md:pb-4 border-b border-gray-200 dark:border-gray-800 last:border-0 group">
-                          <div className="relative overflow-hidden rounded-xl">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/10 group-hover:to-purple-400/10 transition-all duration-300"></div>
-                            <img
-                              src={item.image}
-                              alt={item.name}
-                              className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-xs md:text-sm mb-1 text-gray-800 dark:text-gray-200 truncate">{item.name}</h4>
-                            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 mb-1.5 md:mb-2 font-medium">
-                              ${item.price} × {item.quantity}
-                            </p>
-                            <div className="flex items-center gap-1.5 md:gap-2">
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-7 w-7 md:h-8 md:w-8 rounded-lg border-2 hover:border-blue-500 hover:bg-blue-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-blue-400"
-                                onClick={() => updateQuantity(item.id, -1)}
-                              >
-                                <Minus className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              </Button>
-                              <span className="text-xs md:text-sm font-bold w-6 md:w-8 text-center bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">{item.quantity}</span>
-                              <Button
-                                size="icon"
-                                variant="outline"
-                                className="h-7 w-7 md:h-8 md:w-8 rounded-lg border-2 hover:border-purple-500 hover:bg-purple-50 transition-all duration-300 dark:border-gray-700 dark:hover:bg-gray-800 dark:hover:border-purple-400"
-                                onClick={() => updateQuantity(item.id, 1)}
-                              >
-                                <Plus className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-7 w-7 md:h-8 md:w-8 ml-auto rounded-lg hover:bg-red-50 hover:text-red-600 transition-all duration-300 dark:hover:bg-red-950 dark:hover:text-red-400"
-                                onClick={() => removeFromCart(item.id)}
-                              >
-                                <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-                {cart.length > 0 && (
-                  <CardFooter className="flex-col gap-3 md:gap-4 bg-gradient-to-br from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 rounded-b-xl">
-                    <div className="w-full flex justify-between text-base md:text-lg lg:text-xl font-bold">
-                      <span className="text-gray-700 dark:text-gray-300">Total:</span>
-                      <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">${cartTotal.toFixed(2)}</span>
-                    </div>
-                    <Button 
-                      className="w-full h-10 md:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold text-sm md:text-base lg:text-lg shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl transform hover:scale-[1.02]" 
-                      size="lg"
-                      onClick={handleCheckout}
-                      disabled={!user.balance || user.balance < cartTotal}
-                    >
-                      {user.balance >= cartTotal ? "Checkout Now" : "Insufficient Balance"}
-                    </Button>
-                  </CardFooter>
-                )}
-              </Card>
-            </div>
           </div>
         </div>
       </div>
+
+      {/* Buy Confirmation Dialog */}
+      <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
+        <DialogContent className="sm:max-w-[500px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+              Confirm Purchase
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-gray-400">
+              Review the product details below before completing your purchase.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedProduct && (
+            <div className="space-y-4 py-4">
+              {/* Product Image */}
+              <div className="flex justify-center">
+                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                  <img
+                    src={selectedProduct.image}
+                    alt={selectedProduct.name}
+                    className="w-48 h-48 object-cover rounded-xl"
+                  />
+                </div>
+              </div>
+              
+              {/* Product Details */}
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
+                    {selectedProduct.name}
+                  </h3>
+                  <Badge variant="outline" className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none">
+                    {selectedProduct.category}
+                  </Badge>
+                </div>
+                
+                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                  {selectedProduct.description}
+                </p>
+                
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <span className="text-lg font-semibold text-gray-700 dark:text-gray-300">Price:</span>
+                  <Badge className="text-lg px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
+                    ${selectedProduct.price}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
+                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                    ${(user?.balance || 0).toFixed(2)}
+                  </span>
+                </div>
+              </div>
+              
+              {/* Confirmation Message */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border border-blue-200 dark:border-blue-900">
+                <p className="text-center text-sm font-medium text-blue-900 dark:text-blue-300">
+                  Do you want to pay for this item?
+                </p>
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter className="flex flex-row gap-3 sm:gap-3">
+            <Button
+              variant="outline"
+              onClick={handleCancelPurchase}
+              className="flex-1 h-11 border-2 border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 font-semibold"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button
+              onClick={handleConfirmPurchase}
+              disabled={!user?.balance || user.balance < (selectedProduct?.price || 0)}
+              className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <DollarSign className="h-4 w-4 mr-2" />
+              {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Floating Social Support Icons */}
       <div className="fixed bottom-8 left-6 z-50">
