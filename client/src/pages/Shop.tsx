@@ -73,6 +73,8 @@ const Shop = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+  const [purchaseHistory, setPurchaseHistory] = useState<Array<Product & { purchaseDate: string }>>([]);
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = localStorage.getItem("catalog_products");
     if (stored) {
