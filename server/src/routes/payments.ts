@@ -72,7 +72,12 @@ router.post('/create-session', async (req, res) => {
     // Check if transaction was successful
     if (response.requestSuccessful && response.responseBody) {
       const { checkoutUrl } = response.responseBody;
-      // Ercaspay may return its own transaction reference field; attempt to resolve it
+      
+      // Log full response to see what Ercaspay returns
+      console.log('Ercaspay response body:', JSON.stringify(response.responseBody, null, 2));
+      
+      // Ercaspay verifyTransaction expects the paymentReference we sent, not a separate transactionReference
+      // We'll return our paymentReference for verification
       const transactionReference = response.responseBody.transactionReference
         || response.responseBody.transactionRef
         || response.responseBody.reference

@@ -295,58 +295,42 @@ const Shop = () => {
     const params = new URLSearchParams(window.location.search);
     const pref = params.get("pref");
     if (!pref) return;
-    try {
-      const stored = localStorage.getItem("latest_topup");
-      if (!stored) return;
-      const parsed = JSON.parse(stored) as { paymentReference: string; transactionReference: string | null; amount: number };
-      if (parsed && parsed.paymentReference === pref) {
-        setTopupReference(parsed.paymentReference);
-        setTopupTransactionRef(parsed.transactionReference);
-        // Open dialog to show status and auto-verify
-        setShowTopupDialog(true);
-        // kick off verification automatically
-        (async () => {
-          setIsVerifyingTopup(true);
-          try {
-            const referenceForVerify = parsed.transactionReference || parsed.paymentReference;
-            const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
-            const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
-            if (status === "success") {
-              const updatedUser: User = { ...user!, balance: (user?.balance || 0) + (amount || 0) };
-              setUser(updatedUser);
-              localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-              const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-              const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
-              localStorage.setItem("users", JSON.stringify(updatedUsers));
-              toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet`);
-              setAddFundsAmount("");
-              setTopupReference(null);
-              setTopupTransactionRef(null);
-              setTopupCheckoutUrl(null);
-              setShowTopupDialog(false);
-              // clear stored context
-              localStorage.removeItem("latest_topup");
-              // remove query from URL
-              const url = new URL(window.location.href);
-              url.searchParams.delete("pref");
-              window.history.replaceState({}, "", url.toString());
-            } else if (status === "pending") {
-              toast.info("Payment is still pending. Please try Verify again in a moment.");
-            } else {
-              toast.error("Payment failed or was canceled.");
-            }
-          } catch (e) {
-            const msg = e instanceof Error ? e.message : "Verification failed";
-            toast.error(msg);
-          } finally {
-            setIsVerifyingTopup(false);
-          }
-        })();
+    
+    // Auto-verify using the paymentReference from URL
+    (async () => {
+      setIsVerifyingTopup(true);
+      try {
+        // Use the paymentReference directly - that's what Ercaspay expects
+        const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(pref)}`);
+        const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
+        
+        if (status === "success") {
+          const updatedUser: User = { ...user!, balance: (user?.balance || 0) + (amount || 0) };
+          setUser(updatedUser);
+          localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+          const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+          const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
+          localStorage.setItem("users", JSON.stringify(updatedUsers));
+          toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet!`);
+          
+          // Clean up
+          localStorage.removeItem("latest_topup");
+          const url = new URL(window.location.href);
+          url.searchParams.delete("pref");
+          window.history.replaceState({}, "", url.toString());
+        } else if (status === "pending") {
+          toast.info("Payment is still processing. Please wait a moment and refresh.");
+        } else {
+          toast.error("Payment verification failed. Please contact support if amount was deducted.");
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Verification failed";
+        toast.error(`Verification error: ${msg}. Please try manual verify if payment succeeded.`);
+      } finally {
+        setIsVerifyingTopup(false);
       }
-    } catch {
-      // ignore parse errors
-    }
-  }, []);
+    })();
+  }, [user]);
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
