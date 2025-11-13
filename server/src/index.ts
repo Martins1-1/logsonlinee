@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
 import { User, Admin, Cart, Payment } from "./models";
+import paymentsRouter from "./routes/payments";
 
 dotenv.config();
 
@@ -19,6 +20,9 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Payment routes (Ercaspay integration)
+app.use("/api/payments", paymentsRouter);
 
 const PORT = parseInt(process.env.PORT || "4000", 10);
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
