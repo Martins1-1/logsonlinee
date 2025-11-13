@@ -140,8 +140,18 @@ router.get('/verify', async (req, res) => {
       });
     }
 
+    console.log('=== Verify Payment ===');
+    console.log('Verifying reference:', reference);
+
   // Verify transaction with Ercaspay
   const response = await ercaspay.verifyTransaction(reference);
+
+    console.log('Ercaspay verify response:', JSON.stringify({
+      requestSuccessful: response.requestSuccessful,
+      responseCode: response.responseCode,
+      responseMessage: response.responseMessage,
+      responseBody: response.responseBody,
+    }, null, 2));
 
     // Check verification response
     if (response.requestSuccessful && response.responseBody) {
@@ -163,6 +173,7 @@ router.get('/verify', async (req, res) => {
         data: transactionData,
       });
     } else {
+      console.log('Ercaspay verify failed, checking DB fallback...');
       // Fallback: if gateway says not found, check DB if webhook already marked it completed
       try {
         const { Payment } = await import('../models');
@@ -171,6 +182,7 @@ router.get('/verify', async (req, res) => {
           status: 'completed',
         }).lean();
         if (paid) {
+          console.log('Found completed payment in DB:', paid._id);
           return res.status(200).json({
             success: true,
             status: 'success',
@@ -178,6 +190,8 @@ router.get('/verify', async (req, res) => {
             reference,
             data: { source: 'webhook-cache' },
           });
+        } else {
+          console.log('No completed payment found in DB for reference:', reference);
         }
       } catch (e) {
         console.warn('DB lookup fallback failed:', (e as Error).message);
