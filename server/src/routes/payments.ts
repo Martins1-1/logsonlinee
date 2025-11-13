@@ -5,7 +5,7 @@ const router = express.Router();
 
 // Initialize Ercaspay client
 const ercaspay = new Ercaspay({
-  baseUrl: process.env.ECRS_API_BASE || 'https://api.ercaspay.com/api/v1',
+  baseUrl: 'https://api.ercaspay.com/api/v1',
   secretKey: process.env.ECRS_SECRET_KEY || '',
 });
 
@@ -46,6 +46,14 @@ router.post('/create-session', async (req, res) => {
       },
     };
 
+    // Debug: Log configuration and request data
+    console.log('=== Ercaspay Payment Debug ===');
+    console.log('ECRS_API_BASE:', process.env.ECRS_API_BASE);
+    console.log('ECRS_SECRET_KEY exists:', !!process.env.ECRS_SECRET_KEY);
+    console.log('ECRS_SECRET_KEY length:', process.env.ECRS_SECRET_KEY?.length);
+    console.log('Transaction data:', JSON.stringify(transactionData, null, 2));
+    console.log('============================');
+
     // Initiate transaction with Ercaspay
     const response = await ercaspay.initiateTransaction(transactionData);
 
@@ -66,6 +74,11 @@ router.post('/create-session', async (req, res) => {
     }
   } catch (error: any) {
     console.error('Error creating payment session:', error);
+    console.error('Error details:', {
+      message: error.message,
+      responseData: error.responseData,
+      stack: error.stack?.split('\n').slice(0, 5).join('\n')
+    });
     return res.status(500).json({
       success: false,
       error: error.responseData?.responseMessage || error.message || 'Internal server error',
