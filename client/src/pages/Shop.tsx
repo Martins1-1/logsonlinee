@@ -118,11 +118,21 @@ const Shop = () => {
       navigate("/auth");
       return;
     }
-    const parsedUser = JSON.parse(currentUser) as User;
+    // Safely parse user data to avoid crashing the app if storage is corrupted
+    let parsedUser: User | null = null;
+    try {
+      parsedUser = JSON.parse(currentUser) as User;
+    } catch (e) {
+      // If parsing fails, reset and send user to auth
+      console.error("Invalid currentUser in localStorage; clearing and redirecting", e);
+      localStorage.removeItem("currentUser");
+      navigate("/auth");
+      return;
+    }
     setUser(parsedUser);
     
     // Load purchase history
-    const historyKey = `purchase_history_${parsedUser.id}`;
+  const historyKey = `purchase_history_${parsedUser.id}`;
     const storedHistory = localStorage.getItem(historyKey);
     if (storedHistory) {
       try {
