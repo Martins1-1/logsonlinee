@@ -1,6 +1,6 @@
 declare module '@capitalsage/ercaspay-nodejs' {
   export interface ErcaspayConfig {
-    baseUrl: string;
+    baseURL: string;  // Note: SDK uses baseURL (uppercase), not baseUrl
     secretKey: string;
     logger?: any;
   }

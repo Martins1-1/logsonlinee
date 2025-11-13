@@ -10,9 +10,9 @@ if (!ECRS_SECRET_KEY || ECRS_SECRET_KEY.trim() === '') {
   console.error('Available env keys:', Object.keys(process.env).filter(k => k.startsWith('ECRS')));
 }
 
-// Initialize Ercaspay client - try base URL without /api/v1 suffix
+// Initialize Ercaspay client - MUST use baseURL (uppercase) not baseUrl
 const ercaspay = new Ercaspay({
-  baseUrl: 'https://api.ercaspay.com',
+  baseURL: 'https://api.ercaspay.com',
   secretKey: ECRS_SECRET_KEY || '',
 });
 
