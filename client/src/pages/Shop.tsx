@@ -77,7 +77,9 @@ const Shop = () => {
   // Top-up (Add Funds) payment flow
   const [showTopupDialog, setShowTopupDialog] = useState(false);
   const [isCreatingTopup, setIsCreatingTopup] = useState(false);
+  // paymentReference (our UUID) and transactionReference (gateway reference)
   const [topupReference, setTopupReference] = useState<string | null>(null);
+  const [topupTransactionRef, setTopupTransactionRef] = useState<string | null>(null);
   const [topupCheckoutUrl, setTopupCheckoutUrl] = useState<string | null>(null);
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
@@ -214,13 +216,27 @@ const Shop = () => {
           userId: user!.id,
           email: user!.email,
           // Callback URL is optional if using webhooks; still useful for redirects
-          callbackUrl: window.location.origin,
+          // Ensure redirect returns to /shop page so user can verify easily
+          callbackUrl: `${window.location.origin}/shop`,
         }),
       });
 
-      const { checkoutUrl, reference } = res as { checkoutUrl: string; reference: string };
-      setTopupReference(reference);
+      const { checkoutUrl, paymentReference, transactionReference } = res as {
+        checkoutUrl: string;
+        paymentReference: string;
+        transactionReference: string | null;
+      };
+      setTopupReference(paymentReference);
+      if (transactionReference) setTopupTransactionRef(transactionReference);
       setTopupCheckoutUrl(checkoutUrl);
+
+      // Persist latest topup context so a fresh /shop load (after provider redirect) can resume verification
+      localStorage.setItem("latest_topup", JSON.stringify({
+        paymentReference,
+        transactionReference: transactionReference || null,
+        amount,
+        createdAt: Date.now(),
+      }));
 
       // Open hosted payment page in a new tab for a smooth flow on mobile
       if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
@@ -236,11 +252,13 @@ const Shop = () => {
   };
 
   const verifyTopup = async () => {
-    if (!topupReference) return;
+    // Prefer gateway transaction reference for verification; fallback to our UUID
+    const referenceForVerify = topupTransactionRef || topupReference;
+    if (!referenceForVerify) return;
     setIsVerifyingTopup(true);
     try {
       // Ask backend to verify the payment by reference via the gateway's Verify API
-      const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(topupReference)}`);
+      const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
       const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
 
       if (status === "success") {
@@ -256,7 +274,8 @@ const Shop = () => {
         toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet`);
         setAddFundsAmount("");
         setShowTopupDialog(false);
-        setTopupReference(null);
+  setTopupReference(null);
+  setTopupTransactionRef(null);
         setTopupCheckoutUrl(null);
       } else if (status === "pending") {
         toast.info("Payment is still pending. Please try again in a moment.");
@@ -270,6 +289,64 @@ const Shop = () => {
       setIsVerifyingTopup(false);
     }
   };
+
+  // On return from payment provider, auto-resume verification if we see our reference in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pref = params.get("pref");
+    if (!pref) return;
+    try {
+      const stored = localStorage.getItem("latest_topup");
+      if (!stored) return;
+      const parsed = JSON.parse(stored) as { paymentReference: string; transactionReference: string | null; amount: number };
+      if (parsed && parsed.paymentReference === pref) {
+        setTopupReference(parsed.paymentReference);
+        setTopupTransactionRef(parsed.transactionReference);
+        // Open dialog to show status and auto-verify
+        setShowTopupDialog(true);
+        // kick off verification automatically
+        (async () => {
+          setIsVerifyingTopup(true);
+          try {
+            const referenceForVerify = parsed.transactionReference || parsed.paymentReference;
+            const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
+            const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
+            if (status === "success") {
+              const updatedUser: User = { ...user!, balance: (user?.balance || 0) + (amount || 0) };
+              setUser(updatedUser);
+              localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+              const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+              const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
+              localStorage.setItem("users", JSON.stringify(updatedUsers));
+              toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet`);
+              setAddFundsAmount("");
+              setTopupReference(null);
+              setTopupTransactionRef(null);
+              setTopupCheckoutUrl(null);
+              setShowTopupDialog(false);
+              // clear stored context
+              localStorage.removeItem("latest_topup");
+              // remove query from URL
+              const url = new URL(window.location.href);
+              url.searchParams.delete("pref");
+              window.history.replaceState({}, "", url.toString());
+            } else if (status === "pending") {
+              toast.info("Payment is still pending. Please try Verify again in a moment.");
+            } else {
+              toast.error("Payment failed or was canceled.");
+            }
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : "Verification failed";
+            toast.error(msg);
+          } finally {
+            setIsVerifyingTopup(false);
+          }
+        })();
+      }
+    } catch {
+      // ignore parse errors
+    }
+  }, []);
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");

@@ -34,6 +34,12 @@ router.post('/create-session', async (req, res) => {
     // Generate unique payment reference
     const paymentReference = ercaspay.generatePaymentReferenceUuid();
 
+    // Build redirect URL to return customer to /shop with our paymentReference in query
+    const baseRedirect = (callbackUrl || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/shop`).toString();
+    const redirectUrlWithRef = baseRedirect.includes('?')
+      ? `${baseRedirect}&pref=${encodeURIComponent(paymentReference)}`
+      : `${baseRedirect}?pref=${encodeURIComponent(paymentReference)}`;
+
     // Prepare transaction data
     const transactionData = {
       amount: String(amount),
@@ -43,7 +49,7 @@ router.post('/create-session', async (req, res) => {
       customerEmail: email,
       currency: currency.toUpperCase(),
       customerPhoneNumber: '', // Optional - can be added to frontend form
-      redirectUrl: callbackUrl || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/shop`,
+      redirectUrl: redirectUrlWithRef,
       description: `Wallet top-up for user ${userId}`,
       feeBearer: 'customer',
       metadata: {
@@ -66,11 +72,17 @@ router.post('/create-session', async (req, res) => {
     // Check if transaction was successful
     if (response.requestSuccessful && response.responseBody) {
       const { checkoutUrl } = response.responseBody;
+      // Ercaspay may return its own transaction reference field; attempt to resolve it
+      const transactionReference = response.responseBody.transactionReference
+        || response.responseBody.transactionRef
+        || response.responseBody.reference
+        || null;
 
       return res.status(200).json({
         success: true,
         checkoutUrl,
-        reference: paymentReference,
+        paymentReference, // our internally generated UUID
+        transactionReference, // gateway provided reference for verification
       });
     } else {
       return res.status(400).json({
