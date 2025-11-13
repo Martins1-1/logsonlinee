@@ -140,11 +140,14 @@ router.get('/verify', async (req, res) => {
       });
     }
 
+    // Sanitize reference in case provider appended their own query after our value
+    const cleanReference = String(reference).split('?')[0].split('&')[0].trim();
+
     console.log('=== Verify Payment ===');
-    console.log('Verifying reference:', reference);
+    console.log('Verifying reference:', cleanReference);
 
   // Verify transaction with Ercaspay
-  const response = await ercaspay.verifyTransaction(reference);
+  const response = await ercaspay.verifyTransaction(cleanReference);
 
     console.log('Ercaspay verify response:', JSON.stringify({
       requestSuccessful: response.requestSuccessful,
@@ -169,7 +172,7 @@ router.get('/verify', async (req, res) => {
         success: true,
         status,
         amount: transactionData.amount || 0,
-        reference,
+  reference: cleanReference,
         data: transactionData,
       });
     } else {
@@ -178,7 +181,7 @@ router.get('/verify', async (req, res) => {
       try {
         const { Payment } = await import('../models');
         const paid = await Payment.findOne({
-          $or: [{ transactionReference: reference }, { reference }],
+          $or: [{ transactionReference: cleanReference }, { reference: cleanReference }],
           status: 'completed',
         }).lean();
         if (paid) {
@@ -187,7 +190,7 @@ router.get('/verify', async (req, res) => {
             success: true,
             status: 'success',
             amount: paid.amount,
-            reference,
+            reference: cleanReference,
             data: { source: 'webhook-cache' },
           });
         } else {

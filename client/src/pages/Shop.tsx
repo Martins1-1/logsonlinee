@@ -209,7 +209,7 @@ const Shop = () => {
         }),
       });
 
-      const { checkoutUrl, paymentReference } = res as {
+      const { checkoutUrl, paymentReference, transactionReference } = res as {
         checkoutUrl: string;
         paymentReference: string;
         transactionReference: string | null;
@@ -218,6 +218,7 @@ const Shop = () => {
       // Store reference for later verification
       localStorage.setItem("latest_topup", JSON.stringify({
         paymentReference,
+        transactionReference: transactionReference || null,
         amount,
         createdAt: Date.now(),
       }));
@@ -238,15 +239,27 @@ const Shop = () => {
   // On return from payment provider, auto-resume verification if we see our reference in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const pref = params.get("pref");
+    let pref = params.get("pref");
     if (!pref) return;
+    // Clean pref if provider appended extra query like '?reference='
+    if (pref.includes('?') || pref.includes('&')) {
+      pref = pref.split('?')[0].split('&')[0];
+    }
     
     // Auto-verify using the paymentReference from URL
     (async () => {
       setIsVerifyingTopup(true);
       try {
-        // Use the paymentReference directly - that's what Ercaspay expects
-        const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(pref)}`);
+        // Prefer gateway transactionReference saved earlier, fallback to paymentReference from URL
+        const stored = localStorage.getItem("latest_topup");
+        let referenceForVerify = pref;
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored) as { transactionReference?: string | null; paymentReference?: string };
+            if (parsed?.transactionReference) referenceForVerify = parsed.transactionReference;
+          } catch {}
+        }
+        const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
         const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
         
         if (status === "success") {
