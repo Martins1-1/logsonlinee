@@ -13,11 +13,14 @@ export interface ICart extends Document {
 }
 
 export interface IPayment extends Document {
-  user: mongoose.Types.ObjectId;
+  user?: mongoose.Types.ObjectId; // optional for front-end local users
+  userLocalId?: string; // localStorage user id from client
+  email?: string;
   amount: number;
   method: string;
-  status: string;
-  reference?: string;
+  status: string; // pending | completed | failed
+  reference?: string; // our internal paymentReference
+  transactionReference?: string; // gateway reference
   createdAt: Date;
 }
 
@@ -48,11 +51,14 @@ const CartSchema = new Schema<ICart>({
 });
 
 const PaymentSchema = new Schema<IPayment>({
-  user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+  user: { type: Schema.Types.ObjectId, ref: "User", required: false },
+  userLocalId: { type: String },
+  email: { type: String },
   amount: { type: Number, required: true },
   method: { type: String, required: true },
   status: { type: String, required: true },
   reference: { type: String },
+  transactionReference: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

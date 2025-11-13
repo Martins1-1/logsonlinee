@@ -66,8 +66,8 @@ router.post('/create-session', async (req, res) => {
       hasSecretKey: Boolean(ECRS_SECRET_KEY && ECRS_SECRET_KEY.length > 0)
     });
 
-    // Initiate transaction with Ercaspay
-    const response = await ercaspay.initiateTransaction(transactionData);
+  // Initiate transaction with Ercaspay
+  const response = await ercaspay.initiateTransaction(transactionData);
 
     // Check if transaction was successful
     if (response.requestSuccessful && response.responseBody) {
@@ -77,6 +77,22 @@ router.post('/create-session', async (req, res) => {
         || response.responseBody.transactionRef
         || response.responseBody.reference
         || null;
+
+      // Try to record a pending payment in DB (best-effort; don't block response)
+      try {
+        const { Payment } = await import('../models');
+        await Payment.create({
+          userLocalId: (transactionData as any).metadata?.userId,
+          email: transactionData.customerEmail,
+          amount: Number(transactionData.amount) || 0,
+          method: 'ercaspay',
+          status: 'pending',
+          reference: paymentReference,
+          transactionReference: transactionReference || undefined,
+        });
+      } catch (e) {
+        console.warn('Payment DB record (pending) failed:', (e as Error).message);
+      }
 
       return res.status(200).json({
         success: true,
@@ -119,8 +135,8 @@ router.get('/verify', async (req, res) => {
       });
     }
 
-    // Verify transaction with Ercaspay
-    const response = await ercaspay.verifyTransaction(reference);
+  // Verify transaction with Ercaspay
+  const response = await ercaspay.verifyTransaction(reference);
 
     // Check verification response
     if (response.requestSuccessful && response.responseBody) {
@@ -142,6 +158,26 @@ router.get('/verify', async (req, res) => {
         data: transactionData,
       });
     } else {
+      // Fallback: if gateway says not found, check DB if webhook already marked it completed
+      try {
+        const { Payment } = await import('../models');
+        const paid = await Payment.findOne({
+          $or: [{ transactionReference: reference }, { reference }],
+          status: 'completed',
+        }).lean();
+        if (paid) {
+          return res.status(200).json({
+            success: true,
+            status: 'success',
+            amount: paid.amount,
+            reference,
+            data: { source: 'webhook-cache' },
+          });
+        }
+      } catch (e) {
+        console.warn('DB lookup fallback failed:', (e as Error).message);
+      }
+
       return res.status(400).json({
         success: false,
         error: response.responseMessage || 'Failed to verify payment',
@@ -155,6 +191,60 @@ router.get('/verify', async (req, res) => {
       error: error.responseData?.responseMessage || error.message || 'Internal server error',
       status: 'failed',
     });
+  }
+});
+
+/**
+ * POST /api/payments/webhook
+ * Ercaspay webhook endpoint to receive transaction updates
+ * Note: For production, verify signatures if the provider supports it.
+ */
+router.post('/webhook', async (req, res) => {
+  try {
+    const evt = req.body || {};
+    const reference: string | undefined = evt.transactionReference || evt.reference || evt.transactionRef || evt?.data?.reference;
+    const statusRaw: string = (evt.status || evt.event || evt?.data?.status || '').toString().toLowerCase();
+    const metadata = evt.metadata || evt?.data?.metadata || {};
+    const email = evt.customerEmail || evt?.data?.customer?.email || undefined;
+
+    if (!reference) {
+      console.warn('Webhook without reference:', evt);
+      return res.status(200).json({ received: true });
+    }
+
+    // Confirm with gateway to avoid spoofing
+    const verifyResp = await ercaspay.verifyTransaction(reference);
+    if (verifyResp.requestSuccessful && verifyResp.responseBody) {
+      const code = verifyResp.responseCode;
+      const success = code === 'success';
+      const amt = Number(verifyResp.responseBody.amount || 0);
+      try {
+        const { Payment } = await import('../models');
+        await Payment.findOneAndUpdate(
+          { $or: [{ transactionReference: reference }, { reference }] },
+          {
+            userLocalId: metadata?.userId,
+            email,
+            amount: isNaN(amt) ? 0 : amt,
+            method: 'ercaspay',
+            status: success ? 'completed' : 'failed',
+            transactionReference: reference,
+            reference: verifyResp.responseBody.paymentReference || undefined,
+          },
+          { upsert: true }
+        );
+      } catch (e) {
+        console.error('Failed to upsert Payment from webhook:', (e as Error).message);
+      }
+    } else {
+      console.warn('Gateway verification failed in webhook:', verifyResp.responseMessage);
+    }
+
+    // Always acknowledge to prevent retries storms; adjust if provider expects different codes
+    return res.status(200).json({ received: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    return res.status(200).json({ received: true });
   }
 });
 
