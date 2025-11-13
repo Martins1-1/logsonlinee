@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
@@ -73,6 +74,12 @@ const Shop = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
+  // Top-up (Add Funds) payment flow
+  const [showTopupDialog, setShowTopupDialog] = useState(false);
+  const [isCreatingTopup, setIsCreatingTopup] = useState(false);
+  const [topupReference, setTopupReference] = useState<string | null>(null);
+  const [topupCheckoutUrl, setTopupCheckoutUrl] = useState<string | null>(null);
+  const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [purchaseHistory, setPurchaseHistory] = useState<Array<Product & { purchaseDate: string }>>([]);
   const [products, setProducts] = useState<Product[]>(() => {
@@ -172,23 +179,86 @@ const Shop = () => {
   // Derive products to display based on active category
   const displayedProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);
 
-  const handleAddFunds = () => {
+  const handleAddFunds = async () => {
     const amount = parseFloat(addFundsAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
 
-    const updatedUser: User = { ...user!, balance: (user?.balance || 0) + amount };
-    setUser(updatedUser);
-    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    
-    const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-    const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
-    toast.success(`₦${amount.toFixed(2)} added to your wallet`);
-    setAddFundsAmount("");
+    // Open the top-up dialog and prepare to create a payment session
+    setShowTopupDialog(true);
+    setIsCreatingTopup(true);
+    setTopupReference(null);
+    setTopupCheckoutUrl(null);
+
+    try {
+      // Ask backend to create a payment session with your payment gateway
+      // Backend should use the Secret Key securely and return a checkoutUrl and a reference
+      const res = await apiFetch("/payments/create-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount,
+          currency: "NGN",
+          userId: user!.id,
+          email: user!.email,
+          // Callback URL is optional if using webhooks; still useful for redirects
+          callbackUrl: window.location.origin,
+        }),
+      });
+
+      const { checkoutUrl, reference } = res as { checkoutUrl: string; reference: string };
+      setTopupReference(reference);
+      setTopupCheckoutUrl(checkoutUrl);
+
+      // Open hosted payment page in a new tab for a smooth flow on mobile
+      if (checkoutUrl) window.open(checkoutUrl, "_blank", "noopener,noreferrer");
+
+      toast.info("Payment window opened. Complete payment and return to verify.");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to start payment";
+      toast.error(msg);
+      setShowTopupDialog(false);
+    } finally {
+      setIsCreatingTopup(false);
+    }
+  };
+
+  const verifyTopup = async () => {
+    if (!topupReference) return;
+    setIsVerifyingTopup(true);
+    try {
+      // Ask backend to verify the payment by reference via the gateway's Verify API
+      const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(topupReference)}`);
+      const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
+
+      if (status === "success") {
+        // Credit wallet
+        const updatedUser: User = { ...user!, balance: (user?.balance || 0) + (amount || 0) };
+        setUser(updatedUser);
+        localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+        const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+        const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
+        localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+        toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet`);
+        setAddFundsAmount("");
+        setShowTopupDialog(false);
+        setTopupReference(null);
+        setTopupCheckoutUrl(null);
+      } else if (status === "pending") {
+        toast.info("Payment is still pending. Please try again in a moment.");
+      } else {
+        toast.error("Payment failed or was canceled.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Verification failed";
+      toast.error(msg);
+    } finally {
+      setIsVerifyingTopup(false);
+    }
   };
 
   const handleSignOut = () => {
@@ -452,6 +522,69 @@ const Shop = () => {
             >
               <span className="mr-1 md:mr-2">₦</span>
               {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Funds (Top-up) Dialog */}
+      <Dialog open={showTopupDialog} onOpenChange={setShowTopupDialog}>
+        <DialogContent className="sm:max-w-[480px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-4 md:p-6">
+          <DialogHeader className="pb-2 md:pb-3">
+            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+              Add Funds
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+              Complete the payment to credit your wallet.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 md:space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm md:text-base font-medium text-gray-700 dark:text-gray-300">Amount</span>
+              <Badge className="text-sm md:text-base px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
+                ₦{Number.parseFloat(addFundsAmount || "0").toFixed(2)}
+              </Badge>
+            </div>
+
+            {isCreatingTopup && (
+              <div className="text-xs md:text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                Initializing payment…
+              </div>
+            )}
+
+            {!isCreatingTopup && topupCheckoutUrl && (
+              <div className="space-y-2">
+                <div className="text-xs md:text-sm text-gray-700 dark:text-gray-300">
+                  We've opened your payment in a new tab. After you finish, click Verify below.
+                </div>
+                <a
+                  href={topupCheckoutUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-xs md:text-sm text-blue-600 hover:underline"
+                >
+                  Open payment again
+                </a>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex flex-row gap-2 md:gap-3 pt-2 md:pt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowTopupDialog(false)}
+              className="flex-1 h-10 md:h-11 text-sm md:text-base border-2 border-gray-300 dark:border-gray-700"
+              disabled={isCreatingTopup}
+            >
+              Close
+            </Button>
+            <Button
+              onClick={verifyTopup}
+              disabled={!topupReference || isCreatingTopup || isVerifyingTopup}
+              className="flex-1 h-10 md:h-11 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold disabled:opacity-50"
+            >
+              {isVerifyingTopup ? "Verifying…" : "I've completed payment — Verify"}
             </Button>
           </DialogFooter>
         </DialogContent>
