@@ -5,6 +5,7 @@ const router = express.Router();
 
 // Initialize Ercaspay client
 const ercaspay = new Ercaspay({
+  baseUrl: process.env.ECRS_API_BASE || 'https://api.ercaspay.com/api/v1',
   secretKey: process.env.ECRS_SECRET_KEY || '',
 });
 
