@@ -7,7 +7,6 @@ const router = express.Router();
 const ECRS_SECRET_KEY = process.env.ECRS_SECRET_KEY;
 if (!ECRS_SECRET_KEY || ECRS_SECRET_KEY.trim() === '') {
   console.error('FATAL: ECRS_SECRET_KEY is not set in environment variables!');
-  console.error('Available env keys:', Object.keys(process.env).filter(k => k.startsWith('ECRS')));
 }
 
 // Initialize Ercaspay client - MUST use baseURL (uppercase) not baseUrl
@@ -53,13 +52,13 @@ router.post('/create-session', async (req, res) => {
       },
     };
 
-    // Debug: Log configuration and request data
-    console.log('=== Ercaspay Payment Debug ===');
-    console.log('ECRS_SECRET_KEY exists:', !!ECRS_SECRET_KEY);
-    console.log('ECRS_SECRET_KEY length:', ECRS_SECRET_KEY?.length);
-    console.log('ECRS_SECRET_KEY first 20 chars:', ECRS_SECRET_KEY?.substring(0, 20));
-    console.log('Transaction data:', JSON.stringify(transactionData, null, 2));
-    console.log('============================');
+    // Optional: light debug for transaction (avoid logging secrets)
+    console.log('Ercaspay initiateTransaction called', {
+      paymentReference,
+      amount: String(amount),
+      currency: currency.toUpperCase(),
+      hasSecretKey: Boolean(ECRS_SECRET_KEY && ECRS_SECRET_KEY.length > 0)
+    });
 
     // Initiate transaction with Ercaspay
     const response = await ercaspay.initiateTransaction(transactionData);
