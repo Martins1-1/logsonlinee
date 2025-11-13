@@ -3,10 +3,17 @@ import Ercaspay from '@capitalsage/ercaspay-nodejs';
 
 const router = express.Router();
 
-// Initialize Ercaspay client
+// Validate Ercaspay configuration
+const ECRS_SECRET_KEY = process.env.ECRS_SECRET_KEY;
+if (!ECRS_SECRET_KEY || ECRS_SECRET_KEY.trim() === '') {
+  console.error('FATAL: ECRS_SECRET_KEY is not set in environment variables!');
+  console.error('Available env keys:', Object.keys(process.env).filter(k => k.startsWith('ECRS')));
+}
+
+// Initialize Ercaspay client - try base URL without /api/v1 suffix
 const ercaspay = new Ercaspay({
-  baseUrl: 'https://api.ercaspay.com/api/v1',
-  secretKey: process.env.ECRS_SECRET_KEY || '',
+  baseUrl: 'https://api.ercaspay.com',
+  secretKey: ECRS_SECRET_KEY || '',
 });
 
 /**
@@ -48,9 +55,9 @@ router.post('/create-session', async (req, res) => {
 
     // Debug: Log configuration and request data
     console.log('=== Ercaspay Payment Debug ===');
-    console.log('ECRS_API_BASE:', process.env.ECRS_API_BASE);
-    console.log('ECRS_SECRET_KEY exists:', !!process.env.ECRS_SECRET_KEY);
-    console.log('ECRS_SECRET_KEY length:', process.env.ECRS_SECRET_KEY?.length);
+    console.log('ECRS_SECRET_KEY exists:', !!ECRS_SECRET_KEY);
+    console.log('ECRS_SECRET_KEY length:', ECRS_SECRET_KEY?.length);
+    console.log('ECRS_SECRET_KEY first 20 chars:', ECRS_SECRET_KEY?.substring(0, 20));
     console.log('Transaction data:', JSON.stringify(transactionData, null, 2));
     console.log('============================');
 
