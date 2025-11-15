@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch } from "@/lib/api";
-import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart } from "lucide-react";
+import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
@@ -74,6 +74,7 @@ const Shop = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showBuyDialog, setShowBuyDialog] = useState(false);
+  const [purchaseQuantity, setPurchaseQuantity] = useState(1);
   const [isCreatingTopup, setIsCreatingTopup] = useState(false);
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
@@ -141,25 +142,30 @@ const Shop = () => {
 
   const handleBuyClick = (product: Product) => {
     setSelectedProduct(product);
+    setPurchaseQuantity(1);
     setShowBuyDialog(true);
   };
 
   const handleCancelPurchase = () => {
     setShowBuyDialog(false);
     setSelectedProduct(null);
+    setPurchaseQuantity(1);
   };
 
   const handleConfirmPurchase = () => {
     if (!selectedProduct || !user) return;
 
-    if (!user.balance || user.balance < selectedProduct.price) {
+    const totalPrice = selectedProduct.price * purchaseQuantity;
+
+    if (!user.balance || user.balance < totalPrice) {
       toast.error("Insufficient balance. Please add funds to your wallet.");
       setShowBuyDialog(false);
       setSelectedProduct(null);
+      setPurchaseQuantity(1);
       return;
     }
 
-    const updatedUser: User = { ...user, balance: (user.balance || 0) - selectedProduct.price };
+    const updatedUser: User = { ...user, balance: (user.balance || 0) - totalPrice };
     setUser(updatedUser);
     localStorage.setItem("currentUser", JSON.stringify(updatedUser));
     
@@ -170,16 +176,18 @@ const Shop = () => {
     // Add to purchase history
     const purchaseItem = {
       ...selectedProduct,
-      purchaseDate: new Date().toISOString()
+      purchaseDate: new Date().toISOString(),
+      quantity: purchaseQuantity
     };
     const updatedHistory = [purchaseItem, ...purchaseHistory];
     setPurchaseHistory(updatedHistory);
     const historyKey = `purchase_history_${user.id}`;
     localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     
-    toast.success(`Purchase successful! You bought ${selectedProduct.name}`);
+    toast.success(`Purchase successful! You bought ${purchaseQuantity} x ${selectedProduct.name}`);
     setShowBuyDialog(false);
     setSelectedProduct(null);
+    setPurchaseQuantity(1);
   };
 
   // Derive products to display based on active category
@@ -257,7 +265,9 @@ const Shop = () => {
           try {
             const parsed = JSON.parse(stored) as { transactionReference?: string | null; paymentReference?: string };
             if (parsed?.transactionReference) referenceForVerify = parsed.transactionReference;
-          } catch {}
+          } catch {
+            // Ignore JSON parse errors
+          }
         }
         const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
         const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
@@ -512,9 +522,41 @@ const Shop = () => {
                 </p>
                 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
-                  <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Price:</span>
+                  <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Unit Price:</span>
                   <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
                     ₦{selectedProduct.price}
+                  </Badge>
+                </div>
+
+                {/* Quantity Selector */}
+                <div className="flex items-center justify-between pt-2">
+                  <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Quantity:</span>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setPurchaseQuantity(Math.max(1, purchaseQuantity - 1))}
+                      disabled={purchaseQuantity <= 1}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-lg font-bold min-w-[2rem] text-center">{purchaseQuantity}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={() => setPurchaseQuantity(purchaseQuantity + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
+                  <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Total:</span>
+                  <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 font-bold">
+                    ₦{(selectedProduct.price * purchaseQuantity).toFixed(2)}
                   </Badge>
                 </div>
                 
@@ -529,7 +571,7 @@ const Shop = () => {
               {/* Confirmation Message */}
               <div className="bg-blue-50 dark:bg-blue-950/30 p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-900">
                 <p className="text-center text-xs md:text-sm font-medium text-blue-900 dark:text-blue-300">
-                  Do you want to pay for this item?
+                  Do you want to pay for {purchaseQuantity} {purchaseQuantity === 1 ? 'item' : 'items'}?
                 </p>
               </div>
             </div>
@@ -546,11 +588,11 @@ const Shop = () => {
             </Button>
             <Button
               onClick={handleConfirmPurchase}
-              disabled={!user?.balance || user.balance < (selectedProduct?.price || 0)}
+              disabled={!user?.balance || !selectedProduct || user.balance < (selectedProduct.price * purchaseQuantity)}
               className="flex-1 h-10 md:h-11 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <span className="mr-1 md:mr-2">₦</span>
-              {user?.balance && selectedProduct && user.balance >= selectedProduct.price ? "Continue" : "Insufficient Balance"}
+              {user?.balance && selectedProduct && user.balance >= (selectedProduct.price * purchaseQuantity) ? "Continue" : "Insufficient Balance"}
             </Button>
           </DialogFooter>
         </DialogContent>
