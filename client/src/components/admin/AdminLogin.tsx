@@ -26,8 +26,8 @@ const AdminLogin = ({ onLogin }: Props) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
-      });
-      onLogin((data as any).token);
+      }) as { token: string };
+      onLogin(data.token);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
