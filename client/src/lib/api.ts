@@ -132,3 +132,37 @@ export const purchaseHistoryAPI = {
     });
   },
 };
+
+// ======== CATALOG CATEGORIES API ========
+
+export interface CatalogCategoryDTO {
+  id: string;
+  name: string;
+  createdAt?: string;
+}
+
+export const catalogCategoriesAPI = {
+  async getAll(): Promise<CatalogCategoryDTO[]> {
+    return apiFetch('/api/catalog-categories');
+  },
+  async create(name: string): Promise<CatalogCategoryDTO> {
+    const token = localStorage.getItem('admin_token');
+    return apiFetch('/api/catalog-categories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ name }),
+    });
+  },
+  async delete(id: string): Promise<void> {
+    const token = localStorage.getItem('admin_token');
+    return apiFetch(`/api/catalog-categories/${id}`, {
+      method: 'DELETE',
+      headers: {
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+    });
+  }
+};

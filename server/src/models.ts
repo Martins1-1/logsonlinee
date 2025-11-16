@@ -101,6 +101,13 @@ export interface IPurchaseHistory extends Document {
   purchaseDate: Date;
 }
 
+// Catalog Category interface
+export interface ICatalogCategory extends Document {
+  id: string;
+  name: string;
+  createdAt: Date;
+}
+
 // Define ProductItemSchema first since it's used in CartItemSchema
 const ProductItemSchema = new Schema<IProductItem>({
   username: { type: String, required: true },
@@ -209,3 +216,11 @@ export const Admin = mongoose.model<IAdmin>("Admin", AdminSchema);
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);
 export const CatalogProduct = mongoose.model<ICatalogProduct>("CatalogProduct", CatalogProductSchema);
 export const PurchaseHistory = mongoose.model<IPurchaseHistory>("PurchaseHistory", PurchaseHistorySchema);
+// Catalog Category Schema and Model
+const CatalogCategorySchema = new Schema<ICatalogCategory>({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+export const CatalogCategory = mongoose.model<ICatalogCategory>("CatalogCategory", CatalogCategorySchema);

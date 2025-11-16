@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { catalogAPI } from "@/lib/api";
+import { catalogAPI, catalogCategoriesAPI } from "@/lib/api";
 
 interface SerialNumber {
   id: string;
@@ -41,8 +41,7 @@ interface CatalogProduct {
   createdAt?: string; // Made optional to match API response
 }
 
-const CATEGORIES_KEY = "catalog_categories";
-const PRODUCTS_KEY = "catalog_products";
+const CATEGORIES_KEY = "catalog_categories"; // kept for default fallback only
 
 // Pre-defined categories matching Shop page filters
 const defaultCategories: CatalogCategory[] = [
@@ -59,18 +58,7 @@ const defaultCategories: CatalogCategory[] = [
 ];
 
 export default function AdminCatalog() {
-  const [categories, setCategories] = useState<CatalogCategory[]>(() => {
-    const stored = localStorage.getItem(CATEGORIES_KEY);
-    if (stored) {
-      try { 
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch { /* fallback to default */ }
-    }
-    // Initialize with defaults on first load
-    localStorage.setItem(CATEGORIES_KEY, JSON.stringify(defaultCategories));
-    return defaultCategories;
-  });
+  const [categories, setCategories] = useState<CatalogCategory[]>(defaultCategories);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -96,6 +84,7 @@ export default function AdminCatalog() {
   // Fetch products from MongoDB on mount
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
 
   const loadProducts = async () => {
@@ -111,7 +100,17 @@ export default function AdminCatalog() {
     }
   };
 
-  useEffect(() => { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories)); }, [categories]);
+  const loadCategories = async () => {
+    try {
+      const list = await catalogCategoriesAPI.getAll();
+      if (list.length > 0) {
+        setCategories(list.map(c => ({ id: c.id, name: c.name, createdAt: c.createdAt || new Date().toISOString() })));
+      }
+    } catch (e) {
+      // fall back silently; defaults remain
+      console.error("Error loading categories", e);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -147,14 +146,20 @@ export default function AdminCatalog() {
     reader.readAsDataURL(file);
   };
 
-  const addCategory = () => {
+  const addCategory = async () => {
     const name = newCategoryName.trim();
     if (!name) { toast.error("Category name required"); return; }
     if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) { toast.error("Category already exists"); return; }
-    const cat: CatalogCategory = { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() };
-    setCategories(prev => [...prev, cat]);
-    setNewCategoryName("");
-    toast.success("Category added");
+    try {
+      const created = await catalogCategoriesAPI.create(name);
+      const cat: CatalogCategory = { id: created.id, name: created.name, createdAt: created.createdAt || new Date().toISOString() };
+      setCategories(prev => [...prev, cat]);
+      setNewCategoryName("");
+      toast.success("Category added");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to add category");
+    }
   };
 
   const removeCategory = async (id: string) => {
@@ -163,6 +168,7 @@ export default function AdminCatalog() {
     const productsToDelete = products.filter(p => p.category === name);
     
     try {
+      await catalogCategoriesAPI.delete(id);
       // Delete products from MongoDB
       for (const product of productsToDelete) {
         await catalogAPI.delete(product.id);

@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
-import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory } from "./models";
+import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory } from "./models";
 import paymentsRouter from "./routes/payments";
 
 dotenv.config();
@@ -445,6 +445,46 @@ app.delete("/api/catalog/:id", requireAdmin, async (req: Request, res: Response)
   } catch (err) {
     console.error("Error deleting catalog product:", err);
     res.status(500).json({ error: "Failed to delete catalog product" });
+  }
+});
+
+// ======== CATALOG CATEGORY ENDPOINTS ========
+
+// Get all categories
+app.get("/api/catalog-categories", async (req: Request, res: Response) => {
+  try {
+    const cats = await CatalogCategory.find().sort({ name: 1 }).lean();
+    res.json(cats);
+  } catch (err) {
+    console.error("Error fetching categories:", err);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+// Create category (admin)
+app.post("/api/catalog-categories", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id, name } = req.body as { id?: string; name?: string };
+    if (!name) return res.status(400).json({ error: "Name is required" });
+    const cat = new CatalogCategory({ id: id || crypto.randomUUID(), name });
+    await cat.save();
+    res.json(cat);
+  } catch (err) {
+    console.error("Error creating category:", err);
+    res.status(500).json({ error: "Failed to create category" });
+  }
+});
+
+// Delete category (admin)
+app.delete("/api/catalog-categories/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deleted = await CatalogCategory.findOneAndDelete({ id });
+    if (!deleted) return res.status(404).json({ error: "Category not found" });
+    res.json({ message: "Category deleted" });
+  } catch (err) {
+    console.error("Error deleting category:", err);
+    res.status(500).json({ error: "Failed to delete category" });
   }
 });
 

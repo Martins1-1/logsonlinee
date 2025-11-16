@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { apiFetch, catalogAPI, purchaseHistoryAPI } from "@/lib/api";
+import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
@@ -97,21 +97,8 @@ const Shop = () => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(true);
   
-  // Load categories dynamically from localStorage (matches Admin catalog)
-  const categories = ["All", ...((() => {
-    try {
-      const stored = localStorage.getItem("catalog_categories");
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          return parsed.map((cat: { id: string; name: string }) => cat.name);
-        }
-      }
-    } catch (e) {
-      // fallback to defaults
-    }
-    return ["Audio", "Wearables", "Computers", "Mobile", "Accessories", "Gaming", "Smart Home", "Storage", "Cameras", "Other"];
-  })())];
+  // Categories from API
+  const [categories, setCategories] = useState<string[]>(["All"]);
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -142,6 +129,17 @@ const Shop = () => {
       setLoadingProducts(true);
       const catalogProducts = await catalogAPI.getAll();
       setProducts([...initialProducts, ...catalogProducts]);
+      // Load categories from MongoDB
+      try {
+        const cats = await catalogCategoriesAPI.getAll();
+        if (cats.length > 0) {
+          setCategories(["All", ...cats.map(c => c.name)]);
+        } else {
+          setCategories(["All", "Audio", "Wearables", "Computers", "Mobile", "Accessories", "Gaming", "Smart Home", "Storage", "Cameras", "Other"]);
+        }
+      } catch {
+        setCategories(["All", "Audio", "Wearables", "Computers", "Mobile", "Accessories", "Gaming", "Smart Home", "Storage", "Cameras", "Other"]);
+      }
       
       // Load purchase history from MongoDB
       const history = await purchaseHistoryAPI.getByUserId(userId);
