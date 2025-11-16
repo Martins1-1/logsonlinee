@@ -80,6 +80,7 @@ export default function AdminCatalog() {
   const [newSerial, setNewSerial] = useState("");
   const [showImportBanner, setShowImportBanner] = useState(false);
   const [importCount, setImportCount] = useState(0);
+  const [localMode, setLocalMode] = useState(false);
 
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
@@ -95,6 +96,7 @@ export default function AdminCatalog() {
       setLoading(true);
       const data = await catalogAPI.getAll();
       setProducts(data);
+      setLocalMode(false);
       // If DB is empty but there are local products, offer import
       try {
         const localRaw = localStorage.getItem(PRODUCTS_KEY);
@@ -111,7 +113,20 @@ export default function AdminCatalog() {
       }
     } catch (error) {
       console.error("Error loading products:", error);
-      toast.error("Failed to load products");
+      // Fallback to local storage so admin can keep working
+      try {
+        const localRaw = localStorage.getItem(PRODUCTS_KEY);
+        const localList: CatalogProduct[] = localRaw ? JSON.parse(localRaw) : [];
+        if (Array.isArray(localList) && localList.length > 0) {
+          setProducts(localList);
+          setLocalMode(true);
+          toast.info("Loaded products from this device (offline mode)");
+        } else {
+          toast.error("Failed to load products");
+        }
+      } catch {
+        toast.error("Failed to load products");
+      }
     } finally {
       setLoading(false);
     }
@@ -213,7 +228,12 @@ export default function AdminCatalog() {
       toast.success("Category added");
     } catch (e) {
       console.error(e);
-      toast.error("Failed to add category");
+      // Fallback to local
+      const cat: CatalogCategory = { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() };
+      setCategories(prev => [...prev, cat]);
+      localStorage.setItem(CATEGORIES_KEY, JSON.stringify([...categories, cat]));
+      setNewCategoryName("");
+      toast.success("Category added (local mode)");
     }
   };
 
@@ -234,7 +254,14 @@ export default function AdminCatalog() {
       toast.info("Category removed");
     } catch (error) {
       console.error("Error removing category:", error);
-      toast.error("Failed to remove category");
+      // Fallback to local
+      setProducts(prev => prev.filter(p => p.category !== name));
+      const nextCats = categories.filter(c => c.id !== id);
+      setCategories(nextCats);
+      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(nextCats));
+      // also persist updated local products
+      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products.filter(p => p.category !== name)));
+      toast.info("Category removed (local mode)");
     }
   };
 
@@ -262,7 +289,14 @@ export default function AdminCatalog() {
       toast.success("Product added and saved");
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("Failed to add product");
+      // Fallback to local
+      setProducts(prev => {
+        const next = [...prev, prod];
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+        return next;
+      });
+      setPName(""); setPCategory(""); setPDescription(""); setPPrice(""); setPImage("");
+      toast.success("Product added (local mode)");
     }
   };
 
@@ -273,7 +307,13 @@ export default function AdminCatalog() {
       toast.info("Product removed");
     } catch (error) {
       console.error("Error removing product:", error);
-      toast.error("Failed to remove product");
+      // Fallback to local
+      setProducts(prev => {
+        const next = prev.filter(p => p.id !== id);
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+        return next;
+      });
+      toast.info("Product removed (local mode)");
     }
   };
 
@@ -320,7 +360,15 @@ export default function AdminCatalog() {
       toast.success("Serial number added");
     } catch (error) {
       console.error("Error adding serial number:", error);
-      toast.error("Failed to add serial number");
+      // Fallback to local
+      setProducts(prev => {
+        const next = prev.map(p => p.id === selectedProduct.id ? { ...p, serialNumbers: updatedSerials } : p);
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+        return next;
+      });
+      setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+      setNewSerial("");
+      toast.success("Serial number added (local mode)");
     }
   };
 
@@ -350,7 +398,16 @@ export default function AdminCatalog() {
       toast.info("Serial number removed");
     } catch (error) {
       console.error("Error removing serial number:", error);
-      toast.error("Failed to remove serial number");
+      // Fallback to local
+      setProducts(prev => {
+        const next = prev.map(p => p.id === productId ? { ...p, serialNumbers: updatedSerials } : p);
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+        return next;
+      });
+      if (selectedProduct?.id === productId) {
+        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+      }
+      toast.info("Serial number removed (local mode)");
     }
   };
 
@@ -385,7 +442,16 @@ export default function AdminCatalog() {
       toast.success("Status updated");
     } catch (error) {
       console.error("Error updating serial status:", error);
-      toast.error("Failed to update status");
+      // Fallback to local
+      setProducts(prev => {
+        const next = prev.map(p => p.id === productId ? { ...p, serialNumbers: updatedSerials } : p);
+        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
+        return next;
+      });
+      if (selectedProduct?.id === productId) {
+        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+      }
+      toast.success("Status updated (local mode)");
     }
   };
 
@@ -428,6 +494,13 @@ export default function AdminCatalog() {
                 ))}
               </div>
             </div>
+
+            {/* Mode banners */}
+            {localMode && (
+              <div className="p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900 mb-4">
+                Working in offline/local mode. Your changes are saved on this device. Use Import to move them to the database.
+              </div>
+            )}
 
             {/* Import Banner (one-time migration) */}
             {showImportBanner && (
