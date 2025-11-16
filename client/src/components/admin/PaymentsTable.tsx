@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 type Payment = {
   _id: string;
@@ -21,14 +21,7 @@ export default function PaymentsTable({ token }: { token: string }) {
 
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE}/api/payments`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) {
-          throw new Error(data.error || `HTTP ${r.status}: ${r.statusText}`);
-        }
-        return data;
-      })
+    apiFetch("/payments", { headers: { Authorization: `Bearer ${token}` } })
       .then((data) => {
         if (!mounted) return;
         if (Array.isArray(data)) {
