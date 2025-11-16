@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
-import { User, Admin, Cart, Payment } from "./models";
+import { User, Admin, Cart, Payment, Product } from "./models";
 import paymentsRouter from "./routes/payments";
 
 dotenv.config();
@@ -234,6 +234,138 @@ app.delete("/api/payments/:id", requireAdmin, async (req: Request, res: Response
 app.get("/api/carts", requireAdmin, async (req: Request, res: Response) => {
   const carts = await Cart.find().populate("user").lean();
   res.json(carts);
+});
+
+// Products
+app.get("/api/products", async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find().lean();
+    // Hide items from non-admin users
+    const isAdmin = req.headers.authorization?.startsWith("Bearer ");
+    if (!isAdmin) {
+      // Remove items array for regular users
+      const sanitized = products.map(p => ({ ...p, items: [] }));
+      return res.json(sanitized);
+    }
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching products:", err);
+    res.status(500).json({ error: "Failed to fetch products" });
+  }
+});
+
+app.post("/api/products", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { name, price, description, category, imageUrl } = req.body;
+    if (!name || !price) return res.status(400).json({ error: "Name and price are required" });
+    
+    const product = await Product.create({
+      name,
+      price,
+      description,
+      category,
+      imageUrl,
+      items: []
+    });
+    
+    res.json(product);
+  } catch (err) {
+    console.error("Error creating product:", err);
+    res.status(500).json({ error: "Failed to create product" });
+  }
+});
+
+app.put("/api/products/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { name, price, description, category, imageUrl } = req.body;
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { name, price, description, category, imageUrl },
+      { new: true }
+    );
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    res.json(product);
+  } catch (err) {
+    console.error("Error updating product:", err);
+    res.status(500).json({ error: "Failed to update product" });
+  }
+});
+
+app.delete("/api/products/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    res.json({ ok: true, message: "Product deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting product:", err);
+    res.status(500).json({ error: "Failed to delete product" });
+  }
+});
+
+// Product Items (account credentials)
+app.post("/api/products/:id/items", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { username, password, twoFactorAuth, emailAddress, recoveryPassword } = req.body;
+    if (!username || !password || !emailAddress) {
+      return res.status(400).json({ error: "Username, password, and email are required" });
+    }
+    
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    
+    product.items.push({
+      username,
+      password,
+      twoFactorAuth,
+      emailAddress,
+      recoveryPassword,
+      isSold: false
+    });
+    
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    console.error("Error adding item:", err);
+    res.status(500).json({ error: "Failed to add item" });
+  }
+});
+
+app.delete("/api/products/:productId/items/:itemId", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const product = await Product.findById(req.params.productId);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    
+    product.items = product.items.filter(item => item._id?.toString() !== req.params.itemId);
+    await product.save();
+    
+    res.json({ ok: true, message: "Item deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting item:", err);
+    res.status(500).json({ error: "Failed to delete item" });
+  }
+});
+
+app.patch("/api/products/:productId/items/:itemId/sold", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { isSold } = req.body;
+    const product = await Product.findById(req.params.productId);
+    if (!product) return res.status(404).json({ error: "Product not found" });
+    
+    const item = product.items.find(item => item._id?.toString() === req.params.itemId);
+    if (!item) return res.status(404).json({ error: "Item not found" });
+    
+    item.isSold = isSold;
+    if (!isSold) {
+      item.soldTo = undefined;
+      item.soldAt = undefined;
+    }
+    
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    console.error("Error updating item status:", err);
+    res.status(500).json({ error: "Failed to update item status" });
+  }
 });
 
 // Health check
