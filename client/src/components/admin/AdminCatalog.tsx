@@ -5,7 +5,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Plus, Package, Image as ImageIcon, Database } from "lucide-react";
+import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface SerialNumber {
+  id: string;
+  serial: string;
+  isUsed: boolean;
+  usedBy?: string; // user email
+  usedAt?: string;
+}
 
 interface CatalogCategory {
   id: string;
@@ -20,6 +36,7 @@ interface CatalogProduct {
   description: string;
   price: number;
   image: string;
+  serialNumbers?: SerialNumber[]; // Array of serial numbers
   createdAt: string;
 }
 
@@ -67,6 +84,11 @@ export default function AdminCatalog() {
   const [pPrice, setPPrice] = useState("");
   const [pImage, setPImage] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Serial number management
+  const [serialDialogOpen, setSerialDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
+  const [newSerial, setNewSerial] = useState("");
 
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
@@ -140,6 +162,7 @@ export default function AdminCatalog() {
       description: pDescription.trim(),
       price,
       image: pImage.trim(),
+      serialNumbers: [],
       createdAt: new Date().toISOString()
     };
     setProducts(prev => [...prev, prod]);
@@ -150,6 +173,74 @@ export default function AdminCatalog() {
   const removeProduct = (id: string) => {
     setProducts(prev => prev.filter(p => p.id !== id));
     toast.info("Product removed");
+  };
+
+  const openSerialDialog = (product: CatalogProduct) => {
+    setSelectedProduct(product);
+    setSerialDialogOpen(true);
+  };
+
+  const addSerialNumber = () => {
+    if (!selectedProduct || !newSerial.trim()) {
+      toast.error("Serial number required");
+      return;
+    }
+
+    // Check if serial already exists in this product
+    if (selectedProduct.serialNumbers?.some(s => s.serial === newSerial.trim())) {
+      toast.error("Serial number already exists");
+      return;
+    }
+
+    const serial: SerialNumber = {
+      id: crypto.randomUUID(),
+      serial: newSerial.trim(),
+      isUsed: false,
+    };
+
+    setProducts(prev => prev.map(p => {
+      if (p.id === selectedProduct.id) {
+        return {
+          ...p,
+          serialNumbers: [...(p.serialNumbers || []), serial]
+        };
+      }
+      return p;
+    }));
+
+    setNewSerial("");
+    toast.success("Serial number added");
+  };
+
+  const removeSerialNumber = (productId: string, serialId: string) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return {
+          ...p,
+          serialNumbers: (p.serialNumbers || []).filter(s => s.id !== serialId)
+        };
+      }
+      return p;
+    }));
+    toast.info("Serial number removed");
+  };
+
+  const toggleSerialUsed = (productId: string, serialId: string) => {
+    setProducts(prev => prev.map(p => {
+      if (p.id === productId) {
+        return {
+          ...p,
+          serialNumbers: (p.serialNumbers || []).map(s => {
+            if (s.id === serialId) {
+              return { ...s, isUsed: !s.isUsed, usedBy: s.isUsed ? undefined : "Manual", usedAt: s.isUsed ? undefined : new Date().toISOString() };
+            }
+            return s;
+          })
+        };
+      }
+      return p;
+    }));
+    toast.success("Status updated");
   };
 
   return (
@@ -244,7 +335,11 @@ export default function AdminCatalog() {
               <h3 className="text-xl font-semibold flex items-center gap-2"><Package className="h-5 w-5 text-pink-600" /> Products ({products.length})</h3>
               {products.length === 0 && <p className="text-sm text-gray-500">No products yet.</p>}
               <div className="space-y-3">
-                {products.map(prod => (
+                {products.map(prod => {
+                  const availableSerials = (prod.serialNumbers || []).filter(s => !s.isUsed).length;
+                  const usedSerials = (prod.serialNumbers || []).filter(s => s.isUsed).length;
+                  
+                  return (
                   <Card key={prod.id} className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg border-2 border-white/60 dark:border-gray-800 hover:shadow-xl transition-all duration-300">
                     <CardContent className="p-3">
                       <div className="flex items-center gap-3">
@@ -257,13 +352,31 @@ export default function AdminCatalog() {
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-base mb-0.5 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate">{prod.name}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">{prod.description}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-green-50 text-green-700 border-green-200">
+                              <Hash className="h-3 w-3 mr-1" />
+                              {availableSerials} Available
+                            </Badge>
+                            {usedSerials > 0 && (
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200">
+                                {usedSerials} Used
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                         
                         {/* Price and Actions */}
-                        <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Badge className="text-base px-3 py-1 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold">
-                            ${prod.price.toFixed(2)}
+                            ₦{prod.price.toFixed(2)}
                           </Badge>
+                          <button
+                            onClick={() => openSerialDialog(prod)}
+                            className="bg-blue-50 dark:bg-blue-950 rounded-lg p-2 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-colors"
+                            aria-label="Manage serial numbers"
+                          >
+                            <Hash className="h-4 w-4" />
+                          </button>
                           <button
                             onClick={() => removeProduct(prod.id)}
                             className="bg-red-50 dark:bg-red-950 rounded-lg p-2 hover:bg-red-100 dark:hover:bg-red-900 text-red-600 dark:text-red-400 transition-colors"
@@ -275,13 +388,118 @@ export default function AdminCatalog() {
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
           </div>
           </CardContent>
           <CardFooter className="text-xs text-gray-500">Data persisted locally in browser storage. Integrate API later for persistence.</CardFooter>
         </Card>
       </section>
+
+      {/* Serial Number Management Dialog */}
+      <Dialog open={serialDialogOpen} onOpenChange={setSerialDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Hash className="h-5 w-5" />
+              Manage Serial Numbers - {selectedProduct?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Add serial numbers that will be assigned to customers after purchase. Each unit sold will receive one unique serial number.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Add Serial Form */}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Enter serial number"
+                value={newSerial}
+                onChange={(e) => setNewSerial(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addSerialNumber()}
+                className="font-mono"
+              />
+              <Button onClick={addSerialNumber} className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
+                Add
+              </Button>
+            </div>
+
+            {/* Serial Numbers List */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <h4 className="font-semibold text-sm">
+                  Serial Numbers ({selectedProduct?.serialNumbers?.length || 0})
+                </h4>
+                <div className="flex gap-2 text-xs">
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    {selectedProduct?.serialNumbers?.filter(s => !s.isUsed).length || 0} Available
+                  </Badge>
+                  <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                    {selectedProduct?.serialNumbers?.filter(s => s.isUsed).length || 0} Used
+                  </Badge>
+                </div>
+              </div>
+
+              {(!selectedProduct?.serialNumbers || selectedProduct.serialNumbers.length === 0) && (
+                <p className="text-sm text-gray-500 text-center py-4">No serial numbers yet. Add some above.</p>
+              )}
+
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {selectedProduct?.serialNumbers?.map(serial => (
+                  <div
+                    key={serial.id}
+                    className={`flex items-center justify-between p-3 rounded-lg border-2 ${
+                      serial.isUsed
+                        ? "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                        : "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                    }`}
+                  >
+                    <div className="flex-1">
+                      <p className="font-mono font-semibold text-sm">{serial.serial}</p>
+                      {serial.isUsed && serial.usedBy && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                          Used by: {serial.usedBy} {serial.usedAt && `on ${new Date(serial.usedAt).toLocaleDateString()}`}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {serial.isUsed ? (
+                        <Badge className="bg-gray-500">Used</Badge>
+                      ) : (
+                        <Badge className="bg-green-600">Available</Badge>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => selectedProduct && toggleSerialUsed(selectedProduct.id, serial.id)}
+                        className="text-orange-600 hover:text-orange-700"
+                      >
+                        {serial.isUsed ? "Mark Available" : "Mark Used"}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => selectedProduct && removeSerialNumber(selectedProduct.id, serial.id)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSerialDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
