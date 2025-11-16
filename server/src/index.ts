@@ -89,14 +89,19 @@ async function start() {
 
 // Admin login
 app.post("/api/admin/login", async (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "Missing fields" });
-  const admin = await Admin.findOne({ email }).exec();
-  if (!admin) return res.status(401).json({ error: "Invalid credentials" });
-  const match = await bcrypt.compare(password, admin.password);
-  if (!match) return res.status(401).json({ error: "Invalid credentials" });
-  const token = jwt.sign({ adminId: admin._id, email: admin.email }, JWT_SECRET, { expiresIn: "8h" });
-  res.json({ token });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Missing fields" });
+    const admin = await Admin.findOne({ email }).exec();
+    if (!admin) return res.status(401).json({ error: "Invalid credentials" });
+    const match = await bcrypt.compare(password, admin.password);
+    if (!match) return res.status(401).json({ error: "Invalid credentials" });
+    const token = jwt.sign({ adminId: admin._id, email: admin.email }, JWT_SECRET, { expiresIn: "8h" });
+    res.json({ token });
+  } catch (err) {
+    console.error("Admin login error:", err);
+    res.status(500).json({ error: "Failed to login" });
+  }
 });
 
 // User registration
