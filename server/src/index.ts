@@ -14,7 +14,17 @@ const app = express();
 // allow CORS from local dev and a production frontend URL set via env
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:8080";
 app.use(cors({
-  origin: [FRONTEND_URL, 'http://localhost:8080', 'http://localhost:8081', 'http://localhost:4001', 'http://localhost:4000'],
+  origin: [
+    FRONTEND_URL, 
+    'https://legitstorez.com',
+    'https://www.legitstorez.com',
+    'https://legitstore.vercel.app',
+    'http://localhost:8080', 
+    'http://localhost:8081', 
+    'http://localhost:4001', 
+    'http://localhost:4000',
+    'http://localhost:5173'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
