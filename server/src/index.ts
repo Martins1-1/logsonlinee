@@ -72,6 +72,25 @@ async function start() {
     await mongoose.connect(MONGODB_URL);
     console.log("MongoDB connected successfully");
     
+    // Seed default categories if none exist
+    const categoryCount = await CatalogCategory.countDocuments();
+    if (categoryCount === 0) {
+      const defaultCategories = [
+        { id: "audio", name: "Audio" },
+        { id: "wearables", name: "Wearables" },
+        { id: "computers", name: "Computers" },
+        { id: "mobile", name: "Mobile" },
+        { id: "accessories", name: "Accessories" },
+        { id: "gaming", name: "Gaming" },
+        { id: "smart-home", name: "Smart Home" },
+        { id: "storage", name: "Storage" },
+        { id: "cameras", name: "Cameras" },
+        { id: "other", name: "Other" },
+      ];
+      await CatalogCategory.insertMany(defaultCategories);
+      console.log("Default categories seeded to database");
+    }
+    
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server listening on all interfaces, port ${PORT}`);
       console.log(`Try accessing: http://localhost:${PORT}/api/health`);

@@ -41,25 +41,10 @@ interface CatalogProduct {
   createdAt?: string; // Made optional to match API response
 }
 
-const CATEGORIES_KEY = "catalog_categories"; // kept for default fallback only
 const PRODUCTS_KEY = "catalog_products"; // used only for one-time migration
 
-// Pre-defined categories matching Shop page filters
-const defaultCategories: CatalogCategory[] = [
-  { id: "audio", name: "Audio", createdAt: new Date().toISOString() },
-  { id: "wearables", name: "Wearables", createdAt: new Date().toISOString() },
-  { id: "computers", name: "Computers", createdAt: new Date().toISOString() },
-  { id: "mobile", name: "Mobile", createdAt: new Date().toISOString() },
-  { id: "accessories", name: "Accessories", createdAt: new Date().toISOString() },
-  { id: "gaming", name: "Gaming", createdAt: new Date().toISOString() },
-  { id: "smart-home", name: "Smart Home", createdAt: new Date().toISOString() },
-  { id: "storage", name: "Storage", createdAt: new Date().toISOString() },
-  { id: "cameras", name: "Cameras", createdAt: new Date().toISOString() },
-  { id: "other", name: "Other", createdAt: new Date().toISOString() },
-];
-
 export default function AdminCatalog() {
-  const [categories, setCategories] = useState<CatalogCategory[]>(defaultCategories);
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -80,7 +65,6 @@ export default function AdminCatalog() {
   const [newSerial, setNewSerial] = useState("");
   const [showImportBanner, setShowImportBanner] = useState(false);
   const [importCount, setImportCount] = useState(0);
-  const [localMode, setLocalMode] = useState(false);
 
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
@@ -96,7 +80,7 @@ export default function AdminCatalog() {
       setLoading(true);
       const data = await catalogAPI.getAll();
       setProducts(data);
-      setLocalMode(false);
+      
       // If DB is empty but there are local products, offer import
       try {
         const localRaw = localStorage.getItem(PRODUCTS_KEY);
@@ -113,20 +97,7 @@ export default function AdminCatalog() {
       }
     } catch (error) {
       console.error("Error loading products:", error);
-      // Fallback to local storage so admin can keep working
-      try {
-        const localRaw = localStorage.getItem(PRODUCTS_KEY);
-        const localList: CatalogProduct[] = localRaw ? JSON.parse(localRaw) : [];
-        if (Array.isArray(localList) && localList.length > 0) {
-          setProducts(localList);
-          setLocalMode(true);
-          toast.info("Loaded products from this device (offline mode)");
-        } else {
-          toast.error("Failed to load products");
-        }
-      } catch {
-        toast.error("Failed to load products");
-      }
+      toast.error("Failed to load products from database");
     } finally {
       setLoading(false);
     }
@@ -228,12 +199,7 @@ export default function AdminCatalog() {
       toast.success("Category added");
     } catch (e) {
       console.error(e);
-      // Fallback to local
-      const cat: CatalogCategory = { id: crypto.randomUUID(), name, createdAt: new Date().toISOString() };
-      setCategories(prev => [...prev, cat]);
-      localStorage.setItem(CATEGORIES_KEY, JSON.stringify([...categories, cat]));
-      setNewCategoryName("");
-      toast.success("Category added (local mode)");
+      toast.error("Failed to add category. Please check your connection.");
     }
   };
 
@@ -254,14 +220,7 @@ export default function AdminCatalog() {
       toast.info("Category removed");
     } catch (error) {
       console.error("Error removing category:", error);
-      // Fallback to local
-      setProducts(prev => prev.filter(p => p.category !== name));
-      const nextCats = categories.filter(c => c.id !== id);
-      setCategories(nextCats);
-      localStorage.setItem(CATEGORIES_KEY, JSON.stringify(nextCats));
-      // also persist updated local products
-      localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products.filter(p => p.category !== name)));
-      toast.info("Category removed (local mode)");
+      toast.error("Failed to remove category. Please check your connection.");
     }
   };
 
@@ -289,14 +248,7 @@ export default function AdminCatalog() {
       toast.success("Product added and saved");
     } catch (error) {
       console.error("Error adding product:", error);
-      // Fallback to local
-      setProducts(prev => {
-        const next = [...prev, prod];
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-        return next;
-      });
-      setPName(""); setPCategory(""); setPDescription(""); setPPrice(""); setPImage("");
-      toast.success("Product added (local mode)");
+      toast.error("Failed to add product. Please check your connection.");
     }
   };
 
@@ -307,13 +259,7 @@ export default function AdminCatalog() {
       toast.info("Product removed");
     } catch (error) {
       console.error("Error removing product:", error);
-      // Fallback to local
-      setProducts(prev => {
-        const next = prev.filter(p => p.id !== id);
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-        return next;
-      });
-      toast.info("Product removed (local mode)");
+      toast.error("Failed to remove product. Please check your connection.");
     }
   };
 
@@ -360,15 +306,7 @@ export default function AdminCatalog() {
       toast.success("Serial number added");
     } catch (error) {
       console.error("Error adding serial number:", error);
-      // Fallback to local
-      setProducts(prev => {
-        const next = prev.map(p => p.id === selectedProduct.id ? { ...p, serialNumbers: updatedSerials } : p);
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-        return next;
-      });
-      setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
-      setNewSerial("");
-      toast.success("Serial number added (local mode)");
+      toast.error("Failed to add serial number. Please check your connection.");
     }
   };
 
@@ -398,16 +336,7 @@ export default function AdminCatalog() {
       toast.info("Serial number removed");
     } catch (error) {
       console.error("Error removing serial number:", error);
-      // Fallback to local
-      setProducts(prev => {
-        const next = prev.map(p => p.id === productId ? { ...p, serialNumbers: updatedSerials } : p);
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-        return next;
-      });
-      if (selectedProduct?.id === productId) {
-        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
-      }
-      toast.info("Serial number removed (local mode)");
+      toast.error("Failed to remove serial number. Please check your connection.");
     }
   };
 
@@ -442,16 +371,7 @@ export default function AdminCatalog() {
       toast.success("Status updated");
     } catch (error) {
       console.error("Error updating serial status:", error);
-      // Fallback to local
-      setProducts(prev => {
-        const next = prev.map(p => p.id === productId ? { ...p, serialNumbers: updatedSerials } : p);
-        localStorage.setItem(PRODUCTS_KEY, JSON.stringify(next));
-        return next;
-      });
-      if (selectedProduct?.id === productId) {
-        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
-      }
-      toast.success("Status updated (local mode)");
+      toast.error("Failed to update status. Please check your connection.");
     }
   };
 
@@ -494,13 +414,6 @@ export default function AdminCatalog() {
                 ))}
               </div>
             </div>
-
-            {/* Mode banners */}
-            {localMode && (
-              <div className="p-3 rounded-md bg-blue-50 border border-blue-200 text-blue-900 mb-4">
-                Working in offline/local mode. Your changes are saved on this device. Use Import to move them to the database.
-              </div>
-            )}
 
             {/* Import Banner (one-time migration) */}
             {showImportBanner && (

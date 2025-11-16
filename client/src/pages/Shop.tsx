@@ -129,17 +129,10 @@ const Shop = () => {
       setLoadingProducts(true);
       const catalogProducts = await catalogAPI.getAll();
       setProducts([...initialProducts, ...catalogProducts]);
+      
       // Load categories from MongoDB
-      try {
-        const cats = await catalogCategoriesAPI.getAll();
-        if (cats.length > 0) {
-          setCategories(["All", ...cats.map(c => c.name)]);
-        } else {
-          setCategories(["All", "Audio", "Wearables", "Computers", "Mobile", "Accessories", "Gaming", "Smart Home", "Storage", "Cameras", "Other"]);
-        }
-      } catch {
-        setCategories(["All", "Audio", "Wearables", "Computers", "Mobile", "Accessories", "Gaming", "Smart Home", "Storage", "Cameras", "Other"]);
-      }
+      const cats = await catalogCategoriesAPI.getAll();
+      setCategories(["All", ...cats.map(c => c.name)]);
       
       // Load purchase history from MongoDB
       const history = await purchaseHistoryAPI.getByUserId(userId);
