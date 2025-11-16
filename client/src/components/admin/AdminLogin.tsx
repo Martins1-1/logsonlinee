@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Mail, Lock } from "lucide-react";
 import { useState } from "react";
 
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 type Props = {
   onLogin: (token: string) => void;
@@ -22,14 +22,12 @@ const AdminLogin = ({ onLogin }: Props) => {
     setLoading(true);
     setError(null);
     try {
-  const res = await fetch(`${API_BASE}/api/admin/login`, {
+      const data = await apiFetch("/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Login failed");
-      onLogin(data.token);
+      onLogin((data as any).token);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
