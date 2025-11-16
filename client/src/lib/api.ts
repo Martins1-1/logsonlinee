@@ -1,4 +1,5 @@
-export const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:4001";
+// Prefer production API by default; override with VITE_API_URL for local dev
+export const API_BASE = import.meta.env.VITE_API_URL ?? "https://legitstore-api.onrender.com";
 
 export async function apiFetch(path: string, opts: RequestInit = {}) {
   const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;

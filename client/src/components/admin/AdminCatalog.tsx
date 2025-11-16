@@ -478,7 +478,9 @@ export default function AdminCatalog() {
               </div>
           </div>
           </CardContent>
-          <CardFooter className="text-xs text-gray-500">Data persisted locally in browser storage. Integrate API later for persistence.</CardFooter>
+          <CardFooter className="text-xs text-gray-500">
+            Products and serial numbers are stored securely in the database and sync across devices.
+          </CardFooter>
         </Card>
       </section>
 
