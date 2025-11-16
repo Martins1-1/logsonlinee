@@ -14,6 +14,14 @@ import product2 from "@/assets/product-2.jpg";
 import product3 from "@/assets/product-3.jpg";
 import product4 from "@/assets/product-4.jpg";
 
+interface SerialNumber {
+  id: string;
+  serial: string;
+  isUsed: boolean;
+  usedBy?: string;
+  usedAt?: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -21,6 +29,13 @@ interface Product {
   image: string;
   description: string;
   category: string;
+  serialNumbers?: SerialNumber[];
+}
+
+interface PurchaseHistoryItem extends Product {
+  purchaseDate: string;
+  quantity: number;
+  assignedSerials?: string[]; // Array of serial numbers assigned to this purchase
 }
 
 // Basic user shape for typing localStorage data. Additional dynamic keys allowed as unknown.
@@ -78,7 +93,7 @@ const Shop = () => {
   const [isCreatingTopup, setIsCreatingTopup] = useState(false);
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
-  const [purchaseHistory, setPurchaseHistory] = useState<Array<Product & { purchaseDate: string }>>([]);
+  const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
   const [products, setProducts] = useState<Product[]>(() => {
     const stored = localStorage.getItem("catalog_products");
     if (stored) {
@@ -165,6 +180,40 @@ const Shop = () => {
       return;
     }
 
+    // Check if enough serial numbers are available
+    const availableSerials = (selectedProduct.serialNumbers || []).filter(s => !s.isUsed);
+    if (availableSerials.length < purchaseQuantity) {
+      toast.error(`Only ${availableSerials.length} units available in stock.`);
+      return;
+    }
+
+    // Assign serial numbers to this purchase
+    const serialsToAssign = availableSerials.slice(0, purchaseQuantity);
+    const assignedSerialNumbers = serialsToAssign.map(s => s.serial);
+
+    // Update products in localStorage to mark serials as used
+    const updatedProducts = products.map(p => {
+      if (p.id === selectedProduct.id) {
+        return {
+          ...p,
+          serialNumbers: (p.serialNumbers || []).map(s => {
+            if (serialsToAssign.some(assigned => assigned.id === s.id)) {
+              return {
+                ...s,
+                isUsed: true,
+                usedBy: user.email,
+                usedAt: new Date().toISOString()
+              };
+            }
+            return s;
+          })
+        };
+      }
+      return p;
+    });
+    setProducts(updatedProducts);
+    localStorage.setItem("catalog_products", JSON.stringify(updatedProducts.filter(p => !['1', '2', '3', '4'].includes(p.id))));
+
     const updatedUser: User = { ...user, balance: (user.balance || 0) - totalPrice };
     setUser(updatedUser);
     localStorage.setItem("currentUser", JSON.stringify(updatedUser));
@@ -173,18 +222,19 @@ const Shop = () => {
     const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
     localStorage.setItem("users", JSON.stringify(updatedUsers));
     
-    // Add to purchase history
-    const purchaseItem = {
+    // Add to purchase history with assigned serials
+    const purchaseItem: PurchaseHistoryItem = {
       ...selectedProduct,
       purchaseDate: new Date().toISOString(),
-      quantity: purchaseQuantity
+      quantity: purchaseQuantity,
+      assignedSerials: assignedSerialNumbers
     };
     const updatedHistory = [purchaseItem, ...purchaseHistory];
     setPurchaseHistory(updatedHistory);
     const historyKey = `purchase_history_${user.id}`;
     localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
     
-    toast.success(`Purchase successful! You bought ${purchaseQuantity} x ${selectedProduct.name}`);
+    toast.success(`Purchase successful! You bought ${purchaseQuantity} x ${selectedProduct.name}. Check your purchase history for serial numbers.`);
     setShowBuyDialog(false);
     setSelectedProduct(null);
     setPurchaseQuantity(1);
@@ -420,7 +470,10 @@ const Shop = () => {
                   ))}
                 </div>
                 <div className="space-y-3 md:space-y-4">
-                {displayedProducts.map((product, index) => (
+                {displayedProducts.map((product, index) => {
+                  const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
+                  
+                  return (
                   <Card 
                     key={product.id} 
                     className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-l-0 border-r-0 md:border-l-2 md:border-r-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0 rounded-none md:rounded-lg"
@@ -446,6 +499,16 @@ const Shop = () => {
                               <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
                                 {product.category}
                               </Badge>
+                              {availableStock > 0 && (
+                                <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                                  {availableStock} in stock
+                                </Badge>
+                              )}
+                              {availableStock === 0 && (
+                                <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                  Out of stock
+                                </Badge>
+                              )}
                             </div>
                             <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
                           </div>
@@ -464,16 +527,18 @@ const Shop = () => {
                           <Button 
                             onClick={() => handleBuyClick(product)}
                             size="sm"
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-3 md:px-3 text-xs md:text-sm"
+                            disabled={availableStock === 0}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-3 md:px-3 text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <span className="mr-1">₦</span>
-                            Buy
+                            {availableStock === 0 ? "Sold Out" : "Buy"}
                           </Button>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -546,11 +611,18 @@ const Shop = () => {
                       variant="outline"
                       size="sm"
                       className="h-8 w-8 p-0"
-                      onClick={() => setPurchaseQuantity(purchaseQuantity + 1)}
+                      onClick={() => {
+                        const maxStock = (selectedProduct.serialNumbers || []).filter(s => !s.isUsed).length;
+                        setPurchaseQuantity(Math.min(maxStock, purchaseQuantity + 1));
+                      }}
+                      disabled={purchaseQuantity >= ((selectedProduct.serialNumbers || []).filter(s => !s.isUsed).length)}
                     >
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
+                </div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 text-center mt-1">
+                  {((selectedProduct.serialNumbers || []).filter(s => !s.isUsed).length)} units available
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
@@ -636,10 +708,10 @@ const Shop = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
-                            {item.name}
+                            {item.name} {item.quantity > 1 && `(x${item.quantity})`}
                           </h4>
                           <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 font-bold whitespace-nowrap flex-shrink-0">
-                            ₦{item.price}
+                            ₦{(item.price * item.quantity).toFixed(2)}
                           </Badge>
                         </div>
                         <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none mb-1">
@@ -648,7 +720,29 @@ const Shop = () => {
                         <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
                           {item.description}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                        
+                        {/* Serial Numbers */}
+                        {item.assignedSerials && item.assignedSerials.length > 0 && (
+                          <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                            <p className="text-xs font-semibold text-blue-900 dark:text-blue-300 mb-1">
+                              Serial Number{item.assignedSerials.length > 1 ? 's' : ''}:
+                            </p>
+                            <div className="space-y-1">
+                              {item.assignedSerials.map((serial, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <Badge className="text-xs font-mono bg-blue-600 hover:bg-blue-700 px-2 py-0.5">
+                                    {serial}
+                                  </Badge>
+                                  {item.assignedSerials!.length > 1 && (
+                                    <span className="text-[10px] text-gray-500">Unit {idx + 1}</span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                           Purchased: {new Date(item.purchaseDate).toLocaleDateString()} at {new Date(item.purchaseDate).toLocaleTimeString()}
                         </p>
                       </div>
