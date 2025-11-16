@@ -121,6 +121,26 @@ app.get("/api/users/:id", requireAdmin, async (req: Request, res: Response) => {
   res.json({ ...user, carts, payments });
 });
 
+app.delete("/api/users/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Delete associated data
+    await Cart.deleteMany({ user: user._id });
+    await Payment.deleteMany({ user: user._id });
+    
+    // Delete the user
+    await User.findByIdAndDelete(id);
+    
+    res.json({ ok: true, message: "User deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting user:", err);
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
 // Payments
 app.get("/api/payments", requireAdmin, async (req: Request, res: Response) => {
   const payments = await Payment.find().populate("user").lean();
