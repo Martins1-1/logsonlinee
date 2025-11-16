@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Mail, Lock, User, ArrowRight, Shield } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,8 +18,10 @@ const Auth = () => {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!signInEmail || !signInPassword) {
@@ -26,20 +29,25 @@ const Auth = () => {
       return;
     }
 
-    // Mock authentication - in real app this would call backend
-    const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    const user = mockUsers.find((u: { email: string; password: string }) => u.email === signInEmail && u.password === signInPassword);
-    
-    if (user) {
-      localStorage.setItem("currentUser", JSON.stringify(user));
+    setIsSigningIn(true);
+    try {
+      const data = await apiFetch("/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signInEmail, password: signInPassword }),
+      }) as { ok: boolean; user: { id: string; email: string; name?: string; balance: number } };
+
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
       toast.success("Welcome back!");
       navigate("/shop");
-    } else {
-      toast.error("Invalid credentials");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invalid credentials");
+    } finally {
+      setIsSigningIn(false);
     }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!signUpEmail || !signUpPassword || !signUpConfirmPassword) {
@@ -57,27 +65,22 @@ const Auth = () => {
       return;
     }
 
-    // Mock registration - in real app this would call backend
-    const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    
-    if (mockUsers.find((u: { email: string }) => u.email === signUpEmail)) {
-      toast.error("Email already registered");
-      return;
+    setIsSigningUp(true);
+    try {
+      const data = await apiFetch("/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: signUpEmail, password: signUpPassword }),
+      }) as { ok: boolean; user: { id: string; email: string; name?: string; balance: number } };
+
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      toast.success("Account created successfully!");
+      navigate("/shop");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setIsSigningUp(false);
     }
-
-    const newUser = {
-      id: Date.now().toString(),
-      email: signUpEmail,
-      password: signUpPassword,
-      balance: 0
-    };
-
-    mockUsers.push(newUser);
-    localStorage.setItem("users", JSON.stringify(mockUsers));
-    localStorage.setItem("currentUser", JSON.stringify(newUser));
-    
-    toast.success("Account created successfully!");
-    navigate("/shop");
   };
 
   const handleForgotPassword = (e: React.FormEvent) => {
@@ -192,12 +195,13 @@ const Auth = () => {
                     </div>
                   </div>
                   <Button 
-                    type="submit" 
+                    type="submit"
+                    disabled={isSigningIn}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     <span className="flex items-center justify-center gap-2">
-                      Sign In
-                      <ArrowRight className="w-4 h-4" />
+                      {isSigningIn ? "Signing In..." : "Sign In"}
+                      {!isSigningIn && <ArrowRight className="w-4 h-4" />}
                     </span>
                   </Button>
                   
@@ -326,12 +330,13 @@ const Auth = () => {
                     </div>
                   </div>
                   <Button 
-                    type="submit" 
+                    type="submit"
+                    disabled={isSigningUp}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     <span className="flex items-center justify-center gap-2">
-                      Create Account
-                      <ArrowRight className="w-4 h-4" />
+                      {isSigningUp ? "Creating Account..." : "Create Account"}
+                      {!isSigningUp && <ArrowRight className="w-4 h-4" />}
                     </span>
                   </Button>
                 </form>
