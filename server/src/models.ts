@@ -65,6 +65,18 @@ export interface IProduct extends Document {
   createdAt: Date;
 }
 
+// Define ProductItemSchema first since it's used in CartItemSchema
+const ProductItemSchema = new Schema<IProductItem>({
+  username: { type: String, required: true },
+  password: { type: String, required: true },
+  twoFactorAuth: { type: String },
+  emailAddress: { type: String, required: true },
+  recoveryPassword: { type: String },
+  isSold: { type: Boolean, default: false },
+  soldTo: { type: Schema.Types.ObjectId, ref: "User" },
+  soldAt: { type: Date },
+});
+
 const CartItemSchema = new Schema<ICartItem>({
   productName: { type: String, required: true },
   quantity: { type: Number, required: true },
@@ -106,17 +118,6 @@ const AdminSchema = new Schema<IAdmin>({
   password: { type: String, required: true },
   name: { type: String },
   createdAt: { type: Date, default: Date.now },
-});
-
-const ProductItemSchema = new Schema<IProductItem>({
-  username: { type: String, required: true },
-  password: { type: String, required: true },
-  twoFactorAuth: { type: String },
-  emailAddress: { type: String, required: true },
-  recoveryPassword: { type: String },
-  isSold: { type: Boolean, default: false },
-  soldTo: { type: Schema.Types.ObjectId, ref: "User" },
-  soldAt: { type: Date },
 });
 
 const ProductSchema = new Schema<IProduct>({
