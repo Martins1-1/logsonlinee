@@ -44,18 +44,18 @@ export default function CartsTable({ token }: { token: string }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+      <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
         Carts ({carts.length})
       </h2>
       <div className="overflow-x-auto rounded-xl border-2 border-gray-200 dark:border-gray-800">
-        <table className="w-full table-auto border-collapse">
+        <table className="w-full table-auto border-collapse min-w-[600px]">
           <thead className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
             <tr className="text-left">
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">ID</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">User</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Items</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Total</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Date</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">ID</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">User</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Items</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Total</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -63,11 +63,11 @@ export default function CartsTable({ token }: { token: string }) {
               const total = (c.items || []).reduce((s, it) => s + (it.price || 0) * (it.quantity || 0), 0);
               return (
                 <tr key={c._id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                  <td className="p-4 text-gray-800 dark:text-gray-200 font-mono text-sm">{c._id}</td>
-                  <td className="p-4 text-gray-800 dark:text-gray-200">{c.user?.email || "—"}</td>
-                  <td className="p-4 text-gray-800 dark:text-gray-200">{(c.items || []).length}</td>
-                  <td className="p-4 text-gray-800 dark:text-gray-200 font-semibold">${total.toFixed(2)}</td>
-                  <td className="p-4 text-gray-800 dark:text-gray-200 text-sm">{c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-gray-800 dark:text-gray-200 font-mono break-all">{c._id}</td>
+                  <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{c.user?.email || "—"}</td>
+                  <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{(c.items || []).length}</td>
+                  <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200 font-semibold">₦{total.toFixed(2)}</td>
+                  <td className="p-3 md:p-4 text-xs md:text-sm text-gray-800 dark:text-gray-200">{c.createdAt ? new Date(c.createdAt).toLocaleString() : "—"}</td>
                 </tr>
               );
             })}

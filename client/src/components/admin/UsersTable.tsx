@@ -45,26 +45,26 @@ export default function UsersTable({ token }: { token: string }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+      <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
         Users ({users.length})
       </h2>
       <div className="overflow-x-auto rounded-xl border-2 border-gray-200 dark:border-gray-800">
-        <table className="w-full table-auto border-collapse">
+        <table className="w-full table-auto border-collapse min-w-[600px]">
           <thead className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
             <tr className="text-left">
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">ID</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Email</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Name</th>
-              <th className="p-4 text-gray-700 dark:text-gray-300 font-semibold">Payments</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">ID</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Email</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Name</th>
+              <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Payments</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
               <tr key={u._id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors">
-                <td className="p-4 text-gray-800 dark:text-gray-200 font-mono text-sm">{u._id}</td>
-                <td className="p-4 text-gray-800 dark:text-gray-200">{u.email}</td>
-                <td className="p-4 text-gray-800 dark:text-gray-200">{u.name || "—"}</td>
-                <td className="p-4 text-gray-800 dark:text-gray-200">{(u.payments || []).length}</td>
+                <td className="p-3 md:p-4 text-xs md:text-sm text-gray-800 dark:text-gray-200 font-mono break-all">{u._id}</td>
+                <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{u.email}</td>
+                <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{u.name || "—"}</td>
+                <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{(u.payments || []).length}</td>
               </tr>
             ))}
           </tbody>
