@@ -3,15 +3,16 @@ import AdminLogin from "@/components/admin/AdminLogin";
 import UsersTable from "../components/admin/UsersTable";
 import PaymentsTable from "../components/admin/PaymentsTable";
 import CartsTable from "../components/admin/CartsTable";
+import ProductsTable from "../components/admin/ProductsTable";
 import { useEffect, useState } from "react";
 import AdminCatalog from "@/components/admin/AdminCatalog";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Menu, X, Users, CreditCard, ShoppingCart, Package, LogOut } from "lucide-react";
+import { Menu, X, Users, CreditCard, ShoppingCart, Package, LogOut, Box } from "lucide-react";
 
 const Admin = () => {
   // Read token on mount to avoid SSR/window issues
   const [token, setToken] = useState<string | null>(null);
-  const [view, setView] = useState<"users" | "payments" | "carts" | "catalog">("users");
+  const [view, setView] = useState<"users" | "payments" | "carts" | "catalog" | "products">("users");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -28,7 +29,7 @@ const Admin = () => {
     else localStorage.removeItem("admin_token");
   }, [token]);
 
-  const handleViewChange = (newView: "users" | "payments" | "carts" | "catalog") => {
+  const handleViewChange = (newView: "users" | "payments" | "carts" | "catalog" | "products") => {
     setView(newView);
     setMobileMenuOpen(false);
   };
@@ -95,6 +96,14 @@ const Admin = () => {
                   Carts
                 </Button>
                 <Button 
+                  variant={view === "products" ? "default" : "ghost"} 
+                  onClick={() => setView("products")}
+                  className={view === "products" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}
+                >
+                  <Box className="h-4 w-4 mr-2" />
+                  Products
+                </Button>
+                <Button 
                   variant={view === "catalog" ? "default" : "ghost"} 
                   onClick={() => setView("catalog")}
                   className={view === "catalog" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}
@@ -145,6 +154,14 @@ const Admin = () => {
               Carts
             </Button>
             <Button 
+              variant={view === "products" ? "default" : "ghost"} 
+              onClick={() => handleViewChange("products")}
+              className={`w-full justify-start ${view === "products" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}`}
+            >
+              <Box className="h-4 w-4 mr-2" />
+              Products
+            </Button>
+            <Button 
               variant={view === "catalog" ? "default" : "ghost"} 
               onClick={() => handleViewChange("catalog")}
               className={`w-full justify-start ${view === "catalog" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}`}
@@ -167,12 +184,13 @@ const Admin = () => {
       {!token ? (
         <AdminLogin onLogin={(t) => setToken(t)} />
       ) : (
-        <section className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl p-4 md:p-6 rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800">
+        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl p-4 md:p-8 rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800">
           {view === "users" && <UsersTable token={token} />}
           {view === "payments" && <PaymentsTable token={token} />}
           {view === "carts" && <CartsTable token={token} />}
+          {view === "products" && <ProductsTable token={token} />}
           {view === "catalog" && <AdminCatalog />}
-        </section>
+        </div>
       )}
     </main>
   );
