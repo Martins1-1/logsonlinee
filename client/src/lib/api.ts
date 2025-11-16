@@ -17,6 +17,19 @@ export async function apiFetch(path: string, opts: RequestInit = {}) {
   return res.json();
 }
 
+// Fire-and-forget warm-up ping to reduce first request latency on cold servers (e.g., Render free tier)
+export async function warmBackend(timeoutMs = 6000): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    // Use a lightweight GET to /api/health
+    await fetch(`${API_BASE}/api/health`, { cache: 'no-store', signal: controller.signal }).catch(() => {});
+    clearTimeout(timer);
+  } catch {
+    // Ignore warm-up errors
+  }
+}
+
 // ======== TYPE DEFINITIONS ========
 
 interface SerialNumber {
