@@ -42,6 +42,7 @@ interface CatalogProduct {
 }
 
 const CATEGORIES_KEY = "catalog_categories"; // kept for default fallback only
+const PRODUCTS_KEY = "catalog_products"; // used only for one-time migration
 
 // Pre-defined categories matching Shop page filters
 const defaultCategories: CatalogCategory[] = [
@@ -77,6 +78,8 @@ export default function AdminCatalog() {
   const [serialDialogOpen, setSerialDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<CatalogProduct | null>(null);
   const [newSerial, setNewSerial] = useState("");
+  const [showImportBanner, setShowImportBanner] = useState(false);
+  const [importCount, setImportCount] = useState(0);
 
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
@@ -92,11 +95,63 @@ export default function AdminCatalog() {
       setLoading(true);
       const data = await catalogAPI.getAll();
       setProducts(data);
+      // If DB is empty but there are local products, offer import
+      try {
+        const localRaw = localStorage.getItem(PRODUCTS_KEY);
+        const localList: CatalogProduct[] = localRaw ? JSON.parse(localRaw) : [];
+        if (Array.isArray(localList) && localList.length > 0 && (!data || data.length === 0)) {
+          setImportCount(localList.length);
+          setShowImportBanner(true);
+        } else {
+          setShowImportBanner(false);
+          setImportCount(0);
+        }
+      } catch {
+        // ignore
+      }
     } catch (error) {
       console.error("Error loading products:", error);
       toast.error("Failed to load products");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const importLocalProducts = async () => {
+    try {
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        toast.error("Please login as admin to import");
+        return;
+      }
+      const localRaw = localStorage.getItem(PRODUCTS_KEY);
+      const localList: CatalogProduct[] = localRaw ? JSON.parse(localRaw) : [];
+      if (!Array.isArray(localList) || localList.length === 0) {
+        toast.info("No local products found");
+        return;
+      }
+      // Create each product then update serial numbers if present
+      for (const p of localList) {
+        const payload = {
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          image: p.image,
+          category: p.category,
+          serialNumbers: [] as SerialNumber[],
+        };
+        const created = await catalogAPI.create(payload as unknown as Omit<CatalogProduct, 'createdAt'>);
+        if (p.serialNumbers && p.serialNumbers.length > 0) {
+          await catalogAPI.update(created.id, { serialNumbers: p.serialNumbers });
+        }
+      }
+      toast.success(`Imported ${localList.length} products to database`);
+      setShowImportBanner(false);
+      await loadProducts();
+    } catch (e) {
+      console.error("Import failed", e);
+      toast.error("Failed to import local products");
     }
   };
 
@@ -373,6 +428,19 @@ export default function AdminCatalog() {
                 ))}
               </div>
             </div>
+
+            {/* Import Banner (one-time migration) */}
+            {showImportBanner && (
+              <div className="p-3 rounded-md bg-amber-50 border border-amber-200 text-amber-900 flex items-center justify-between">
+                <div>
+                  Found {importCount} product{importCount === 1 ? '' : 's'} saved on this device. Import them to the database so they sync across all devices.
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100" onClick={() => setShowImportBanner(false)}>Dismiss</Button>
+                  <Button className="bg-amber-600 hover:bg-amber-700" onClick={importLocalProducts}>Import now</Button>
+                </div>
+              </div>
+            )}
 
             {/* Products */}
             <div className="space-y-6">
