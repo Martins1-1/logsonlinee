@@ -109,8 +109,8 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
     const existingUser = await User.findOne({ email }).exec();
     if (existingUser) return res.status(400).json({ error: "Email already registered" });
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash password (8 rounds = faster but still secure)
+    const hashedPassword = await bcrypt.hash(password, 8);
     
     // Create user
     const user = await User.create({
