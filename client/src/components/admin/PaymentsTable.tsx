@@ -36,7 +36,7 @@ export default function PaymentsTable({ token }: { token: string }) {
   const fetchPayments = () => {
     setLoading(true);
     setError(null);
-    apiFetch("/payments", { headers: { Authorization: `Bearer ${token}` } })
+  apiFetch("/api/payments", { headers: { Authorization: `Bearer ${token}` } })
       .then((data) => {
         if (Array.isArray(data)) {
           setPayments(data);
@@ -66,7 +66,7 @@ export default function PaymentsTable({ token }: { token: string }) {
     if (!paymentToDelete) return;
 
     try {
-      await apiFetch(`/payments/${paymentToDelete._id}`, {
+      await apiFetch(`/api/payments/${paymentToDelete._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

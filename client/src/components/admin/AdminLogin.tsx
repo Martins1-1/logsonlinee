@@ -22,7 +22,7 @@ const AdminLogin = ({ onLogin }: Props) => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiFetch("/admin/login", {
+      const data = await apiFetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

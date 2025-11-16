@@ -33,7 +33,7 @@ export default function UsersTable({ token }: { token: string }) {
   const fetchUsers = () => {
     setLoading(true);
     setError(null);
-    apiFetch("/users", { headers: { Authorization: `Bearer ${token}` } })
+  apiFetch("/api/users", { headers: { Authorization: `Bearer ${token}` } })
       .then((data) => {
         if (Array.isArray(data)) {
           setUsers(data);
@@ -59,7 +59,7 @@ export default function UsersTable({ token }: { token: string }) {
     
     setDeleting(true);
     try {
-      await apiFetch(`/users/${deleteUserId}`, {
+      await apiFetch(`/api/users/${deleteUserId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

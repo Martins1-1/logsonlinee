@@ -283,7 +283,7 @@ const Shop = () => {
 
     try {
       // Create payment session
-      const res = await apiFetch("/payments/create-session", {
+      const res = await apiFetch("/api/payments/create-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -347,7 +347,7 @@ const Shop = () => {
             // Ignore JSON parse errors
           }
         }
-        const res = await apiFetch(`/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
+  const res = await apiFetch(`/api/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
         const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
         
         if (status === "success") {

@@ -31,7 +31,7 @@ const Auth = () => {
 
     setIsSigningIn(true);
     try {
-      const data = await apiFetch("/auth/login", {
+      const data = await apiFetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: signInEmail, password: signInPassword }),
@@ -67,7 +67,7 @@ const Auth = () => {
 
     setIsSigningUp(true);
     try {
-      const data = await apiFetch("/auth/register", {
+      const data = await apiFetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: signUpEmail, password: signUpPassword }),

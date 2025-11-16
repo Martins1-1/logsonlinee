@@ -18,7 +18,7 @@ export default function CartsTable({ token }: { token: string }) {
 
     setLoading(true);
     setError(null);
-    apiFetch("/carts", { headers: { Authorization: `Bearer ${token}` } })
+  apiFetch("/api/carts", { headers: { Authorization: `Bearer ${token}` } })
       .then((data) => {
         if (!mounted) return;
         if (Array.isArray(data)) {
