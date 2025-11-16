@@ -65,6 +65,42 @@ export interface IProduct extends Document {
   createdAt: Date;
 }
 
+// Serial Number interface for catalog products
+export interface ISerialNumber {
+  id: string;
+  serial: string;
+  isUsed: boolean;
+  usedBy?: string;
+  usedAt?: Date;
+}
+
+// Catalog Product interface
+export interface ICatalogProduct extends Document {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  serialNumbers?: ISerialNumber[];
+  createdAt: Date;
+}
+
+// Purchase History interface
+export interface IPurchaseHistory extends Document {
+  userId: string; // localStorage user ID or MongoDB user ID
+  email: string;
+  productId: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  quantity: number;
+  assignedSerials: string[];
+  purchaseDate: Date;
+}
+
 // Define ProductItemSchema first since it's used in CartItemSchema
 const ProductItemSchema = new Schema<IProductItem>({
   username: { type: String, required: true },
@@ -130,8 +166,46 @@ const ProductSchema = new Schema<IProduct>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Serial Number Schema
+const SerialNumberSchema = new Schema<ISerialNumber>({
+  id: { type: String, required: true },
+  serial: { type: String, required: true },
+  isUsed: { type: Boolean, default: false },
+  usedBy: { type: String },
+  usedAt: { type: Date },
+});
+
+// Catalog Product Schema
+const CatalogProductSchema = new Schema<ICatalogProduct>({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  price: { type: Number, required: true },
+  image: { type: String, required: true },
+  category: { type: String, required: true },
+  serialNumbers: { type: [SerialNumberSchema], default: [] },
+  createdAt: { type: Date, default: Date.now },
+});
+
+// Purchase History Schema
+const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
+  userId: { type: String, required: true },
+  email: { type: String, required: true },
+  productId: { type: String, required: true },
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  price: { type: Number, required: true },
+  image: { type: String, required: true },
+  category: { type: String, required: true },
+  quantity: { type: Number, required: true },
+  assignedSerials: { type: [String], default: [] },
+  purchaseDate: { type: Date, default: Date.now },
+});
+
 export const Cart = mongoose.model<ICart>("Cart", CartSchema);
 export const Payment = mongoose.model<IPayment>("Payment", PaymentSchema);
 export const User = mongoose.model<IUser>("User", UserSchema);
 export const Admin = mongoose.model<IAdmin>("Admin", AdminSchema);
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);
+export const CatalogProduct = mongoose.model<ICatalogProduct>("CatalogProduct", CatalogProductSchema);
+export const PurchaseHistory = mongoose.model<IPurchaseHistory>("PurchaseHistory", PurchaseHistorySchema);

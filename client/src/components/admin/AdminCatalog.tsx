@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { catalogAPI } from "@/lib/api";
 
 interface SerialNumber {
   id: string;
@@ -37,7 +38,7 @@ interface CatalogProduct {
   price: number;
   image: string;
   serialNumbers?: SerialNumber[]; // Array of serial numbers
-  createdAt: string;
+  createdAt?: string; // Made optional to match API response
 }
 
 const CATEGORIES_KEY = "catalog_categories";
@@ -70,9 +71,8 @@ export default function AdminCatalog() {
     localStorage.setItem(CATEGORIES_KEY, JSON.stringify(defaultCategories));
     return defaultCategories;
   });
-  const [products, setProducts] = useState<CatalogProduct[]>(() => {
-    try { return JSON.parse(localStorage.getItem(PRODUCTS_KEY) || "[]"); } catch { return []; }
-  });
+  const [products, setProducts] = useState<CatalogProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Category form state
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -93,8 +93,25 @@ export default function AdminCatalog() {
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
 
+  // Fetch products from MongoDB on mount
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const data = await catalogAPI.getAll();
+      setProducts(data);
+    } catch (error) {
+      console.error("Error loading products:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { localStorage.setItem(CATEGORIES_KEY, JSON.stringify(categories)); }, [categories]);
-  useEffect(() => { localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products)); }, [products]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -140,22 +157,34 @@ export default function AdminCatalog() {
     toast.success("Category added");
   };
 
-  const removeCategory = (id: string) => {
+  const removeCategory = async (id: string) => {
     // also remove products in that category (by name)
     const name = categoryMap[id];
-    setProducts(prev => prev.filter(p => p.category !== name));
-    setCategories(prev => prev.filter(c => c.id !== id));
-    toast.info("Category removed");
+    const productsToDelete = products.filter(p => p.category === name);
+    
+    try {
+      // Delete products from MongoDB
+      for (const product of productsToDelete) {
+        await catalogAPI.delete(product.id);
+      }
+      
+      setProducts(prev => prev.filter(p => p.category !== name));
+      setCategories(prev => prev.filter(c => c.id !== id));
+      toast.info("Category removed");
+    } catch (error) {
+      console.error("Error removing category:", error);
+      toast.error("Failed to remove category");
+    }
   };
 
-  const addProduct = () => {
+  const addProduct = async () => {
     if (!pName.trim() || !pDescription.trim()) { toast.error("Name & description required"); return; }
     if (!pCategory) { toast.error("Select a category"); return; }
     const price = parseFloat(pPrice);
     if (isNaN(price) || price <= 0) { toast.error("Enter valid price"); return; }
     if (!pImage.trim()) { toast.error("Please upload an image"); return; }
 
-    const prod: CatalogProduct = {
+    const prod = {
       id: crypto.randomUUID(),
       name: pName.trim(),
       category: categoryMap[pCategory] || "",
@@ -163,16 +192,28 @@ export default function AdminCatalog() {
       price,
       image: pImage.trim(),
       serialNumbers: [],
-      createdAt: new Date().toISOString()
     };
-    setProducts(prev => [...prev, prod]);
-    setPName(""); setPCategory(""); setPDescription(""); setPPrice(""); setPImage("");
-    toast.success("Product added and saved");
+    
+    try {
+      const created = await catalogAPI.create(prod);
+      setProducts(prev => [...prev, created]);
+      setPName(""); setPCategory(""); setPDescription(""); setPPrice(""); setPImage("");
+      toast.success("Product added and saved");
+    } catch (error) {
+      console.error("Error adding product:", error);
+      toast.error("Failed to add product");
+    }
   };
 
-  const removeProduct = (id: string) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-    toast.info("Product removed");
+  const removeProduct = async (id: string) => {
+    try {
+      await catalogAPI.delete(id);
+      setProducts(prev => prev.filter(p => p.id !== id));
+      toast.info("Product removed");
+    } catch (error) {
+      console.error("Error removing product:", error);
+      toast.error("Failed to remove product");
+    }
   };
 
   const openSerialDialog = (product: CatalogProduct) => {
@@ -180,7 +221,7 @@ export default function AdminCatalog() {
     setSerialDialogOpen(true);
   };
 
-  const addSerialNumber = () => {
+  const addSerialNumber = async () => {
     if (!selectedProduct || !newSerial.trim()) {
       toast.error("Serial number required");
       return;
@@ -198,49 +239,93 @@ export default function AdminCatalog() {
       isUsed: false,
     };
 
-    setProducts(prev => prev.map(p => {
-      if (p.id === selectedProduct.id) {
-        return {
-          ...p,
-          serialNumbers: [...(p.serialNumbers || []), serial]
-        };
-      }
-      return p;
-    }));
+    const updatedSerials = [...(selectedProduct.serialNumbers || []), serial];
+    
+    try {
+      await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
+      
+      setProducts(prev => prev.map(p => {
+        if (p.id === selectedProduct.id) {
+          return {
+            ...p,
+            serialNumbers: updatedSerials
+          };
+        }
+        return p;
+      }));
 
-    setNewSerial("");
-    toast.success("Serial number added");
+      setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+      setNewSerial("");
+      toast.success("Serial number added");
+    } catch (error) {
+      console.error("Error adding serial number:", error);
+      toast.error("Failed to add serial number");
+    }
   };
 
-  const removeSerialNumber = (productId: string, serialId: string) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        return {
-          ...p,
-          serialNumbers: (p.serialNumbers || []).filter(s => s.id !== serialId)
-        };
+  const removeSerialNumber = async (productId: string, serialId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const updatedSerials = (product.serialNumbers || []).filter(s => s.id !== serialId);
+    
+    try {
+      await catalogAPI.update(productId, { serialNumbers: updatedSerials });
+      
+      setProducts(prev => prev.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            serialNumbers: updatedSerials
+          };
+        }
+        return p;
+      }));
+      
+      if (selectedProduct?.id === productId) {
+        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
       }
-      return p;
-    }));
-    toast.info("Serial number removed");
+      
+      toast.info("Serial number removed");
+    } catch (error) {
+      console.error("Error removing serial number:", error);
+      toast.error("Failed to remove serial number");
+    }
   };
 
-  const toggleSerialUsed = (productId: string, serialId: string) => {
-    setProducts(prev => prev.map(p => {
-      if (p.id === productId) {
-        return {
-          ...p,
-          serialNumbers: (p.serialNumbers || []).map(s => {
-            if (s.id === serialId) {
-              return { ...s, isUsed: !s.isUsed, usedBy: s.isUsed ? undefined : "Manual", usedAt: s.isUsed ? undefined : new Date().toISOString() };
-            }
-            return s;
-          })
-        };
+  const toggleSerialUsed = async (productId: string, serialId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+    
+    const updatedSerials = (product.serialNumbers || []).map(s => {
+      if (s.id === serialId) {
+        return { ...s, isUsed: !s.isUsed, usedBy: s.isUsed ? undefined : "Manual", usedAt: s.isUsed ? undefined : new Date().toISOString() };
       }
-      return p;
-    }));
-    toast.success("Status updated");
+      return s;
+    });
+    
+    try {
+      await catalogAPI.update(productId, { serialNumbers: updatedSerials });
+      
+      setProducts(prev => prev.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            serialNumbers: updatedSerials
+          };
+        }
+        return p;
+      }));
+      
+      if (selectedProduct?.id === productId) {
+        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+      }
+      
+      toast.success("Status updated");
+    } catch (error) {
+      console.error("Error updating serial status:", error);
+      toast.error("Failed to update status");
+    }
   };
 
   return (

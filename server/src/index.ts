@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
 import axios from "axios";
-import { User, Admin, Cart, Payment, Product } from "./models";
+import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory } from "./models";
 import paymentsRouter from "./routes/payments";
 
 dotenv.config();
@@ -365,6 +365,138 @@ app.patch("/api/products/:productId/items/:itemId/sold", requireAdmin, async (re
   } catch (err) {
     console.error("Error updating item status:", err);
     res.status(500).json({ error: "Failed to update item status" });
+  }
+});
+
+// Health check
+app.get("/api/health", (req: Request, res: Response) => {
+  console.log("Health check endpoint hit");
+  const state = mongoose.connection.readyState; // 0 disconnected, 1 connected
+  const states = ["disconnected", "connected", "connecting", "disconnecting"];
+  res.json({ status: states[state] || "unknown", uptime: process.uptime() });
+});
+
+// ======== CATALOG PRODUCT ENDPOINTS ========
+
+// Get all catalog products
+app.get("/api/catalog", async (req: Request, res: Response) => {
+  try {
+    const products = await CatalogProduct.find().lean();
+    res.json(products);
+  } catch (err) {
+    console.error("Error fetching catalog products:", err);
+    res.status(500).json({ error: "Failed to fetch catalog products" });
+  }
+});
+
+// Create catalog product (admin only)
+app.post("/api/catalog", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id, name, description, price, image, category } = req.body;
+    if (!id || !name || !description || !price || !image || !category) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const product = new CatalogProduct({
+      id,
+      name,
+      description,
+      price,
+      image,
+      category,
+      serialNumbers: [],
+    });
+    await product.save();
+    res.json(product);
+  } catch (err) {
+    console.error("Error creating catalog product:", err);
+    res.status(500).json({ error: "Failed to create catalog product" });
+  }
+});
+
+// Update catalog product (admin only)
+app.put("/api/catalog/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const product = await CatalogProduct.findOneAndUpdate(
+      { id },
+      updates,
+      { new: true }
+    );
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.json(product);
+  } catch (err) {
+    console.error("Error updating catalog product:", err);
+    res.status(500).json({ error: "Failed to update catalog product" });
+  }
+});
+
+// Delete catalog product (admin only)
+app.delete("/api/catalog/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const product = await CatalogProduct.findOneAndDelete({ id });
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+    res.json({ message: "Product deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting catalog product:", err);
+    res.status(500).json({ error: "Failed to delete catalog product" });
+  }
+});
+
+// ======== PURCHASE HISTORY ENDPOINTS ========
+
+// Get purchase history for a user
+app.get("/api/purchase-history/:userId", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const history = await PurchaseHistory.find({ userId }).sort({ purchaseDate: -1 }).lean();
+    res.json(history);
+  } catch (err) {
+    console.error("Error fetching purchase history:", err);
+    res.status(500).json({ error: "Failed to fetch purchase history" });
+  }
+});
+
+// Create purchase history entry
+app.post("/api/purchase-history", async (req: Request, res: Response) => {
+  try {
+    const { userId, email, productId, name, description, price, image, category, quantity, assignedSerials } = req.body;
+    if (!userId || !email || !productId || !name || !price || !quantity) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    const purchase = new PurchaseHistory({
+      userId,
+      email,
+      productId,
+      name,
+      description,
+      price,
+      image,
+      category,
+      quantity,
+      assignedSerials: assignedSerials || [],
+    });
+    await purchase.save();
+    res.json(purchase);
+  } catch (err) {
+    console.error("Error creating purchase history:", err);
+    res.status(500).json({ error: "Failed to create purchase history" });
+  }
+});
+
+// Get all purchase history (admin only)
+app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const history = await PurchaseHistory.find().sort({ purchaseDate: -1 }).lean();
+    res.json(history);
+  } catch (err) {
+    console.error("Error fetching all purchase history:", err);
+    res.status(500).json({ error: "Failed to fetch purchase history" });
   }
 });
 

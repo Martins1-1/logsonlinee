@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, catalogAPI, purchaseHistoryAPI } from "@/lib/api";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 import product1 from "@/assets/product-1.jpg";
 import product2 from "@/assets/product-2.jpg";
@@ -94,19 +94,8 @@ const Shop = () => {
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
-  const [products, setProducts] = useState<Product[]>(() => {
-    const stored = localStorage.getItem("catalog_products");
-    if (stored) {
-      try {
-        const parsed: Product[] = JSON.parse(stored);
-        // basic shape validation
-        if (Array.isArray(parsed)) return [...initialProducts, ...parsed];
-      } catch (e) {
-        // swallow JSON parse error silently
-      }
-    }
-    return initialProducts;
-  });
+  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [loadingProducts, setLoadingProducts] = useState(true);
   
   // Load categories dynamically from localStorage (matches Admin catalog)
   const categories = ["All", ...((() => {
@@ -143,17 +132,37 @@ const Shop = () => {
     }
     setUser(parsedUser);
     
-    // Load purchase history
-  const historyKey = `purchase_history_${parsedUser.id}`;
-    const storedHistory = localStorage.getItem(historyKey);
-    if (storedHistory) {
-      try {
-        setPurchaseHistory(JSON.parse(storedHistory));
-      } catch (e) {
-        // ignore parse errors
-      }
-    }
+    // Load products and purchase history from MongoDB
+    loadProductsAndHistory(parsedUser.id);
   }, [navigate]);
+
+  const loadProductsAndHistory = async (userId: string) => {
+    try {
+      // Load products from MongoDB
+      setLoadingProducts(true);
+      const catalogProducts = await catalogAPI.getAll();
+      setProducts([...initialProducts, ...catalogProducts]);
+      
+      // Load purchase history from MongoDB
+      const history = await purchaseHistoryAPI.getByUserId(userId);
+      setPurchaseHistory(history.map(h => ({
+        id: h.productId,
+        name: h.name,
+        description: h.description,
+        price: h.price,
+        image: h.image,
+        category: h.category,
+        quantity: h.quantity,
+        assignedSerials: h.assignedSerials,
+        purchaseDate: h.purchaseDate.toString()
+      })));
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast.error("Failed to load products");
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
 
   const handleBuyClick = (product: Product) => {
     setSelectedProduct(product);
@@ -167,7 +176,7 @@ const Shop = () => {
     setPurchaseQuantity(1);
   };
 
-  const handleConfirmPurchase = () => {
+  const handleConfirmPurchase = async () => {
     if (!selectedProduct || !user) return;
 
     const totalPrice = selectedProduct.price * purchaseQuantity;
@@ -187,57 +196,85 @@ const Shop = () => {
       return;
     }
 
-    // Assign serial numbers to this purchase
-    const serialsToAssign = availableSerials.slice(0, purchaseQuantity);
-    const assignedSerialNumbers = serialsToAssign.map(s => s.serial);
+    try {
+      // Assign serial numbers to this purchase
+      const serialsToAssign = availableSerials.slice(0, purchaseQuantity);
+      const assignedSerialNumbers = serialsToAssign.map(s => s.serial);
 
-    // Update products in localStorage to mark serials as used
-    const updatedProducts = products.map(p => {
-      if (p.id === selectedProduct.id) {
-        return {
-          ...p,
-          serialNumbers: (p.serialNumbers || []).map(s => {
-            if (serialsToAssign.some(assigned => assigned.id === s.id)) {
-              return {
-                ...s,
-                isUsed: true,
-                usedBy: user.email,
-                usedAt: new Date().toISOString()
-              };
-            }
-            return s;
-          })
-        };
+      // Update product in MongoDB to mark serials as used
+      const updatedSerials = (selectedProduct.serialNumbers || []).map(s => {
+        if (serialsToAssign.some(assigned => assigned.id === s.id)) {
+          return {
+            ...s,
+            isUsed: true,
+            usedBy: user.email,
+            usedAt: new Date().toISOString()
+          };
+        }
+        return s;
+      });
+
+      // Only update if this is a catalog product (not initial products)
+      if (!['1', '2', '3', '4'].includes(selectedProduct.id)) {
+        await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
       }
-      return p;
-    });
-    setProducts(updatedProducts);
-    localStorage.setItem("catalog_products", JSON.stringify(updatedProducts.filter(p => !['1', '2', '3', '4'].includes(p.id))));
 
-    const updatedUser: User = { ...user, balance: (user.balance || 0) - totalPrice };
-    setUser(updatedUser);
-    localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-    
-    const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-    const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
-    // Add to purchase history with assigned serials
-    const purchaseItem: PurchaseHistoryItem = {
-      ...selectedProduct,
-      purchaseDate: new Date().toISOString(),
-      quantity: purchaseQuantity,
-      assignedSerials: assignedSerialNumbers
-    };
-    const updatedHistory = [purchaseItem, ...purchaseHistory];
-    setPurchaseHistory(updatedHistory);
-    const historyKey = `purchase_history_${user.id}`;
-    localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
-    
-    toast.success(`Purchase successful! You bought ${purchaseQuantity} x ${selectedProduct.name}. Check your purchase history for serial numbers.`);
-    setShowBuyDialog(false);
-    setSelectedProduct(null);
-    setPurchaseQuantity(1);
+      // Update local products state
+      const updatedProducts = products.map(p => {
+        if (p.id === selectedProduct.id) {
+          return {
+            ...p,
+            serialNumbers: updatedSerials
+          };
+        }
+        return p;
+      });
+      setProducts(updatedProducts);
+
+      const updatedUser: User = { ...user, balance: (user.balance || 0) - totalPrice };
+      setUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      
+      const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+      const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
+      localStorage.setItem("users", JSON.stringify(updatedUsers));
+      
+      // Save purchase to MongoDB
+      await purchaseHistoryAPI.create({
+        userId: user.id,
+        email: user.email,
+        productId: selectedProduct.id,
+        name: selectedProduct.name,
+        description: selectedProduct.description,
+        price: selectedProduct.price,
+        image: selectedProduct.image,
+        category: selectedProduct.category,
+        quantity: purchaseQuantity,
+        assignedSerials: assignedSerialNumbers
+      });
+
+      // Reload purchase history
+      const history = await purchaseHistoryAPI.getByUserId(user.id);
+      setPurchaseHistory(history.map(h => ({
+        id: h.productId,
+        name: h.name,
+        description: h.description,
+        price: h.price,
+        image: h.image,
+        category: h.category,
+        quantity: h.quantity,
+        assignedSerials: h.assignedSerials,
+        purchaseDate: h.purchaseDate.toString()
+      })));
+      
+      toast.success(`Purchase successful! ₦${totalPrice.toFixed(2)} deducted. Check Purchase History for your serial number${purchaseQuantity > 1 ? 's' : ''}.`);
+      setShowBuyDialog(false);
+      setSelectedProduct(null);
+      setPurchaseQuantity(1);
+    } catch (error) {
+      console.error("Error processing purchase:", error);
+      toast.error("Failed to complete purchase. Please try again.");
+    }
   };
 
   // Derive products to display based on active category
