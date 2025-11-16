@@ -210,6 +210,21 @@ app.get("/api/payments", requireAdmin, async (req: Request, res: Response) => {
   res.json(payments);
 });
 
+app.delete("/api/payments/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const payment = await Payment.findById(id);
+    if (!payment) return res.status(404).json({ error: "Payment not found" });
+    
+    await Payment.findByIdAndDelete(id);
+    
+    res.json({ ok: true, message: "Payment deleted successfully" });
+  } catch (err) {
+    console.error("Error deleting payment:", err);
+    res.status(500).json({ error: "Failed to delete payment" });
+  }
+});
+
 // Carts
 app.get("/api/carts", requireAdmin, async (req: Request, res: Response) => {
   const carts = await Cart.find().populate("user").lean();
