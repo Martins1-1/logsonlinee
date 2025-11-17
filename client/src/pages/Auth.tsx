@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Mail, Lock, User, ArrowRight, Shield } from "lucide-react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, catalogAPI, catalogCategoriesAPI } from "@/lib/api";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -39,6 +39,17 @@ const Auth = () => {
 
       localStorage.setItem("currentUser", JSON.stringify(data.user));
       toast.success("Welcome back!");
+      // Fire-and-forget prefetch of shop data to speed up first render
+      (async () => {
+        try {
+          const [prods, cats] = await Promise.all([
+            catalogAPI.getAll(),
+            catalogCategoriesAPI.getAll(),
+          ]);
+          sessionStorage.setItem("prefetch_products", JSON.stringify(prods));
+          sessionStorage.setItem("prefetch_categories", JSON.stringify(cats));
+        } catch { /* ignore */ }
+      })();
       navigate("/shop");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid credentials");

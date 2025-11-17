@@ -17,7 +17,7 @@ Add the following variable:
 
 | Name | Value | Environments |
 |------|-------|--------------|
-| `VITE_API_URL` | `https://legitstore-api.onrender.com/api` | ✅ Production, ✅ Preview, ✅ Development |
+| `VITE_API_URL` | `https://legitstore-api.onrender.com` | ✅ Production, ✅ Preview, ✅ Development |
 
 **Important**: After adding the environment variable, Vercel will automatically redeploy.
 
@@ -98,8 +98,8 @@ Failed to fetch: 404 Not Found
 
 **Fix**:
 1. Go to Vercel → Settings → Environment Variables
-2. Verify `VITE_API_URL=https://legitstore-api.onrender.com/api`
-3. Redeploy if missing
+2. Verify `VITE_API_URL=https://legitstore-api.onrender.com` (no trailing `/api`)
+3. Redeploy if missing or incorrect
 
 ---
 
@@ -109,7 +109,7 @@ Failed to fetch: 404 Not Found
 
 **Vercel (Frontend)**
 ```
-VITE_API_URL=https://legitstore-api.onrender.com/api
+VITE_API_URL=https://legitstore-api.onrender.com
 ```
 
 **Render (Backend)**

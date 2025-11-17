@@ -118,35 +118,64 @@ const Shop = () => {
       return;
     }
     setUser(parsedUser);
-    
-    // Load products and purchase history from MongoDB
+
+    // Hydrate from prefetch cache immediately if available, for snappy UI
+    try {
+      const cachedProds = sessionStorage.getItem("prefetch_products");
+      const cachedCats = sessionStorage.getItem("prefetch_categories");
+      if (cachedProds) {
+        const prods = JSON.parse(cachedProds) as Product[];
+        setProducts([...initialProducts, ...prods]);
+        setLoadingProducts(false);
+      }
+      if (cachedCats) {
+        const cats = JSON.parse(cachedCats) as Array<{ name: string }>;
+        setCategories(["All", ...cats.map(c => c.name)]);
+      }
+      // Clear caches after hydration to avoid stale data next session
+      sessionStorage.removeItem("prefetch_products");
+      sessionStorage.removeItem("prefetch_categories");
+    } catch { /* ignore cache errors */ }
+
+    // Load products/categories (parallel) and then purchase history (deferred)
     loadProductsAndHistory(parsedUser.id);
   }, [navigate]);
 
   const loadProductsAndHistory = async (userId: string) => {
     try {
-      // Load products from MongoDB
       setLoadingProducts(true);
-      const catalogProducts = await catalogAPI.getAll();
+
+      // Fetch products and categories in parallel with a soft timeout
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 10000);
+      const [catalogProducts, cats] = await Promise.all([
+        catalogAPI.getAll(),
+        catalogCategoriesAPI.getAll(),
+      ]);
+      clearTimeout(timer);
+
       setProducts([...initialProducts, ...catalogProducts]);
-      
-      // Load categories from MongoDB
-      const cats = await catalogCategoriesAPI.getAll();
       setCategories(["All", ...cats.map(c => c.name)]);
       
-      // Load purchase history from MongoDB
-      const history = await purchaseHistoryAPI.getByUserId(userId);
-      setPurchaseHistory(history.map(h => ({
-        id: h.productId,
-        name: h.name,
-        description: h.description,
-        price: h.price,
-        image: h.image,
-        category: h.category,
-        quantity: h.quantity,
-        assignedSerials: h.assignedSerials,
-        purchaseDate: h.purchaseDate.toString()
-      })));
+      // Defer purchase history so UI renders fast
+      (async () => {
+        try {
+          const history = await purchaseHistoryAPI.getByUserId(userId);
+          setPurchaseHistory(history.map(h => ({
+            id: h.productId,
+            name: h.name,
+            description: h.description,
+            price: h.price,
+            image: h.image,
+            category: h.category,
+            quantity: h.quantity,
+            assignedSerials: h.assignedSerials,
+            purchaseDate: h.purchaseDate.toString()
+          })));
+        } catch (e) {
+          console.error("Failed to load purchase history", e);
+        }
+      })();
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load products");
