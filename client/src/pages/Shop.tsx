@@ -9,10 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
-import product1 from "@/assets/product-1.jpg";
-import product2 from "@/assets/product-2.jpg";
-import product3 from "@/assets/product-3.jpg";
-import product4 from "@/assets/product-4.jpg";
+// Removed demo product assets; shop now shows only database products
 
 interface SerialNumber {
   id: string;
@@ -47,40 +44,7 @@ interface User {
   [key: string]: unknown;
 }
 
-const initialProducts: Product[] = [
-  {
-    id: "1",
-    name: "Wireless Headphones",
-    price: 129.99,
-    image: product1,
-    description: "Premium noise-canceling headphones with 30hr battery",
-    category: "Audio",
-  },
-  {
-    id: "2",
-    name: "Smart Watch",
-    price: 299.99,
-    image: product2,
-    description: "Fitness tracker with heart rate monitor and GPS",
-    category: "Wearables",
-  },
-  {
-    id: "3",
-    name: "Bluetooth Speaker",
-    price: 79.99,
-    image: product3,
-    description: "Portable speaker with 360° sound and waterproof design",
-    category: "Audio",
-  },
-  {
-    id: "4",
-    name: "Laptop Pro",
-    price: 1299.99,
-    image: product4,
-    description: "High-performance laptop for work and creativity",
-    category: "Computers",
-  }
-];
+const initialProducts: Product[] = [];
 
 const Shop = () => {
   const navigate = useNavigate();
@@ -125,7 +89,7 @@ const Shop = () => {
       const cachedCats = sessionStorage.getItem("prefetch_categories");
       if (cachedProds) {
         const prods = JSON.parse(cachedProds) as Product[];
-        setProducts([...initialProducts, ...prods]);
+        setProducts(prods);
         setLoadingProducts(false);
       }
       if (cachedCats) {
@@ -154,7 +118,7 @@ const Shop = () => {
       ]);
       clearTimeout(timer);
 
-      setProducts([...initialProducts, ...catalogProducts]);
+  setProducts(catalogProducts);
       setCategories(["All", ...cats.map(c => c.name)]);
       
       // Defer purchase history so UI renders fast
