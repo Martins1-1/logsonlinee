@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Mail, Lock, User, ArrowRight, Shield } from "lucide-react";
-import { apiFetch, catalogAPI, catalogCategoriesAPI } from "@/lib/api";
+import { apiFetch, catalogAPI, catalogCategoriesAPI, warmBackend } from "@/lib/api";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -57,6 +57,30 @@ const Auth = () => {
       setIsSigningIn(false);
     }
   };
+
+  // Warm backend and prefetch shop data proactively to reduce sign-in latency
+  useEffect(() => {
+    let mounted = true;
+    // Warm the backend (non-blocking)
+    warmBackend().catch(() => {});
+
+    // Prefetch products and categories in the background and cache for quick shop hydration
+    (async () => {
+      try {
+        const [prods, cats] = await Promise.all([
+          catalogAPI.getAll(),
+          catalogCategoriesAPI.getAll(),
+        ]);
+        if (!mounted) return;
+        sessionStorage.setItem("prefetch_products", JSON.stringify(prods));
+        sessionStorage.setItem("prefetch_categories", JSON.stringify(cats));
+      } catch {
+        // ignore prefetch errors
+      }
+    })();
+
+    return () => { mounted = false; };
+  }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
