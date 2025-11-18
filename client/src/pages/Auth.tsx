@@ -20,6 +20,7 @@ const Auth = () => {
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [showWakingMessage, setShowWakingMessage] = useState(false);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +31,12 @@ const Auth = () => {
     }
 
     setIsSigningIn(true);
+    
+    // Show "Waking server..." hint if request takes longer than 2s
+    const wakingTimer = setTimeout(() => {
+      setShowWakingMessage(true);
+    }, 2000);
+    
     try {
       const data = await apiFetch("/api/auth/login", {
         method: "POST",
@@ -54,6 +61,8 @@ const Auth = () => {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid credentials");
     } finally {
+      clearTimeout(wakingTimer);
+      setShowWakingMessage(false);
       setIsSigningIn(false);
     }
   };
@@ -101,6 +110,12 @@ const Auth = () => {
     }
 
     setIsSigningUp(true);
+    
+    // Show "Waking server..." hint if request takes longer than 2s
+    const wakingTimer = setTimeout(() => {
+      setShowWakingMessage(true);
+    }, 2000);
+    
     try {
       const data = await apiFetch("/api/auth/register", {
         method: "POST",
@@ -114,6 +129,8 @@ const Auth = () => {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed");
     } finally {
+      clearTimeout(wakingTimer);
+      setShowWakingMessage(false);
       setIsSigningUp(false);
     }
   };
@@ -239,6 +256,12 @@ const Auth = () => {
                       {!isSigningIn && <ArrowRight className="w-4 h-4" />}
                     </span>
                   </Button>
+                  
+                  {showWakingMessage && (
+                    <div className="text-center text-sm text-blue-600 dark:text-blue-400 animate-pulse">
+                      Waking server... This takes a moment after inactivity
+                    </div>
+                  )}
                   
                   <div className="text-center pt-2">
                     <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
@@ -374,6 +397,12 @@ const Auth = () => {
                       {!isSigningUp && <ArrowRight className="w-4 h-4" />}
                     </span>
                   </Button>
+                  
+                  {showWakingMessage && (
+                    <div className="text-center text-sm text-blue-600 dark:text-blue-400 animate-pulse">
+                      Waking server... This takes a moment after inactivity
+                    </div>
+                  )}
                 </form>
               </CardContent>
             </Card>
