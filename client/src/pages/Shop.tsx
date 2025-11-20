@@ -340,17 +340,25 @@ const Shop = () => {
             // Ignore JSON parse errors
           }
         }
-        const res = await apiFetch(`/api/payments/verify/${encodeURIComponent(referenceForVerify)}`);
-        const { status, amount, newBalance, alreadyCredited } = res as { status: "success" | "pending" | "failed" | "completed"; amount: number; newBalance?: number; alreadyCredited?: boolean };
+        let res: any;
+        try {
+          // Primary attempt: path param
+          res = await apiFetch(`/api/payments/verify/${encodeURIComponent(referenceForVerify)}`);
+        } catch (e) {
+          // Fallback: query param style
+          res = await apiFetch(`/api/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
+        }
+        const { status, amount, newBalance, alreadyCredited, paymentFound, details } = res as { status: string; amount: number; newBalance?: number; alreadyCredited?: boolean; paymentFound?: boolean; details?: any };
 
         if (status === "success" || status === "completed") {
           const creditedAmount = amount || 0;
-          const balanceToUse = typeof newBalance === 'number' ? newBalance : (user?.balance || 0) + creditedAmount;
+          const balanceToUse = typeof newBalance === 'number'
+            ? newBalance
+            : (alreadyCredited ? (user?.balance || 0) : (user?.balance || 0) + creditedAmount);
           const updatedUser: User = { ...user!, balance: balanceToUse };
           setUser(updatedUser);
-          // Persist only currentUser for quick reload (optional - remove if no longer needed)
           localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-          toast.success(`₦${creditedAmount.toFixed(2)} ${alreadyCredited ? 'verified' : 'added'} to your wallet!`);
+          toast.success(`₦${creditedAmount.toFixed(2)} ${alreadyCredited ? 'verified' : 'added'}${paymentFound === false ? ' (record missing, credited virtually)' : ''}`);
           
           // Clean up
           localStorage.removeItem("latest_topup");
@@ -360,7 +368,7 @@ const Shop = () => {
         } else if (status === "pending") {
           toast.info("Payment is still processing. Please wait a moment and refresh.");
         } else {
-          toast.error("Payment verification failed. Please contact support if amount was deducted.");
+          toast.error(`Payment verification failed${details ? `: ${typeof details === 'string' ? details : JSON.stringify(details)}` : ''}. If amount was deducted, contact support.`);
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : "Verification failed";

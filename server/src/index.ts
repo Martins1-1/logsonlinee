@@ -597,25 +597,36 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
 });
 
 // Verify Paystack transaction
-// Verify Paystack transaction (supports either path param or query param for reference)
+// Robust verification endpoint: accepts path or various query param names (reference, pref, ref, transRef)
 app.get("/api/payments/verify/:reference?", async (req: Request, res: Response) => {
-  const reference = req.params.reference || (req.query.reference as string | undefined);
-  if (!reference) return res.status(400).json({ error: "Missing reference" });
+  const passed = req.params.reference
+    || (req.query.reference as string | undefined)
+    || (req.query.pref as string | undefined)
+    || (req.query.ref as string | undefined)
+    || (req.query.transRef as string | undefined);
+  if (!passed) return res.status(400).json({ error: "Missing reference" });
   try {
-    const resp = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } });
-    const { status, amount } = resp.data.data; // amount is in kobo
-    // Update payment status
-    const payment = await Payment.findOne({ reference }).exec();
+    // Call Paystack with whatever reference we were given
+    const resp = await axios.get(`https://api.paystack.co/transaction/verify/${passed}`, { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } });
+    const { status, amount } = resp.data.data; // amount in kobo
+
+    // Attempt to locate Payment by internal reference first, then by transactionReference
+    let payment = await Payment.findOne({ reference: passed }).exec();
     if (!payment) {
-      return res.json({ ok: true, status, amount: amount / 100, newBalance: undefined });
+      payment = await Payment.findOne({ transactionReference: passed }).exec();
     }
-    const prevStatus = payment.status;
+
+    if (!payment) {
+      // No payment record, still return status so client can decide next step
+      return res.json({ ok: true, status, amount: amount / 100, newBalance: undefined, paymentFound: false });
+    }
+
+    // Update status
     payment.status = status === "success" ? "completed" : status;
 
     let newBalance: number | undefined = undefined;
-    // Credit user wallet exactly once when payment succeeds and not yet credited
     if (payment.status === "completed" && !payment.isCredited && payment.user) {
-      const creditedAmount = amount / 100; // convert kobo to naira
+      const creditedAmount = amount / 100;
       const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: creditedAmount } }, { new: true }).exec();
       if (updatedUser) {
         newBalance = updatedUser.balance || 0;
@@ -623,16 +634,18 @@ app.get("/api/payments/verify/:reference?", async (req: Request, res: Response) 
       }
     }
     await payment.save();
-    res.json({ ok: true, status: payment.status, amount: amount / 100, newBalance, alreadyCredited: payment.isCredited });
+    res.json({ ok: true, status: payment.status, amount: amount / 100, newBalance, alreadyCredited: payment.isCredited, paymentFound: true });
   } catch (err) {
     if (axios.isAxiosError(err)) {
-      console.error(err.response?.data ?? err.message);
+      console.error("Paystack verify error:", err.response?.data ?? err.message);
+      return res.status(500).json({ error: "Verification failed", details: err.response?.data ?? err.message });
     } else if (err instanceof Error) {
-      console.error(err.message);
+      console.error("Verify error:", err.message);
+      return res.status(500).json({ error: "Verification failed", details: err.message });
     } else {
-      console.error(err);
+      console.error("Unknown verify error:", err);
+      return res.status(500).json({ error: "Verification failed" });
     }
-    res.status(500).json({ error: "Verification failed" });
   }
 });
 
