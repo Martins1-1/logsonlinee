@@ -597,13 +597,33 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
 });
 
 // Verify Paystack transaction
-app.get("/api/payments/verify/:reference", async (req: Request, res: Response) => {
-  const { reference } = req.params;
+// Verify Paystack transaction (supports either path param or query param for reference)
+app.get("/api/payments/verify/:reference?", async (req: Request, res: Response) => {
+  const reference = req.params.reference || (req.query.reference as string | undefined);
+  if (!reference) return res.status(400).json({ error: "Missing reference" });
   try {
     const resp = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } });
-    const { status, amount } = resp.data.data;
-    const payment = await Payment.findOneAndUpdate({ reference }, { status: status === "success" ? "completed" : status }).exec();
-    res.json({ ok: true, status: resp.data.data.status, amount: resp.data.data.amount / 100 });
+    const { status, amount } = resp.data.data; // amount is in kobo
+    // Update payment status
+    const payment = await Payment.findOne({ reference }).exec();
+    if (!payment) {
+      return res.json({ ok: true, status, amount: amount / 100, newBalance: undefined });
+    }
+    const prevStatus = payment.status;
+    payment.status = status === "success" ? "completed" : status;
+
+    let newBalance: number | undefined = undefined;
+    // Credit user wallet exactly once when payment succeeds and not yet credited
+    if (payment.status === "completed" && !payment.isCredited && payment.user) {
+      const creditedAmount = amount / 100; // convert kobo to naira
+      const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: creditedAmount } }, { new: true }).exec();
+      if (updatedUser) {
+        newBalance = updatedUser.balance || 0;
+        payment.isCredited = true;
+      }
+    }
+    await payment.save();
+    res.json({ ok: true, status: payment.status, amount: amount / 100, newBalance, alreadyCredited: payment.isCredited });
   } catch (err) {
     if (axios.isAxiosError(err)) {
       console.error(err.response?.data ?? err.message);

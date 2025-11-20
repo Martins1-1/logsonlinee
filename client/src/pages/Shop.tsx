@@ -340,17 +340,17 @@ const Shop = () => {
             // Ignore JSON parse errors
           }
         }
-  const res = await apiFetch(`/api/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
-        const { status, amount } = res as { status: "success" | "pending" | "failed"; amount: number };
-        
-        if (status === "success") {
-          const updatedUser: User = { ...user!, balance: (user?.balance || 0) + (amount || 0) };
+        const res = await apiFetch(`/api/payments/verify/${encodeURIComponent(referenceForVerify)}`);
+        const { status, amount, newBalance, alreadyCredited } = res as { status: "success" | "pending" | "failed" | "completed"; amount: number; newBalance?: number; alreadyCredited?: boolean };
+
+        if (status === "success" || status === "completed") {
+          const creditedAmount = amount || 0;
+          const balanceToUse = typeof newBalance === 'number' ? newBalance : (user?.balance || 0) + creditedAmount;
+          const updatedUser: User = { ...user!, balance: balanceToUse };
           setUser(updatedUser);
+          // Persist only currentUser for quick reload (optional - remove if no longer needed)
           localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-          const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-          const updatedUsers = usersRaw.map(u => u.id === user!.id ? updatedUser : u);
-          localStorage.setItem("users", JSON.stringify(updatedUsers));
-          toast.success(`₦${(amount || 0).toFixed(2)} added to your wallet!`);
+          toast.success(`₦${creditedAmount.toFixed(2)} ${alreadyCredited ? 'verified' : 'added'} to your wallet!`);
           
           // Clean up
           localStorage.removeItem("latest_topup");

@@ -25,6 +25,7 @@ export interface IPayment extends Document {
   status: string; // pending | completed | failed
   reference?: string; // our internal paymentReference
   transactionReference?: string; // gateway reference
+  isCredited?: boolean; // whether balance already applied to user wallet
   createdAt: Date;
 }
 
@@ -145,6 +146,7 @@ const PaymentSchema = new Schema<IPayment>({
   status: { type: String, required: true },
   reference: { type: String },
   transactionReference: { type: String },
+  isCredited: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 
