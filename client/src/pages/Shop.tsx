@@ -316,8 +316,31 @@ const Shop = () => {
     }
   };
 
-  // Derive products to display based on active category
-  const displayedProducts = activeCategory === "All" ? products : products.filter(p => p.category === activeCategory);
+  // Group products by category
+  const groupedProducts = products.reduce((acc, product) => {
+    if (!acc[product.category]) {
+      acc[product.category] = [];
+    }
+    acc[product.category].push(product);
+    return acc;
+  }, {} as Record<string, Product[]>);
+
+  // Get categories that have products (excluding "All")
+  const categoriesWithProducts = categories.filter(cat => cat !== "All" && groupedProducts[cat]?.length > 0);
+
+  // Function to scroll to category section
+  const scrollToCategory = (category: string) => {
+    if (category === "All") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      const element = document.getElementById(`category-${category}`);
+      if (element) {
+        const offset = 100; // Offset for fixed header
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        window.scrollTo({ top: elementPosition - offset, behavior: "smooth" });
+      }
+    }
+  };
 
   const handleAddFunds = async () => {
     const amount = parseFloat(addFundsAmount);
@@ -648,87 +671,208 @@ const Shop = () => {
                     <Button
                       key={cat}
                       variant={activeCategory === cat ? "default" : "outline"}
-                      onClick={() => setActiveCategory(cat)}
+                      onClick={() => {
+                        setActiveCategory(cat);
+                        scrollToCategory(cat);
+                      }}
                       className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
                     >
                       {cat}
                     </Button>
                   ))}
                 </div>
-                <div className="space-y-3 md:space-y-4">
-                {displayedProducts.map((product, index) => {
-                  const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
-                  
-                  return (
-                  <Card 
-                    key={product.id} 
-                    className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-l-0 border-r-0 md:border-l-2 md:border-r-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0 rounded-none md:rounded-lg"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <CardContent className="p-0">
-                      <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
-                        {/* Top Section: Image and Info (Mobile Full Width) */}
-                        <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
-                          {/* Small Product Image */}
-                          <div className="relative overflow-hidden rounded-lg flex-shrink-0">
-                            <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
-                            />
-                          </div>
-                          
-                          {/* Product Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start gap-2 mb-0.5 md:mb-1">
-                              <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
-                                {product.category}
-                              </Badge>
-                              {availableStock > 0 && (
-                                <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
-                                  {availableStock} in stock
-                                </Badge>
-                              )}
-                              {availableStock === 0 && (
-                                <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
-                                  Out of stock
-                                </Badge>
-                              )}
-                            </div>
-                            <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
-                          </div>
-                        </div>
-                        
-                        {/* Description Section (Full Width on Mobile) */}
-                        <div className="px-3 pb-2 md:p-0 md:flex-1">
-                          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 line-clamp-3 md:line-clamp-2 leading-relaxed">{product.description}</p>
-                        </div>
-                        
-                        {/* Price and Buy Button (Full Width on Mobile, Fixed to Edges) */}
-                        <div className="flex items-center justify-between gap-2 px-3 pb-3 md:p-0 md:flex-shrink-0 md:flex-col md:gap-2 border-t md:border-t-0 border-gray-200 dark:border-gray-800 pt-2 md:pt-0">
-                          <Badge className="text-xs md:text-sm lg:text-base px-2 md:px-3 py-1 md:py-1.5 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 font-bold whitespace-nowrap">
-                            ₦{product.price}
-                          </Badge>
-                          <Button 
-                            onClick={() => handleBuyClick(product)}
-                            size="sm"
-                            disabled={availableStock === 0}
-                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg h-8 md:h-9 px-3 md:px-3 text-xs md:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <span className="mr-1">₦</span>
-                            {availableStock === 0 ? "Sold Out" : "Buy"}
-                          </Button>
+
+                {/* Display products grouped by category */}
+                {activeCategory === "All" ? (
+                  // Show all categories with headings
+                  <div className="space-y-8 md:space-y-12">
+                    {categoriesWithProducts.map((category) => (
+                      <div key={category} id={`category-${category}`} className="scroll-mt-24">
+                        <h3 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0 border-b-2 border-gray-200 dark:border-gray-800 pb-2">
+                          {category}
+                        </h3>
+                        <div className="space-y-3 md:space-y-4">
+                          {groupedProducts[category].map((product, index) => {
+                            const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
+                            
+                            return (
+                            <Card 
+                              key={product.id} 
+                              className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-l-0 border-r-0 md:border-l-2 md:border-r-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0 rounded-none md:rounded-lg"
+                              style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                              <CardContent className="p-0">
+                                <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
+                                  {/* Top Section: Image and Info (Mobile Full Width) */}
+                                  <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
+                                    {/* Small Product Image */}
+                                    <div className="relative overflow-hidden rounded-lg flex-shrink-0">
+                                      <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                                      />
+                                    </div>
+                                    
+                                    {/* Product Info */}
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-start gap-2 mb-0.5 md:mb-1">
+                                        <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
+                                          {product.category}
+                                        </Badge>
+                                        {availableStock > 0 && (
+                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                                            {availableStock} in stock
+                                          </Badge>
+                                        )}
+                                        {availableStock === 0 && (
+                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                            Out of stock
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                                    </div>
+                                    
+                                    {/* Price (Mobile - Right Side) */}
+                                    <div className="text-right flex-shrink-0 md:hidden">
+                                      <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                        ₦{product.price.toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Description (Mobile Full Width) */}
+                                  <div className="px-3 pb-3 md:hidden">
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                                  </div>
+
+                                  {/* Desktop Layout: Description, Price, Button */}
+                                  <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 flex-1">{product.description}</p>
+                                    <div className="text-right flex-shrink-0">
+                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                        ₦{product.price.toFixed(2)}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Buy Button (Mobile Full Width) */}
+                                  <div className="px-3 pb-3 md:p-0 md:flex-shrink-0">
+                                    <Button 
+                                      onClick={() => handleBuyClick(product)}
+                                      disabled={availableStock === 0}
+                                      className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                    >
+                                      <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                      {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                            );
+                          })}
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                  );
-                })}
+                    ))}
+                  </div>
+                ) : (
+                  // Show single category
+                  <div id={`category-${activeCategory}`} className="scroll-mt-24">
+                    <h3 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0 border-b-2 border-gray-200 dark:border-gray-800 pb-2">
+                      {activeCategory}
+                    </h3>
+                    <div className="space-y-3 md:space-y-4">
+                      {(groupedProducts[activeCategory] || []).map((product, index) => {
+                        const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
+                        
+                        return (
+                        <Card 
+                          key={product.id} 
+                          className="bg-white/90 backdrop-blur-xl shadow-lg border-2 border-l-0 border-r-0 md:border-l-2 md:border-r-2 border-white/60 hover:shadow-xl transition-all duration-300 group animate-in fade-in slide-in-from-bottom dark:bg-gray-900/90 dark:border-gray-800 mx-0 rounded-none md:rounded-lg"
+                          style={{ animationDelay: `${index * 50}ms` }}
+                        >
+                          <CardContent className="p-0">
+                            <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
+                              {/* Top Section: Image and Info (Mobile Full Width) */}
+                              <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
+                                {/* Small Product Image */}
+                                <div className="relative overflow-hidden rounded-lg flex-shrink-0">
+                                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                </div>
+                                
+                                {/* Product Info */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start gap-2 mb-0.5 md:mb-1">
+                                    <Badge variant="outline" className="px-1.5 md:px-2 py-0.5 text-xs tracking-wide bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 border-none flex-shrink-0 dark:from-blue-950 dark:to-purple-950 dark:text-blue-400">
+                                      {product.category}
+                                    </Badge>
+                                    {availableStock > 0 && (
+                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                                        {availableStock} in stock
+                                      </Badge>
+                                    )}
+                                    {availableStock === 0 && (
+                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                        Out of stock
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                                </div>
+                                
+                                {/* Price (Mobile - Right Side) */}
+                                <div className="text-right flex-shrink-0 md:hidden">
+                                  <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                    ₦{product.price.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Description (Mobile Full Width) */}
+                              <div className="px-3 pb-3 md:hidden">
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                              </div>
+
+                              {/* Desktop Layout: Description, Price, Button */}
+                              <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
+                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 flex-1">{product.description}</p>
+                                <div className="text-right flex-shrink-0">
+                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                    ₦{product.price.toFixed(2)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              {/* Buy Button (Mobile Full Width) */}
+                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0">
+                                <Button 
+                                  onClick={() => handleBuyClick(product)}
+                                  disabled={availableStock === 0}
+                                  className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                >
+                                  <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                  {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
 
