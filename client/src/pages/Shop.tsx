@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote } from "lucide-react";
+import { Banknote, ChevronDown } from "lucide-react";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
@@ -59,6 +59,7 @@ const Shop = () => {
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [showDepositHistory, setShowDepositHistory] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [depositHistory, setDepositHistory] = useState<Array<{
     _id?: string;
     amount?: number;
@@ -327,6 +328,21 @@ const Shop = () => {
 
   // Get categories that have products (excluding "All")
   const categoriesWithProducts = categories.filter(cat => cat !== "All" && groupedProducts[cat]?.length > 0);
+
+  // Function to toggle category expansion
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  // Function to get products to display for a category (5 or all)
+  const getProductsToDisplay = (category: string) => {
+    const products = groupedProducts[category] || [];
+    const isExpanded = expandedCategories[category];
+    return isExpanded ? products : products.slice(0, 5);
+  };
 
   // Function to scroll to category section
   const scrollToCategory = (category: string) => {
@@ -686,13 +702,31 @@ const Shop = () => {
                 {activeCategory === "All" ? (
                   // Show all categories with headings
                   <div className="space-y-8 md:space-y-12">
-                    {categoriesWithProducts.map((category) => (
+                    {categoriesWithProducts.map((category) => {
+                      const categoryProducts = groupedProducts[category] || [];
+                      const displayedProducts = getProductsToDisplay(category);
+                      const hasMore = categoryProducts.length > 5;
+                      const isExpanded = expandedCategories[category];
+
+                      return (
                       <div key={category} id={`category-${category}`} className="scroll-mt-24">
-                        <h3 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0 border-b-2 border-gray-200 dark:border-gray-800 pb-2">
-                          {category}
-                        </h3>
+                        <div className="flex items-center justify-between mb-4 md:mb-6 px-3 md:px-0">
+                          <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
+                            {category}
+                          </h3>
+                          {hasMore && (
+                            <Button
+                              variant="ghost"
+                              onClick={() => toggleCategoryExpansion(category)}
+                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+                            >
+                              <span className="text-sm md:text-base">{isExpanded ? 'Show Less' : 'See More'}</span>
+                              <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                            </Button>
+                          )}
+                        </div>
                         <div className="space-y-3 md:space-y-4">
-                          {groupedProducts[category].map((product, index) => {
+                          {displayedProducts.map((product, index) => {
                             const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
                             
                             return (
@@ -776,16 +810,37 @@ const Shop = () => {
                           })}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   // Show single category
                   <div id={`category-${activeCategory}`} className="scroll-mt-24">
-                    <h3 className="text-xl md:text-3xl font-bold mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0 border-b-2 border-gray-200 dark:border-gray-800 pb-2">
-                      {activeCategory}
-                    </h3>
-                    <div className="space-y-3 md:space-y-4">
-                      {(groupedProducts[activeCategory] || []).map((product, index) => {
+                    {(() => {
+                      const categoryProducts = groupedProducts[activeCategory] || [];
+                      const displayedProducts = getProductsToDisplay(activeCategory);
+                      const hasMore = categoryProducts.length > 5;
+                      const isExpanded = expandedCategories[activeCategory];
+
+                      return (
+                        <>
+                          <div className="flex items-center justify-between mb-4 md:mb-6 px-3 md:px-0">
+                            <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
+                              {activeCategory}
+                            </h3>
+                            {hasMore && (
+                              <Button
+                                variant="ghost"
+                                onClick={() => toggleCategoryExpansion(activeCategory)}
+                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+                              >
+                                <span className="text-sm md:text-base">{isExpanded ? 'Show Less' : 'See More'}</span>
+                                <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="space-y-3 md:space-y-4">
+                            {displayedProducts.map((product, index) => {
                         const availableStock = (product.serialNumbers || []).filter(s => !s.isUsed).length;
                         
                         return (
@@ -868,6 +923,9 @@ const Shop = () => {
                         );
                       })}
                     </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
