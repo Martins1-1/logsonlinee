@@ -199,6 +199,24 @@ app.get("/api/users", requireAdmin, async (req: Request, res: Response) => {
   }
 });
 
+// Get current user data by ID (for balance refresh)
+app.get("/api/users/current/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).lean();
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      balance: user.balance || 0
+    });
+  } catch (err) {
+    console.error("Error fetching current user:", err);
+    res.status(500).json({ error: "Failed to fetch user data" });
+  }
+});
+
 app.get("/api/users/:id", requireAdmin, async (req: Request, res: Response) => {
   const id = req.params.id;
   const user = await User.findById(id).lean();

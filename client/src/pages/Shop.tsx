@@ -59,12 +59,26 @@ const Shop = () => {
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [showDepositHistory, setShowDepositHistory] = useState(false);
-  const [depositHistory, setDepositHistory] = useState<any[]>([]);
+  const [depositHistory, setDepositHistory] = useState<Array<{
+    _id?: string;
+    amount?: number;
+    method?: string;
+    status?: string;
+    createdAt: string;
+    reference?: string;
+  }>>([]);
   // Fetch deposit history (payments)
   const loadDepositHistory = async (userId: string) => {
     try {
       const res = await apiFetch(`/api/payments/user/${userId}`);
-      setDepositHistory(res as any[]);
+      setDepositHistory(res as Array<{
+        _id?: string;
+        amount?: number;
+        method?: string;
+        status?: string;
+        createdAt: string;
+        reference?: string;
+      }>);
     } catch (e) {
       setDepositHistory([]);
     }
@@ -114,36 +128,37 @@ const Shop = () => {
     } catch { /* ignore cache errors */ }
 
     // Load products/categories (parallel) and then purchase history (deferred)
-  loadProductsAndHistory(parsedUser.id);
-  loadDepositHistory(parsedUser.id);
-  // Deposit history modal
-  const DepositHistoryModal = () => (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm ${showDepositHistory ? '' : 'hidden'}`}>
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-green-600" /> Deposits</h2>
-          <button onClick={() => setShowDepositHistory(false)} className="text-gray-500 hover:text-red-500 text-xl">&times;</button>
-        </div>
-        <div className="max-h-80 overflow-y-auto">
-          {depositHistory.length === 0 ? (
-            <div className="text-gray-500 text-center py-8">No deposits found.</div>
-          ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
-              {depositHistory.map((d, i) => (
-                <li key={d._id || i} className="py-3 flex flex-col gap-1">
-                  <span className="font-semibold text-green-700 dark:text-green-400">₦{d.amount?.toFixed(2)}</span>
-                  <span className="text-xs text-gray-600 dark:text-gray-400">{d.method?.toUpperCase()} • {d.status?.toUpperCase()}</span>
-                  <span className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
-                  {d.reference && <span className="text-xs text-gray-400">Ref: {d.reference}</span>}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+    loadProductsAndHistory(parsedUser.id);
+    loadDepositHistory(parsedUser.id);
   }, [navigate]);
+
+  // Periodically refresh user balance from backend (every 10 seconds)
+  useEffect(() => {
+    if (!user) return;
+
+    const refreshBalance = async () => {
+      try {
+        const res = await apiFetch(`/api/users/current/${user.id}`);
+        const userData = res as { id: string; email: string; name?: string; balance: number };
+        
+        // Only update if balance has changed
+        if (userData.balance !== user.balance) {
+          const updatedUser = { ...user, balance: userData.balance };
+          setUser(updatedUser);
+          localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        }
+      } catch (e) {
+        // Silently fail - user can still use the app with cached balance
+        console.error("Failed to refresh balance:", e);
+      }
+    };
+
+    // Refresh immediately on mount, then every 10 seconds
+    refreshBalance();
+    const interval = setInterval(refreshBalance, 10000);
+
+    return () => clearInterval(interval);
+  }, [user]);
 
   const loadProductsAndHistory = async (userId: string) => {
     try {
