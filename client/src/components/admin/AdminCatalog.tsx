@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2 } from "lucide-react";
+import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2, ChevronDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,7 @@ export default function AdminCatalog() {
   const [categories, setCategories] = useState<CatalogCategory[]>([]);
   const [products, setProducts] = useState<CatalogProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   // Category form state
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -68,6 +69,37 @@ export default function AdminCatalog() {
 
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
+
+  // Group products by category
+  const groupedProducts = useMemo(() => {
+    return products.reduce((acc, product) => {
+      if (!acc[product.category]) {
+        acc[product.category] = [];
+      }
+      acc[product.category].push(product);
+      return acc;
+    }, {} as Record<string, CatalogProduct[]>);
+  }, [products]);
+
+  // Get categories that have products
+  const categoriesWithProducts = useMemo(() => {
+    return categories.filter(cat => groupedProducts[cat.name]?.length > 0);
+  }, [categories, groupedProducts]);
+
+  // Function to toggle category expansion
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  // Function to get products to display for a category (5 or all)
+  const getProductsToDisplay = (category: string) => {
+    const products = groupedProducts[category] || [];
+    const isExpanded = expandedCategories[category];
+    return isExpanded ? products : products.slice(0, 5);
+  };
 
   // Fetch products from MongoDB on mount
   useEffect(() => {
@@ -479,8 +511,35 @@ export default function AdminCatalog() {
             <div className="space-y-4">
               <h3 className="text-xl font-semibold flex items-center gap-2"><Package className="h-5 w-5 text-pink-600" /> Products ({products.length})</h3>
               {products.length === 0 && <p className="text-sm text-gray-500">No products yet.</p>}
-              <div className="space-y-3">
-                {products.map(prod => {
+              
+              {/* Display products grouped by category */}
+              <div className="space-y-8">
+                {categoriesWithProducts.map((category) => {
+                  const categoryProducts = groupedProducts[category.name] || [];
+                  const displayedProducts = getProductsToDisplay(category.name);
+                  const hasMore = categoryProducts.length > 5;
+                  const isExpanded = expandedCategories[category.name];
+
+                  return (
+                    <div key={category.id} className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
+                          {category.name} ({categoryProducts.length})
+                        </h4>
+                        {hasMore && (
+                          <Button
+                            variant="ghost"
+                            onClick={() => toggleCategoryExpansion(category.name)}
+                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+                          >
+                            <span className="text-sm">{isExpanded ? 'Show Less' : 'See More'}</span>
+                            <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {displayedProducts.map(prod => {
                   const availableSerials = (prod.serialNumbers || []).filter(s => !s.isUsed).length;
                   const usedSerials = (prod.serialNumbers || []).filter(s => s.isUsed).length;
                   
@@ -533,6 +592,10 @@ export default function AdminCatalog() {
                       </div>
                     </CardContent>
                   </Card>
+                  );
+                })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
