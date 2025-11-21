@@ -94,11 +94,11 @@ export default function AdminCatalog() {
     }));
   };
 
-  // Function to get products to display for a category (5 or all)
+  // Function to get products to display for a category (0 or all)
   const getProductsToDisplay = (category: string) => {
     const products = groupedProducts[category] || [];
     const isExpanded = expandedCategories[category];
-    return isExpanded ? products : products.slice(0, 5);
+    return isExpanded ? products : [];
   };
 
   // Fetch products from MongoDB on mount
@@ -517,7 +517,6 @@ export default function AdminCatalog() {
                 {categoriesWithProducts.map((category) => {
                   const categoryProducts = groupedProducts[category.name] || [];
                   const displayedProducts = getProductsToDisplay(category.name);
-                  const hasMore = categoryProducts.length > 5;
                   const isExpanded = expandedCategories[category.name];
 
                   return (
@@ -526,18 +525,17 @@ export default function AdminCatalog() {
                         <h4 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
                           {category.name} ({categoryProducts.length})
                         </h4>
-                        {hasMore && (
-                          <Button
-                            variant="ghost"
-                            onClick={() => toggleCategoryExpansion(category.name)}
-                            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
-                          >
-                            <span className="text-sm">{isExpanded ? 'Show Less' : 'See More'}</span>
-                            <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                          </Button>
-                        )}
+                        <Button
+                          variant="ghost"
+                          onClick={() => toggleCategoryExpansion(category.name)}
+                          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
+                        >
+                          <span className="text-sm">{isExpanded ? 'Collapse' : 'Expand'}</span>
+                          <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+                        </Button>
                       </div>
                       
+                      {isExpanded && (
                       <div className="space-y-3">
                         {displayedProducts.map(prod => {
                   const availableSerials = (prod.serialNumbers || []).filter(s => !s.isUsed).length;
@@ -595,6 +593,7 @@ export default function AdminCatalog() {
                   );
                 })}
                       </div>
+                      )}
                     </div>
                   );
                 })}
