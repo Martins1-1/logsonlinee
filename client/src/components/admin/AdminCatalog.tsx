@@ -67,6 +67,13 @@ export default function AdminCatalog() {
   const [showImportBanner, setShowImportBanner] = useState(false);
   const [importCount, setImportCount] = useState(0);
 
+  // Edit product state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<CatalogProduct | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editingInProgress, setEditingInProgress] = useState(false);
+
   // Derived lookup
   const categoryMap = useMemo(() => Object.fromEntries(categories.map(c => [c.id, c.name])), [categories]);
 
@@ -407,6 +414,59 @@ export default function AdminCatalog() {
     }
   };
 
+  const openEditDialog = (product: CatalogProduct) => {
+    setEditingProduct(product);
+    setEditPrice(product.price.toString());
+    setEditDescription(product.description);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateProduct = async () => {
+    if (!editingProduct) return;
+    
+    const price = parseFloat(editPrice);
+    if (isNaN(price) || price <= 0) {
+      toast.error("Enter valid price");
+      return;
+    }
+    
+    if (!editDescription.trim()) {
+      toast.error("Description required");
+      return;
+    }
+
+    setEditingInProgress(true);
+    
+    try {
+      await catalogAPI.update(editingProduct.id, {
+        price,
+        description: editDescription.trim()
+      });
+      
+      setProducts(prev => prev.map(p => {
+        if (p.id === editingProduct.id) {
+          return {
+            ...p,
+            price,
+            description: editDescription.trim()
+          };
+        }
+        return p;
+      }));
+      
+      toast.success("Product updated successfully");
+      setEditDialogOpen(false);
+      setEditingProduct(null);
+      setEditPrice("");
+      setEditDescription("");
+    } catch (error) {
+      console.error("Error updating product:", error);
+      toast.error("Failed to update product. Please check your connection.");
+    } finally {
+      setEditingInProgress(false);
+    }
+  };
+
   return (
     <div className="space-y-10">
       <section>
@@ -573,6 +633,13 @@ export default function AdminCatalog() {
                             ₦{prod.price.toFixed(2)}
                           </Badge>
                           <button
+                            onClick={() => openEditDialog(prod)}
+                            className="bg-purple-50 dark:bg-purple-950 rounded-lg p-2 hover:bg-purple-100 dark:hover:bg-purple-900 text-purple-600 dark:text-purple-400 transition-colors"
+                            aria-label="Edit product"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </button>
+                          <button
                             onClick={() => openSerialDialog(prod)}
                             className="bg-blue-50 dark:bg-blue-950 rounded-lg p-2 hover:bg-blue-100 dark:hover:bg-blue-900 text-blue-600 dark:text-blue-400 transition-colors"
                             aria-label="Manage serial numbers"
@@ -705,6 +772,68 @@ export default function AdminCatalog() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSerialDialogOpen(false)}>
               Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Product Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="h-5 w-5 text-purple-600" />
+              Edit Product - {editingProduct?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Update the price and description for this product.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Price (₦)</label>
+              <Input
+                type="number"
+                placeholder="Enter price"
+                value={editPrice}
+                onChange={(e) => setEditPrice(e.target.value)}
+                min="0"
+                step="0.01"
+                className="font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Description</label>
+              <Textarea
+                placeholder="Enter product description"
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setEditDialogOpen(false);
+                setEditingProduct(null);
+                setEditPrice("");
+                setEditDescription("");
+              }}
+              disabled={editingInProgress}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleUpdateProduct}
+              disabled={editingInProgress}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              {editingInProgress ? "Updating..." : "Update Product"}
             </Button>
           </DialogFooter>
         </DialogContent>
