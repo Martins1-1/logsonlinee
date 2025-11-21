@@ -6,7 +6,7 @@ import CartsTable from "../components/admin/CartsTable";
 import { useEffect, useState } from "react";
 import AdminCatalog from "@/components/admin/AdminCatalog";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { Menu, X, Users, CreditCard, ShoppingCart, Package, LogOut } from "lucide-react";
+import { Menu, X, Users, CreditCard, History, Package, LogOut } from "lucide-react";
 
 const Admin = () => {
   // Read token on mount to avoid SSR/window issues
@@ -91,8 +91,8 @@ const Admin = () => {
                   onClick={() => setView("carts")}
                   className={view === "carts" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}
                 >
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Carts
+                  <History className="h-4 w-4 mr-2" />
+                  Buy History
                 </Button>
                 <Button 
                   variant={view === "catalog" ? "default" : "ghost"} 
@@ -141,8 +141,8 @@ const Admin = () => {
               onClick={() => handleViewChange("carts")}
               className={`w-full justify-start ${view === "carts" ? "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700" : "dark:text-gray-300 dark:hover:bg-gray-800"}`}
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
-              Carts
+              <History className="h-4 w-4 mr-2" />
+              Buy History
             </Button>
             <Button 
               variant={view === "catalog" ? "default" : "ghost"} 
