@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Trash2, AlertCircle, Plus, Minus } from "lucide-react";
+import { Trash2, AlertCircle, Plus, Minus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,6 +33,7 @@ export default function UsersTable({ token }: { token: string }) {
   const [adjustingUserId, setAdjustingUserId] = useState<string | null>(null);
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjusting, setAdjusting] = useState(false);
+  const [searchEmail, setSearchEmail] = useState("");
 
   const fetchUsers = () => {
     setLoading(true);
@@ -114,27 +115,60 @@ export default function UsersTable({ token }: { token: string }) {
   if (error) return <div className="p-4 text-center text-red-600 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900">Error: {error}</div>;
   if (!users || users.length === 0) return <div className="p-4 text-center text-gray-600 dark:text-gray-400">No users found.</div>;
 
+  // Filter users based on search email
+  const filteredUsers = searchEmail
+    ? users.filter((u) => u.email.toLowerCase().includes(searchEmail.toLowerCase()))
+    : users;
+
   return (
     <>
       <div className="space-y-4">
         <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
-          Registered Users ({users.length})
+          Registered Users ({filteredUsers.length}{searchEmail ? ` of ${users.length}` : ''})
         </h2>
-        <div className="overflow-x-auto rounded-xl border-2 border-gray-200 dark:border-gray-800">
-          <table className="w-full table-auto border-collapse min-w-[700px]">
-            <thead className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
-              <tr className="text-left">
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">ID</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Email</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Name</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Balance</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Adjust Wallet</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Payments</th>
-                <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((u) => (
+        
+        {/* Search Bar */}
+        <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-800">
+          <Search className="w-5 h-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by user email..."
+            value={searchEmail}
+            onChange={(e) => setSearchEmail(e.target.value)}
+            className="flex-1 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+          {searchEmail && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchEmail("")}
+              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              Clear
+            </Button>
+          )}
+        </div>
+
+        {filteredUsers.length === 0 ? (
+          <div className="p-8 text-center text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-800">
+            No users found{searchEmail ? ` for "${searchEmail}"` : ""}.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-xl border-2 border-gray-200 dark:border-gray-800">
+            <table className="w-full table-auto border-collapse min-w-[700px]">
+              <thead className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30">
+                <tr className="text-left">
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">ID</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Email</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Name</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Balance</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Adjust Wallet</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Payments</th>
+                  <th className="p-3 md:p-4 text-sm md:text-base text-gray-700 dark:text-gray-300 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => (
                 <tr key={u._id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="p-3 md:p-4 text-xs md:text-sm text-gray-800 dark:text-gray-200 font-mono break-all">{u._id}</td>
                   <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{u.email}</td>
@@ -178,6 +212,7 @@ export default function UsersTable({ token }: { token: string }) {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
       {/* Delete Confirmation Dialog */}
