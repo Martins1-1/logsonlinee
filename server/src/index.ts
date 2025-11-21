@@ -596,6 +596,48 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
   }
 });
 
+// Credit Ercas payment (client-side confirmation when redirected back with status=PAID&transRef=...)
+app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
+  try {
+    const { userId, transRef, status, amount } = req.body as { userId?: string; transRef?: string; status?: string; amount?: number };
+    if (!userId || !transRef || !status) return res.status(400).json({ error: "Missing fields" });
+    if (status !== "PAID") return res.status(400).json({ error: "Status not PAID" });
+    if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
+
+    // Find existing payment by transactionReference or create new
+    let payment = await Payment.findOne({ transactionReference: transRef }).exec();
+    if (!payment) {
+      payment = await Payment.create({
+        user: userId,
+        amount,
+        method: "ercas",
+        status: "completed",
+        transactionReference: transRef,
+        reference: transRef, // mirror for easier lookups
+        isCredited: false,
+      });
+    } else {
+      // Update status if needed
+      payment.status = "completed";
+    }
+
+    let newBalance: number | undefined = undefined;
+    if (!payment.isCredited && payment.user) {
+      const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: amount } }, { new: true }).exec();
+      if (updatedUser) {
+        newBalance = updatedUser.balance || 0;
+        payment.isCredited = true;
+      }
+      await payment.save();
+    }
+
+    res.json({ ok: true, credited: payment.isCredited, amount, newBalance });
+  } catch (err) {
+    console.error("Ercas credit error", err);
+    res.status(500).json({ error: "Failed to credit Ercas payment" });
+  }
+});
+
 // Verify Paystack transaction
 // Robust verification endpoint: accepts path or various query param names (reference, pref, ref, transRef)
 app.get("/api/payments/verify/:reference?", async (req: Request, res: Response) => {

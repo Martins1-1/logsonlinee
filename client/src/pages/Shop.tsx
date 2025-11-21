@@ -319,6 +319,57 @@ const Shop = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     let pref = params.get("pref");
+    const ercasStatus = params.get("status");
+    const ercasTransRef = params.get("transRef");
+
+    // Handle Ercas redirect first (status=PAID & transRef present, no pref)
+    if (!pref && ercasStatus === "PAID" && ercasTransRef) {
+      (async () => {
+        setIsVerifyingTopup(true);
+        try {
+          const storedRaw = localStorage.getItem("latest_topup");
+          let amount: number | undefined = undefined;
+          if (storedRaw) {
+            try {
+              const parsed = JSON.parse(storedRaw) as { amount?: number };
+              amount = parsed.amount;
+            } catch { /* ignore */ }
+          }
+          if (!amount) {
+            toast.error("Unable to determine top-up amount for Ercas payment.");
+            return;
+          }
+          const creditRes = await apiFetch("/api/payments/ercas/credit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: user!.id, transRef: ercasTransRef, status: ercasStatus, amount }),
+          });
+          const { ok, credited, newBalance } = creditRes as { ok: boolean; credited: boolean; newBalance?: number };
+          if (ok && credited) {
+            const updatedUser: User = { ...user!, balance: newBalance ?? (user!.balance || 0) + amount };
+            setUser(updatedUser);
+            localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+            toast.success(`₦${amount.toFixed(2)} added to your wallet!`);
+            // Cleanup URL params
+            const url = new URL(window.location.href);
+            url.searchParams.delete("status");
+            url.searchParams.delete("transRef");
+            window.history.replaceState({}, "", url.toString());
+            localStorage.removeItem("latest_topup");
+          } else if (ok && !credited) {
+            toast.info("Payment already credited.");
+          } else {
+            toast.error("Failed to credit Ercas payment.");
+          }
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : "Unknown Ercas credit error";
+          toast.error(`Ercas credit error: ${msg}`);
+        } finally {
+          setIsVerifyingTopup(false);
+        }
+      })();
+      return; // Skip Paystack flow
+    }
     if (!pref) return;
     // Clean pref if provider appended extra query like '?reference='
     if (pref.includes('?') || pref.includes('&')) {
