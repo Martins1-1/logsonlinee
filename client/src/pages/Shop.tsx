@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
+import { Banknote } from "lucide-react";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
@@ -57,6 +58,17 @@ const Shop = () => {
   const [isCreatingTopup, setIsCreatingTopup] = useState(false);
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
+  const [showDepositHistory, setShowDepositHistory] = useState(false);
+  const [depositHistory, setDepositHistory] = useState<any[]>([]);
+  // Fetch deposit history (payments)
+  const loadDepositHistory = async (userId: string) => {
+    try {
+      const res = await apiFetch(`/api/payments/user/${userId}`);
+      setDepositHistory(res as any[]);
+    } catch (e) {
+      setDepositHistory([]);
+    }
+  };
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(true);
@@ -102,7 +114,35 @@ const Shop = () => {
     } catch { /* ignore cache errors */ }
 
     // Load products/categories (parallel) and then purchase history (deferred)
-    loadProductsAndHistory(parsedUser.id);
+  loadProductsAndHistory(parsedUser.id);
+  loadDepositHistory(parsedUser.id);
+  // Deposit history modal
+  const DepositHistoryModal = () => (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm ${showDepositHistory ? '' : 'hidden'}`}>
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-green-600" /> Deposits</h2>
+          <button onClick={() => setShowDepositHistory(false)} className="text-gray-500 hover:text-red-500 text-xl">&times;</button>
+        </div>
+        <div className="max-h-80 overflow-y-auto">
+          {depositHistory.length === 0 ? (
+            <div className="text-gray-500 text-center py-8">No deposits found.</div>
+          ) : (
+            <ul className="divide-y divide-gray-200 dark:divide-gray-800">
+              {depositHistory.map((d, i) => (
+                <li key={d._id || i} className="py-3 flex flex-col gap-1">
+                  <span className="font-semibold text-green-700 dark:text-green-400">₦{d.amount?.toFixed(2)}</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-400">{d.method?.toUpperCase()} • {d.status?.toUpperCase()}</span>
+                  <span className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
+                  {d.reference && <span className="text-xs text-gray-400">Ref: {d.reference}</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
+  );
   }, [navigate]);
 
   const loadProductsAndHistory = async (userId: string) => {
@@ -498,6 +538,40 @@ const Shop = () => {
               <CardHeader className="pb-3 md:pb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 md:gap-3">
+                    <button
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                      title="View deposit history"
+                      onClick={() => setShowDepositHistory(true)}
+                    >
+                      <Banknote className="w-6 h-6 text-white" />
+                    </button>
+      {/* Deposit history modal component inline */}
+      {showDepositHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-green-600" /> Deposits</h2>
+              <button onClick={() => setShowDepositHistory(false)} className="text-gray-500 hover:text-red-500 text-xl">&times;</button>
+            </div>
+            <div className="max-h-80 overflow-y-auto">
+              {depositHistory.length === 0 ? (
+                <div className="text-gray-500 text-center py-8">No deposits found.</div>
+              ) : (
+                <ul className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {depositHistory.map((d, i) => (
+                    <li key={d._id || i} className="py-3 flex flex-col gap-1">
+                      <span className="font-semibold text-green-700 dark:text-green-400">₦{d.amount?.toFixed(2)}</span>
+                      <span className="text-xs text-gray-600 dark:text-gray-400">{d.method?.toUpperCase()} • {d.status?.toUpperCase()}</span>
+                      <span className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
+                      {d.reference && <span className="text-xs text-gray-400">Ref: {d.reference}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
                     <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
                       <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
                     </div>
