@@ -347,9 +347,9 @@ const Shop = () => {
           const creditRes = await apiFetch("/api/payments/ercas/credit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user!.id, transRef: ercasTransRef, status: ercasStatus, amount }),
+            body: JSON.stringify({ userId: user!.id, email: user!.email, transRef: ercasTransRef, status: ercasStatus, amount }),
           });
-          const { ok, credited, newBalance, amount: backendAmount, error } = creditRes as { ok: boolean; credited: boolean; newBalance?: number; amount?: number; error?: string };
+          const { ok, credited, newBalance, amount: backendAmount, error, creditedUserId } = creditRes as { ok: boolean; credited: boolean; newBalance?: number; amount?: number; error?: string; creditedUserId?: string };
           if (ok && credited) {
             const finalAmount = backendAmount ?? amount ?? 0;
             const updatedUser: User = { ...user!, balance: newBalance ?? (user!.balance || 0) + finalAmount };

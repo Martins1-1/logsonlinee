@@ -599,7 +599,7 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
 // Credit Ercas payment (client-side confirmation when redirected back with status=PAID&transRef=...)
 app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
   try {
-    const { userId, transRef, status, amount } = req.body as { userId?: string; transRef?: string; status?: string; amount?: number };
+    const { userId, email, transRef, status, amount } = req.body as { userId?: string; email?: string; transRef?: string; status?: string; amount?: number };
     if (!userId || !transRef || !status) return res.status(400).json({ error: "Missing fields" });
     if (status !== "PAID") return res.status(400).json({ error: "Status not PAID" });
 
@@ -608,20 +608,26 @@ app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
     let resolvedAmount = amount;
 
     if (!payment && (!resolvedAmount || resolvedAmount <= 0)) {
-      // Try find latest pending ercas payment for user within last 30 minutes as fallback
+      // Try find latest pending ercas payment (any status except completed) for user within last 30 minutes
       const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const pending = await Payment.findOne({ user: userId, method: "ercas", status: { $in: ["pending", "initiated"] }, createdAt: { $gte: thirtyMinsAgo } }).sort({ createdAt: -1 }).exec();
+      const pending = await Payment.findOne({ user: userId, method: "ercas", status: { $nin: ["completed", "failed"] }, createdAt: { $gte: thirtyMinsAgo } }).sort({ createdAt: -1 }).exec();
       if (pending) {
         payment = pending;
         resolvedAmount = pending.amount;
       }
     }
 
+    // Resolve real user document (handle case where userId is not a Mongo ObjectId but a local id)
+    let realUser = await User.findById(userId).exec();
+    if (!realUser && email) {
+      realUser = await User.findOne({ email }).exec();
+    }
+
     if (!payment) {
       // Create new payment record if still not found; must have amount
       if (!resolvedAmount || resolvedAmount <= 0) return res.status(400).json({ error: "Invalid or unknown amount" });
       payment = await Payment.create({
-        user: userId,
+        user: realUser?._id,
         amount: resolvedAmount,
         method: "ercas",
         status: "completed",
@@ -638,8 +644,9 @@ app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
     }
 
     let newBalance: number | undefined = undefined;
-    if (!payment.isCredited && payment.user) {
-      const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: resolvedAmount } }, { new: true }).exec();
+    if (!payment.isCredited && (payment.user || realUser)) {
+      const targetUserId = payment.user || realUser?._id;
+      const updatedUser = targetUserId ? await User.findByIdAndUpdate(targetUserId, { $inc: { balance: resolvedAmount } }, { new: true }).exec() : null;
       if (updatedUser) {
         newBalance = updatedUser.balance || 0;
         payment.isCredited = true;
@@ -647,7 +654,7 @@ app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
       await payment.save();
     }
 
-    res.json({ ok: true, credited: payment.isCredited, amount: resolvedAmount, newBalance });
+    res.json({ ok: true, credited: payment.isCredited, amount: resolvedAmount, newBalance, creditedUserId: (payment.user || realUser?._id) });
   } catch (err) {
     console.error("Ercas credit error", err);
     res.status(500).json({ error: "Failed to credit Ercas payment" });
