@@ -228,10 +228,63 @@ app.delete("/api/users/:id", requireAdmin, async (req: Request, res: Response) =
   }
 });
 
+// Adjust user balance (admin only - for manual cash payments)
+app.post("/api/users/:id/adjust-balance", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const { amount } = req.body;
+    
+    if (typeof amount !== 'number' || amount === 0) {
+      return res.status(400).json({ error: "Invalid amount" });
+    }
+    
+    const user = await User.findById(id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+    
+    // Update balance
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $inc: { balance: amount } },
+      { new: true }
+    );
+    
+    // Create a payment record for tracking
+    await Payment.create({
+      user: id,
+      amount: Math.abs(amount),
+      method: "cash",
+      status: "completed",
+      reference: `MANUAL_${Date.now()}`,
+      isCredited: true,
+    });
+    
+    res.json({ 
+      ok: true, 
+      message: `Balance ${amount > 0 ? 'increased' : 'decreased'} successfully`,
+      newBalance: updatedUser?.balance || 0
+    });
+  } catch (err) {
+    console.error("Error adjusting balance:", err);
+    res.status(500).json({ error: "Failed to adjust balance" });
+  }
+});
+
 // Payments
 app.get("/api/payments", requireAdmin, async (req: Request, res: Response) => {
   const payments = await Payment.find().populate("user").lean();
   res.json(payments);
+});
+
+// Get payments for a specific user
+app.get("/api/payments/user/:userId", async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const payments = await Payment.find({ user: userId }).sort({ createdAt: -1 }).lean();
+    res.json(payments);
+  } catch (err) {
+    console.error("Error fetching user payments:", err);
+    res.status(500).json({ error: "Failed to fetch payments" });
+  }
 });
 
 app.delete("/api/payments/:id", requireAdmin, async (req: Request, res: Response) => {
