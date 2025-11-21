@@ -602,28 +602,44 @@ app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
     const { userId, transRef, status, amount } = req.body as { userId?: string; transRef?: string; status?: string; amount?: number };
     if (!userId || !transRef || !status) return res.status(400).json({ error: "Missing fields" });
     if (status !== "PAID") return res.status(400).json({ error: "Status not PAID" });
-    if (!amount || amount <= 0) return res.status(400).json({ error: "Invalid amount" });
 
-    // Find existing payment by transactionReference or create new
+    // Attempt to find existing payment first
     let payment = await Payment.findOne({ transactionReference: transRef }).exec();
+    let resolvedAmount = amount;
+
+    if (!payment && (!resolvedAmount || resolvedAmount <= 0)) {
+      // Try find latest pending ercas payment for user within last 30 minutes as fallback
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const pending = await Payment.findOne({ user: userId, method: "ercas", status: { $in: ["pending", "initiated"] }, createdAt: { $gte: thirtyMinsAgo } }).sort({ createdAt: -1 }).exec();
+      if (pending) {
+        payment = pending;
+        resolvedAmount = pending.amount;
+      }
+    }
+
     if (!payment) {
+      // Create new payment record if still not found; must have amount
+      if (!resolvedAmount || resolvedAmount <= 0) return res.status(400).json({ error: "Invalid or unknown amount" });
       payment = await Payment.create({
         user: userId,
-        amount,
+        amount: resolvedAmount,
         method: "ercas",
         status: "completed",
         transactionReference: transRef,
-        reference: transRef, // mirror for easier lookups
+        reference: transRef,
         isCredited: false,
       });
     } else {
-      // Update status if needed
+      // Ensure status is completed and sync transactionReference/reference if missing
       payment.status = "completed";
+      if (!payment.transactionReference) payment.transactionReference = transRef;
+      if (!payment.reference) payment.reference = transRef;
+      if (!resolvedAmount || resolvedAmount <= 0) resolvedAmount = payment.amount;
     }
 
     let newBalance: number | undefined = undefined;
     if (!payment.isCredited && payment.user) {
-      const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: amount } }, { new: true }).exec();
+      const updatedUser = await User.findByIdAndUpdate(payment.user, { $inc: { balance: resolvedAmount } }, { new: true }).exec();
       if (updatedUser) {
         newBalance = updatedUser.balance || 0;
         payment.isCredited = true;
@@ -631,7 +647,7 @@ app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
       await payment.save();
     }
 
-    res.json({ ok: true, credited: payment.isCredited, amount, newBalance });
+    res.json({ ok: true, credited: payment.isCredited, amount: resolvedAmount, newBalance });
   } catch (err) {
     console.error("Ercas credit error", err);
     res.status(500).json({ error: "Failed to credit Ercas payment" });

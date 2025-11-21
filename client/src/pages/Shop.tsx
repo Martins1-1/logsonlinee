@@ -284,7 +284,8 @@ const Shop = () => {
           currency: "NGN",
           userId: user!.id,
           email: user!.email,
-          callbackUrl: `${window.location.origin}/shop`,
+          // Include amount in callback so we can recover if localStorage missing
+          callbackUrl: `${window.location.origin}/shop?ercasAmount=${amount}`,
         }),
       });
 
@@ -320,7 +321,8 @@ const Shop = () => {
     const params = new URLSearchParams(window.location.search);
     let pref = params.get("pref");
     const ercasStatus = params.get("status");
-    const ercasTransRef = params.get("transRef");
+  const ercasTransRef = params.get("transRef");
+  const ercasAmountParam = params.get("ercasAmount");
 
     // Handle Ercas redirect first (status=PAID & transRef present, no pref)
     if (!pref && ercasStatus === "PAID" && ercasTransRef) {
@@ -329,37 +331,42 @@ const Shop = () => {
         try {
           const storedRaw = localStorage.getItem("latest_topup");
           let amount: number | undefined = undefined;
+          // Prefer localStorage
           if (storedRaw) {
             try {
               const parsed = JSON.parse(storedRaw) as { amount?: number };
               amount = parsed.amount;
             } catch { /* ignore */ }
           }
-          if (!amount) {
-            toast.error("Unable to determine top-up amount for Ercas payment.");
-            return;
+          // Fallback to query param
+          if ((!amount || amount <= 0) && ercasAmountParam) {
+            const parsed = parseFloat(ercasAmountParam);
+            if (!isNaN(parsed) && parsed > 0) amount = parsed;
           }
+          // If still missing, we'll let backend attempt recovery without amount
           const creditRes = await apiFetch("/api/payments/ercas/credit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: user!.id, transRef: ercasTransRef, status: ercasStatus, amount }),
           });
-          const { ok, credited, newBalance } = creditRes as { ok: boolean; credited: boolean; newBalance?: number };
+          const { ok, credited, newBalance, amount: backendAmount, error } = creditRes as { ok: boolean; credited: boolean; newBalance?: number; amount?: number; error?: string };
           if (ok && credited) {
-            const updatedUser: User = { ...user!, balance: newBalance ?? (user!.balance || 0) + amount };
+            const finalAmount = backendAmount ?? amount ?? 0;
+            const updatedUser: User = { ...user!, balance: newBalance ?? (user!.balance || 0) + finalAmount };
             setUser(updatedUser);
             localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-            toast.success(`₦${amount.toFixed(2)} added to your wallet!`);
+            toast.success(`₦${finalAmount.toFixed(2)} added to your wallet!`);
             // Cleanup URL params
             const url = new URL(window.location.href);
             url.searchParams.delete("status");
             url.searchParams.delete("transRef");
+            url.searchParams.delete("ercasAmount");
             window.history.replaceState({}, "", url.toString());
             localStorage.removeItem("latest_topup");
           } else if (ok && !credited) {
             toast.info("Payment already credited.");
           } else {
-            toast.error("Failed to credit Ercas payment.");
+            toast.error(`Failed to credit Ercas payment${error ? ": " + error : ""}.`);
           }
         } catch (e) {
           const msg = e instanceof Error ? e.message : "Unknown Ercas credit error";
@@ -391,7 +398,16 @@ const Shop = () => {
             // Ignore JSON parse errors
           }
         }
-        let res: any;
+        // Response shape from verification endpoints
+        type VerifyResponse = {
+          status: string;
+          amount: number;
+          newBalance?: number;
+          alreadyCredited?: boolean;
+          paymentFound?: boolean;
+          details?: unknown;
+        };
+        let res: VerifyResponse | undefined;
         try {
           // Primary attempt: path param
           res = await apiFetch(`/api/payments/verify/${encodeURIComponent(referenceForVerify)}`);
@@ -399,7 +415,8 @@ const Shop = () => {
           // Fallback: query param style
           res = await apiFetch(`/api/payments/verify?reference=${encodeURIComponent(referenceForVerify)}`);
         }
-        const { status, amount, newBalance, alreadyCredited, paymentFound, details } = res as { status: string; amount: number; newBalance?: number; alreadyCredited?: boolean; paymentFound?: boolean; details?: any };
+  if (!res) throw new Error("Empty verification response");
+  const { status, amount, newBalance, alreadyCredited, paymentFound, details } = res;
 
         if (status === "success" || status === "completed") {
           const creditedAmount = amount || 0;
