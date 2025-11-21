@@ -66,6 +66,7 @@ export default function AdminCatalog() {
   const [newSerial, setNewSerial] = useState("");
   const [showImportBanner, setShowImportBanner] = useState(false);
   const [importCount, setImportCount] = useState(0);
+  const [uploadingCSV, setUploadingCSV] = useState(false);
 
   // Edit product state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -347,6 +348,88 @@ export default function AdminCatalog() {
       console.error("Error adding serial number:", error);
       toast.error("Failed to add serial number. Please check your connection.");
     }
+  };
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (!selectedProduct) {
+      toast.error("No product selected");
+      return;
+    }
+
+    // Check file type
+    if (!file.name.endsWith('.csv')) {
+      toast.error("Please upload a CSV file");
+      return;
+    }
+
+    setUploadingCSV(true);
+    const reader = new FileReader();
+    
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const lines = text.split(/\r?\n/).filter(line => line.trim());
+        
+        // Parse CSV - expect each line to be a serial number
+        const newSerials: SerialNumber[] = [];
+        
+        for (const line of lines) {
+          const serial = line.trim();
+          if (serial) {
+            // Check if serial already exists
+            const exists = (selectedProduct.serialNumbers || []).some(s => s.serial === serial);
+            if (!exists && !newSerials.some(s => s.serial === serial)) {
+              newSerials.push({
+                id: crypto.randomUUID(),
+                serial: serial,
+                isUsed: false,
+              });
+            }
+          }
+        }
+
+        if (newSerials.length === 0) {
+          toast.info("No new serial numbers to add (duplicates or empty file)");
+          setUploadingCSV(false);
+          return;
+        }
+
+        const updatedSerials = [...(selectedProduct.serialNumbers || []), ...newSerials];
+        
+        await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
+        
+        setProducts(prev => prev.map(p => {
+          if (p.id === selectedProduct.id) {
+            return {
+              ...p,
+              serialNumbers: updatedSerials
+            };
+          }
+          return p;
+        }));
+
+        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+        toast.success(`${newSerials.length} serial numbers added from CSV`);
+        
+        // Reset file input
+        e.target.value = '';
+      } catch (error) {
+        console.error("Error processing CSV:", error);
+        toast.error("Failed to process CSV file. Please check the format.");
+      } finally {
+        setUploadingCSV(false);
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Failed to read CSV file");
+      setUploadingCSV(false);
+    };
+
+    reader.readAsText(file);
   };
 
   const removeSerialNumber = async (productId: string, serialId: string) => {
@@ -688,18 +771,42 @@ export default function AdminCatalog() {
 
           <div className="space-y-4">
             {/* Add Serial Form */}
-            <div className="flex gap-2">
-              <Input
-                placeholder="Enter serial number"
-                value={newSerial}
-                onChange={(e) => setNewSerial(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addSerialNumber()}
-                className="font-mono"
-              />
-              <Button onClick={addSerialNumber} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4 mr-2" />
-                Add
-              </Button>
+            <div className="space-y-3">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter serial number"
+                  value={newSerial}
+                  onChange={(e) => setNewSerial(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addSerialNumber()}
+                  className="font-mono"
+                />
+                <Button onClick={addSerialNumber} className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add
+                </Button>
+              </div>
+
+              {/* CSV Upload */}
+              <div className="flex items-center gap-2 p-3 bg-purple-50 dark:bg-purple-950/30 rounded-lg border-2 border-purple-200 dark:border-purple-800">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-purple-900 dark:text-purple-300">Bulk Upload</p>
+                  <p className="text-xs text-purple-700 dark:text-purple-400">Upload a CSV file with one serial number per line</p>
+                </div>
+                <label htmlFor="csv-upload" className={`cursor-pointer ${uploadingCSV ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                  <input
+                    id="csv-upload"
+                    type="file"
+                    accept=".csv"
+                    onChange={handleCSVUpload}
+                    disabled={uploadingCSV}
+                    className="hidden"
+                  />
+                  <div className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-purple-600 text-white hover:bg-purple-700 h-10 px-4 py-2">
+                    <Database className="h-4 w-4 mr-2" />
+                    {uploadingCSV ? "Uploading..." : "Upload CSV"}
+                  </div>
+                </label>
+              </div>
             </div>
 
             {/* Serial Numbers List */}
