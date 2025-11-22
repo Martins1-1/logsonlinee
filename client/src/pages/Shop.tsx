@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote, ChevronDown, History } from "lucide-react";
+import { Banknote, ChevronDown, History, Copy } from "lucide-react";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
@@ -633,7 +633,24 @@ const Shop = () => {
                 <div className="text-gray-800">{purchaseSummaryData.quantity}</div>
               </div>
               <div>
-                <div className="font-semibold text-gray-700 mb-1">Serial Number{purchaseSummaryData.serials.length > 1 ? 's' : ''}:</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="font-semibold text-gray-700">Serial Number{purchaseSummaryData.serials.length > 1 ? 's' : ''}:</div>
+                  {purchaseSummaryData.serials.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => {
+                        const allSerials = purchaseSummaryData.serials.join('\n');
+                        navigator.clipboard.writeText(allSerials);
+                        toast.success(`${purchaseSummaryData.serials.length} serials copied!`);
+                      }}
+                    >
+                      <Copy className="h-3 w-3 mr-1" />
+                      Copy All Serials
+                    </Button>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {purchaseSummaryData.serials.map((serial, idx) => (
                     <div key={serial} className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1">
