@@ -709,6 +709,33 @@ app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Respons
   }
 });
 
+// Delete a purchase history entry (user-owned)
+app.delete("/api/purchase-history/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+
+    if (!id || !userId) {
+      return res.status(400).json({ error: "Missing id or userId" });
+    }
+
+    const record = await PurchaseHistory.findById(id).exec();
+    if (!record) {
+      return res.status(404).json({ error: "Record not found" });
+    }
+
+    if (record.userId.toString() !== userId) {
+      return res.status(403).json({ error: "Not authorized to delete this record" });
+    }
+
+    await record.deleteOne();
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error deleting purchase history entry:", err);
+    res.status(500).json({ error: "Failed to delete purchase history entry" });
+  }
+});
+
 // Health check
 app.get("/api/health", (req: Request, res: Response) => {
   console.log("Health check endpoint hit");

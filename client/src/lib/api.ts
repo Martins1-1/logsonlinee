@@ -161,6 +161,13 @@ export const purchaseHistoryAPI = {
       body: JSON.stringify(data),
     });
   },
+  
+  // Delete a purchase history entry (user-owned)
+  async delete(recordId: string, userId: string): Promise<{ success: boolean }> {
+    return apiFetch(`/api/purchase-history/${recordId}?userId=${encodeURIComponent(userId)}` , {
+      method: 'DELETE'
+    });
+  }
 };
 
 // ======== CATALOG CATEGORIES API ========

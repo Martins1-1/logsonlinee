@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
 import { Banknote, ChevronDown, History } from "lucide-react";
-import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
+import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus, Trash2 } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
 interface SerialNumber {
@@ -1132,9 +1132,39 @@ const Shop = () => {
                             ₦{(item.price * item.quantity).toFixed(2)}
                           </Badge>
                         </div>
-                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none mb-1">
-                          {item.category}
-                        </Badge>
+                        <div className="flex items-center justify-between mb-1">
+                          <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none">
+                            {item.category}
+                          </Badge>
+                          <button
+                            aria-label="Delete purchase history entry"
+                            title="Delete entry"
+                            onClick={async () => {
+                              if (!user) return;
+                              const confirmDelete = window.confirm('Delete this purchase entry? This action cannot be undone.');
+                              if (!confirmDelete) return;
+                              try {
+                                // We need the record id; assume backend returns _id stored as item.recordId
+                                // Attempt to derive record id; extend typing inline without using 'any'
+                                const recordLike: { recordId?: string; _id?: string } = item as unknown as { recordId?: string; _id?: string };
+                                const recordId = recordLike.recordId || recordLike._id;
+                                if (!recordId) {
+                                  toast.error('Unable to delete: missing record id');
+                                  return;
+                                }
+                                await purchaseHistoryAPI.delete(recordId, user.id);
+                                setPurchaseHistory(prev => prev.filter((ph, i) => i !== index));
+                                toast.success('Purchase history entry deleted');
+                              } catch (e) {
+                                console.error(e);
+                                toast.error('Failed to delete entry');
+                              }
+                            }}
+                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
+                          </button>
+                        </div>
                         <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
                           {item.description}
                         </p>
