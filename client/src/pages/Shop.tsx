@@ -31,6 +31,7 @@ interface Product {
 }
 
 interface PurchaseHistoryItem extends Product {
+  _id: string; // MongoDB id for deletion/restore
   purchaseDate: string;
   quantity: number;
   assignedSerials?: string[]; // Array of serial numbers assigned to this purchase
@@ -85,6 +86,10 @@ const Shop = () => {
     }
   };
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
+  const [purchasePage, setPurchasePage] = useState(1);
+  const [purchaseTotalPages, setPurchaseTotalPages] = useState(1);
+  const PURCHASE_LIMIT = 10;
+  const [loadingMorePurchases, setLoadingMorePurchases] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(true);
   
@@ -298,9 +303,12 @@ const Shop = () => {
       });
       setProducts(updatedProducts);
       
-      // Reload purchase history
-      const history = await purchaseHistoryAPI.getByUserId(user.id);
-      setPurchaseHistory(history.map(h => ({
+      // Reload purchase history (page 1)
+      const historyPage = await purchaseHistoryAPI.getByUserId(user.id, 1, PURCHASE_LIMIT);
+      setPurchasePage(historyPage.page);
+      setPurchaseTotalPages(historyPage.totalPages);
+      setPurchaseHistory(historyPage.items.map(h => ({
+        _id: (h as unknown as { _id: string })._id,
         id: h.productId,
         name: h.name,
         description: h.description,
@@ -1146,15 +1154,34 @@ const Shop = () => {
                               try {
                                 // We need the record id; assume backend returns _id stored as item.recordId
                                 // Attempt to derive record id; extend typing inline without using 'any'
-                                const recordLike: { recordId?: string; _id?: string } = item as unknown as { recordId?: string; _id?: string };
-                                const recordId = recordLike.recordId || recordLike._id;
+                                const recordId = item._id;
                                 if (!recordId) {
                                   toast.error('Unable to delete: missing record id');
                                   return;
                                 }
-                                await purchaseHistoryAPI.delete(recordId, user.id);
-                                setPurchaseHistory(prev => prev.filter((ph, i) => i !== index));
-                                toast.success('Purchase history entry deleted');
+                                  const snapshot = item; // preserve for undo
+                                  await purchaseHistoryAPI.delete(recordId, user.id);
+                                  setPurchaseHistory(prev => prev.filter((ph) => ph._id !== recordId));
+                                  toast.success('Entry deleted', {
+                                    action: {
+                                      label: 'Undo',
+                                      onClick: async () => {
+                                        try {
+                                          await purchaseHistoryAPI.restore(recordId, user.id);
+                                          // Reinsert at original index
+                                          setPurchaseHistory(prev => {
+                                            const updated = [...prev];
+                                            updated.splice(index, 0, snapshot);
+                                            return updated;
+                                          });
+                                          toast.success('Restored');
+                                        } catch (e) {
+                                          toast.error('Failed to restore');
+                                        }
+                                      }
+                                    },
+                                    duration: 5000
+                                  });
                               } catch (e) {
                                 console.error(e);
                                 toast.error('Failed to delete entry');
@@ -1201,7 +1228,45 @@ const Shop = () => {
             )}
           </div>
           
-          <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
+          <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0 flex flex-col gap-2">
+            {purchasePage < purchaseTotalPages && (
+              <Button
+                disabled={loadingMorePurchases}
+                onClick={async () => {
+                  if (!user) return;
+                  setLoadingMorePurchases(true);
+                  try {
+                    const nextPage = purchasePage + 1;
+                    const historyPage = await purchaseHistoryAPI.getByUserId(user.id, nextPage, PURCHASE_LIMIT);
+                    setPurchasePage(historyPage.page);
+                    setPurchaseTotalPages(historyPage.totalPages);
+                    setPurchaseHistory(prev => ([
+                      ...prev,
+                      ...historyPage.items.map(h => ({
+                        _id: (h as unknown as { _id: string })._id,
+                        id: h.productId,
+                        name: h.name,
+                        description: h.description,
+                        price: h.price,
+                        image: h.image,
+                        category: h.category,
+                        quantity: h.quantity,
+                        assignedSerials: h.assignedSerials,
+                        purchaseDate: h.purchaseDate.toString()
+                      }))
+                    ]));
+                  } catch (e) {
+                    toast.error('Failed to load more');
+                  } finally {
+                    setLoadingMorePurchases(false);
+                  }
+                }}
+                className="w-full h-9 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 text-gray-800 dark:text-gray-100 hover:from-gray-300 hover:to-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500"
+                variant="secondary"
+              >
+                {loadingMorePurchases ? 'Loading...' : 'Load More'}
+              </Button>
+            )}
             <Button
               onClick={() => setShowPurchaseHistory(false)}
               className="w-full h-10 md:h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"

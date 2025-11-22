@@ -584,8 +584,17 @@ app.delete("/api/catalog-categories/:id", requireAdmin, async (req: Request, res
 app.get("/api/purchase-history/:userId", async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const history = await PurchaseHistory.find({ userId }).sort({ purchaseDate: -1 }).lean();
-    res.json(history);
+    const page = parseInt((req.query.page as string) || "1", 10);
+    const limit = parseInt((req.query.limit as string) || "10", 10);
+    const query = { userId, softDeleted: { $ne: true } } as any;
+    const totalCount = await PurchaseHistory.countDocuments(query);
+    const items = await PurchaseHistory.find(query)
+      .sort({ purchaseDate: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    res.json({ items, page, totalPages, totalCount });
   } catch (err) {
     console.error("Error fetching purchase history:", err);
     res.status(500).json({ error: "Failed to fetch purchase history" });
@@ -610,6 +619,7 @@ app.post("/api/purchase-history", async (req: Request, res: Response) => {
       category,
       quantity,
       assignedSerials: assignedSerials || [],
+      softDeleted: false
     });
     await purchase.save();
     res.json(purchase);
@@ -701,8 +711,17 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
 // Get all purchase history (admin only)
 app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Response) => {
   try {
-    const history = await PurchaseHistory.find().sort({ purchaseDate: -1 }).lean();
-    res.json(history);
+    const page = parseInt((req.query.page as string) || "1", 10);
+    const limit = parseInt((req.query.limit as string) || "20", 10);
+    const query: any = { softDeleted: { $ne: true } };
+    const totalCount = await PurchaseHistory.countDocuments(query);
+    const items = await PurchaseHistory.find(query)
+      .sort({ purchaseDate: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+    res.json({ items, page, totalPages, totalCount });
   } catch (err) {
     console.error("Error fetching all purchase history:", err);
     res.status(500).json({ error: "Failed to fetch purchase history" });
@@ -714,25 +733,38 @@ app.delete("/api/purchase-history/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { userId } = req.query;
-
-    if (!id || !userId) {
-      return res.status(400).json({ error: "Missing id or userId" });
-    }
-
+    if (!id || !userId) return res.status(400).json({ error: "Missing id or userId" });
     const record = await PurchaseHistory.findById(id).exec();
-    if (!record) {
-      return res.status(404).json({ error: "Record not found" });
-    }
-
-    if (record.userId.toString() !== userId) {
-      return res.status(403).json({ error: "Not authorized to delete this record" });
-    }
-
-    await record.deleteOne();
+    if (!record) return res.status(404).json({ error: "Record not found" });
+    if (record.userId.toString() !== userId) return res.status(403).json({ error: "Not authorized" });
+    if (record.softDeleted) return res.json({ success: true });
+    record.softDeleted = true;
+    record.deletedAt = new Date();
+    await record.save();
     res.json({ success: true });
   } catch (err) {
-    console.error("Error deleting purchase history entry:", err);
+    console.error("Error soft-deleting purchase history entry:", err);
     res.status(500).json({ error: "Failed to delete purchase history entry" });
+  }
+});
+
+// Restore a soft-deleted purchase history entry
+app.patch("/api/purchase-history/:id/restore", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { userId } = req.query;
+    if (!id || !userId) return res.status(400).json({ error: "Missing id or userId" });
+    const record = await PurchaseHistory.findById(id).exec();
+    if (!record) return res.status(404).json({ error: "Record not found" });
+    if (record.userId.toString() !== userId) return res.status(403).json({ error: "Not authorized" });
+    if (!record.softDeleted) return res.json({ success: true });
+    record.softDeleted = false;
+    record.deletedAt = undefined;
+    await record.save();
+    res.json({ success: true, restored: record });
+  } catch (err) {
+    console.error("Error restoring purchase history entry:", err);
+    res.status(500).json({ error: "Failed to restore purchase history entry" });
   }
 });
 

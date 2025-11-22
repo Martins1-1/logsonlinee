@@ -119,9 +119,9 @@ export const catalogAPI = {
 // ======== PURCHASE HISTORY API ========
 
 export const purchaseHistoryAPI = {
-  // Get purchase history for a user
-  async getByUserId(userId: string): Promise<PurchaseHistoryItem[]> {
-    return apiFetch(`/api/purchase-history/${userId}`);
+  // Get purchase history for a user (paginated)
+  async getByUserId(userId: string, page: number = 1, limit: number = 10): Promise<{ items: PurchaseHistoryItem[]; page: number; totalPages: number; totalCount: number }> {
+    return apiFetch(`/api/purchase-history/${userId}?page=${page}&limit=${limit}`);
   },
 
   // Create a purchase history entry
@@ -135,10 +135,10 @@ export const purchaseHistoryAPI = {
     });
   },
 
-  // Get all purchase history (admin only)
-  async getAll(): Promise<PurchaseHistoryItem[]> {
+  // Get all purchase history (admin only, paginated)
+  async getAll(page: number = 1, limit: number = 20): Promise<{ items: PurchaseHistoryItem[]; page: number; totalPages: number; totalCount: number }> {
     const token = getAdminToken();
-    return apiFetch('/api/purchase-history', {
+    return apiFetch(`/api/purchase-history?page=${page}&limit=${limit}`, {
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
@@ -166,6 +166,11 @@ export const purchaseHistoryAPI = {
   async delete(recordId: string, userId: string): Promise<{ success: boolean }> {
     return apiFetch(`/api/purchase-history/${recordId}?userId=${encodeURIComponent(userId)}` , {
       method: 'DELETE'
+    });
+  },
+  async restore(recordId: string, userId: string): Promise<{ success: boolean; restored?: PurchaseHistoryItem }> {
+    return apiFetch(`/api/purchase-history/${recordId}/restore?userId=${encodeURIComponent(userId)}` , {
+      method: 'PATCH'
     });
   }
 };

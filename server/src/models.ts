@@ -100,6 +100,8 @@ export interface IPurchaseHistory extends Document {
   quantity: number;
   assignedSerials: string[];
   purchaseDate: Date;
+  softDeleted?: boolean;
+  deletedAt?: Date;
 }
 
 // Catalog Category interface
@@ -209,6 +211,8 @@ const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
   quantity: { type: Number, required: true },
   assignedSerials: { type: [String], default: [] },
   purchaseDate: { type: Date, default: Date.now },
+  softDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date }
 });
 
 export const Cart = mongoose.model<ICart>("Cart", CartSchema);
