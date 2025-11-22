@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from "lucide-react";
+import { History } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
@@ -82,7 +82,7 @@ const Navbar = ({ isShopPage = false, cartItemCount = 0, onCartClick }: NavbarPr
               <div className="relative group cursor-pointer" onClick={onCartClick}>
                 <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-md group-hover:blur-lg transition-all duration-300"></div>
                 <div className="relative w-12 h-12 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                  <ShoppingCart className="h-6 w-6 text-white" />
+                  <History className="h-6 w-6 text-white" />
                   {cartItemCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-gradient-to-br from-pink-500 to-red-500 text-white text-xs font-bold rounded-full h-6 w-6 flex items-center justify-center shadow-lg animate-pulse">
                       {cartItemCount}

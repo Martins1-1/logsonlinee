@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote, ChevronDown } from "lucide-react";
+import { Banknote, ChevronDown, History } from "lucide-react";
 import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
