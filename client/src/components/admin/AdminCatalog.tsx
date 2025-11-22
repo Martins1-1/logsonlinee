@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2, ChevronDown } from "lucide-react";
+import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2, ChevronDown, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -67,6 +67,7 @@ export default function AdminCatalog() {
   const [showImportBanner, setShowImportBanner] = useState(false);
   const [importCount, setImportCount] = useState(0);
   const [uploadingCSV, setUploadingCSV] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Edit product state
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -109,10 +110,17 @@ export default function AdminCatalog() {
     return isExpanded ? products : [];
   };
 
-  // Fetch products from MongoDB on mount
+  // Fetch products from MongoDB on mount and poll for updates
   useEffect(() => {
     loadProducts();
     loadCategories();
+    
+    // Auto-refresh every 30 seconds to show updated serial states after purchases
+    const interval = setInterval(() => {
+      loadProducts();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadProducts = async () => {
@@ -140,7 +148,14 @@ export default function AdminCatalog() {
       toast.error("Failed to load products from database");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await loadProducts();
+    toast.success("Products refreshed");
   };
 
   const importLocalProducts = async () => {
@@ -555,12 +570,24 @@ export default function AdminCatalog() {
       <section>
         <Card className="bg-white/90 backdrop-blur border-2 border-white/60 shadow-xl">
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center"><Database className="h-6 w-6 text-white" /></div>
-              <div>
-                <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Catalog Manager</CardTitle>
-                <CardDescription>Manage categories and products stored locally</CardDescription>
+            <div className="flex items-center gap-3 justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center"><Database className="h-6 w-6 text-white" /></div>
+                <div>
+                  <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Catalog Manager</CardTitle>
+                  <CardDescription>Manage categories and products stored locally</CardDescription>
+                </div>
               </div>
+              <Button
+                onClick={handleManualRefresh}
+                disabled={refreshing || loading}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-8">
@@ -698,12 +725,12 @@ export default function AdminCatalog() {
                           <h4 className="font-bold text-base mb-0.5 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate">{prod.name}</h4>
                           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">{prod.description}</p>
                           <div className="flex gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-green-50 text-green-700 border-green-200">
+                            <Badge variant="outline" className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
                               <Hash className="h-3 w-3 mr-1" />
                               {availableSerials} Available
                             </Badge>
                             {usedSerials > 0 && (
-                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200">
+                              <Badge variant="outline" className="text-xs px-2 py-0.5 bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700">
                                 {usedSerials} Used
                               </Badge>
                             )}
