@@ -784,7 +784,7 @@ const Shop = () => {
                                           </Badge>
                                         )}
                                         {availableStock === 0 && (
-                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                          <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                                             Out of stock
                                           </Badge>
                                         )}
@@ -797,6 +797,13 @@ const Shop = () => {
                                       <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                                         ₦{product.price.toFixed(2)}
                                       </p>
+                                      {availableStock === 0 && (
+                                        <div className="mt-0.5">
+                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                            Out of stock
+                                          </Badge>
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
 
