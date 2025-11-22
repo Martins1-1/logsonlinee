@@ -794,7 +794,7 @@ const Shop = () => {
                                     
                                     {/* Price (Mobile - Right Side) */}
                                     <div className="text-right flex-shrink-0 md:hidden">
-                                      <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                      <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                                         ₦{product.price.toFixed(2)}
                                       </p>
                                     </div>
