@@ -643,11 +643,11 @@ const Shop = () => {
                       onClick={() => {
                         const allSerials = purchaseSummaryData.serials.join('\n');
                         navigator.clipboard.writeText(allSerials);
-                        toast.success(`${purchaseSummaryData.serials.length} serials copied!`);
+                        toast.success(`${purchaseSummaryData.serials.length} logs copied!`);
                       }}
                     >
                       <Copy className="h-3 w-3 mr-1" />
-                      Copy All Serials
+                      Copy All Logs
                     </Button>
                   )}
                 </div>
