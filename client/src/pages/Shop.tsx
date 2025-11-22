@@ -699,12 +699,12 @@ const Shop = () => {
             href="https://chat.whatsapp.com/Jyr22tl4NNA6GJ5dXIpAlv?mode=wwt" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="block relative overflow-hidden rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800 hover:border-blue-400 transition-colors"
+            className="block relative overflow-hidden rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800 hover:border-blue-400 transition-colors mx-auto w-3/4 md:w-full"
           >
             <img
               src={bannerImg}
               alt="Premium products banner"
-              className="w-full h-24 md:h-44 object-cover select-none"
+              className="w-full h-7 md:h-44 object-cover select-none"
               draggable={false}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-blue-900/20 via-purple-900/20 to-pink-900/20 mix-blend-multiply"></div>
