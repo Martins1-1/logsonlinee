@@ -662,20 +662,35 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
     await purchase.save();
     console.log("Purchase history created successfully");
 
-    // Update product serial numbers if provided (only for catalog products with MongoDB ObjectId)
+    // Update product serial numbers if provided (support both _id and custom id field)
+    let updatedCatalogProduct: any = null;
     if (serialUpdates && serialUpdates.length > 0) {
       console.log("Updating product serial numbers...");
-      // Check if productId is a valid MongoDB ObjectId (not a UUID)
       const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(productId);
-      if (isValidObjectId) {
-        await CatalogProduct.findByIdAndUpdate(
-          productId,
-          { serialNumbers: serialUpdates },
-          { new: true }
-        ).exec();
-        console.log("Serial numbers updated successfully for catalog product");
-      } else {
-        console.log("Skipping serial update for non-catalog product (UUID-based)");
+      try {
+        if (isValidObjectId) {
+          // Try _id first
+          updatedCatalogProduct = await CatalogProduct.findByIdAndUpdate(
+            productId,
+            { serialNumbers: serialUpdates },
+            { new: true }
+          ).exec();
+        }
+        // If not valid ObjectId or not found via _id, fall back to custom id field
+        if (!updatedCatalogProduct) {
+          updatedCatalogProduct = await CatalogProduct.findOneAndUpdate(
+            { id: productId },
+            { serialNumbers: serialUpdates },
+            { new: true }
+          ).exec();
+        }
+        if (updatedCatalogProduct) {
+          console.log("Serial numbers updated successfully for catalog product", updatedCatalogProduct.id || updatedCatalogProduct._id);
+        } else {
+          console.log("Catalog product not found for serial update", productId);
+        }
+      } catch (e) {
+        console.error("Error updating serial numbers", e);
       }
     }
 
@@ -691,7 +706,11 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
     res.json({
       success: true,
       newBalance: updatedUser?.balance || 0,
-      purchase
+      purchase,
+      updatedProduct: updatedCatalogProduct ? {
+        id: updatedCatalogProduct.id || updatedCatalogProduct._id?.toString(),
+        serialNumbers: updatedCatalogProduct.serialNumbers || []
+      } : null
     });
   } catch (err) {
     console.error("Error completing purchase:", err);

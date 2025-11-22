@@ -153,7 +153,7 @@ export const purchaseHistoryAPI = {
     quantity: number;
     serialUpdates?: SerialNumber[];
     purchaseData: Omit<PurchaseHistoryItem, 'purchaseDate'>;
-  }): Promise<{ success: boolean; newBalance: number; purchase: PurchaseHistoryItem }> {
+  }): Promise<{ success: boolean; newBalance: number; purchase: PurchaseHistoryItem; updatedProduct?: { id: string; serialNumbers?: SerialNumber[] } | null }> {
     return apiFetch('/api/purchase/complete', {
       method: 'POST',
       headers: {

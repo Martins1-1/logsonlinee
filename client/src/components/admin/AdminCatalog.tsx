@@ -816,7 +816,7 @@ export default function AdminCatalog() {
                   Serial Numbers ({selectedProduct?.serialNumbers?.length || 0})
                 </h4>
                 <div className="flex gap-2 text-xs">
-                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                     {selectedProduct?.serialNumbers?.filter(s => !s.isUsed).length || 0} Available
                   </Badge>
                   <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
@@ -836,7 +836,7 @@ export default function AdminCatalog() {
                     className={`flex items-center justify-between p-3 rounded-lg border-2 ${
                       serial.isUsed
                         ? "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                        : "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                        : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"
                     }`}
                   >
                     <div className="flex-1">
@@ -851,7 +851,7 @@ export default function AdminCatalog() {
                       {serial.isUsed ? (
                         <Badge className="bg-gray-500">Used</Badge>
                       ) : (
-                        <Badge className="bg-green-600">Available</Badge>
+                        <Badge className="bg-blue-600">Available</Badge>
                       )}
                       <Button
                         variant="ghost"

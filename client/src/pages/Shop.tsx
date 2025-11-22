@@ -286,12 +286,13 @@ const Shop = () => {
       const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
       localStorage.setItem("users", JSON.stringify(updatedUsers));
 
-      // Update local products state
+      // Update local products state using backend authoritative serialNumbers if provided
+      const backendSerials = result.updatedProduct?.serialNumbers;
       const updatedProducts = products.map(p => {
         if (p.id === selectedProduct.id) {
           return {
             ...p,
-            serialNumbers: updatedSerials
+            serialNumbers: backendSerials && backendSerials.length > 0 ? backendSerials : updatedSerials
           };
         }
         return p;
