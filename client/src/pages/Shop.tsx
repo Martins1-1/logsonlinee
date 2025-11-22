@@ -254,15 +254,13 @@ const Shop = () => {
         return s;
       });
 
-      // Check if productId is a valid MongoDB ObjectId (24 hex characters)
-      const isMongoDBProduct = /^[0-9a-fA-F]{24}$/.test(selectedProduct.id);
-
       // Complete purchase via backend (deducts balance, updates product, creates history)
+      // Backend handles both MongoDB _id and custom UUID id fields, so always send serialUpdates
       const result = await purchaseHistoryAPI.completePurchase({
         userId: user.id,
         productId: selectedProduct.id,
         quantity: purchaseQuantity,
-        serialUpdates: isMongoDBProduct ? updatedSerials : undefined,
+        serialUpdates: updatedSerials,
         purchaseData: {
           userId: user.id,
           email: user.email,
