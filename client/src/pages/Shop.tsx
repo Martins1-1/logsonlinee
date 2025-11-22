@@ -87,9 +87,18 @@ const Shop = () => {
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(true);
-  
   // Categories from API
   const [categories, setCategories] = useState<string[]>(["All"]);
+
+  // New: Purchase summary dialog state
+  const [showPurchaseSummaryDialog, setShowPurchaseSummaryDialog] = useState(false);
+  const [purchaseSummaryData, setPurchaseSummaryData] = useState<{
+    product: Product | null;
+    quantity: number;
+    serials: string[];
+    balanceBefore: number;
+    balanceAfter: number;
+  } | null>(null);
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -220,6 +229,7 @@ const Shop = () => {
     if (!selectedProduct || !user) return;
 
     const totalPrice = selectedProduct.price * purchaseQuantity;
+    const balanceBefore = user.balance || 0;
 
     if (!user.balance || user.balance < totalPrice) {
       toast.error("Insufficient balance. Please add funds to your wallet.");
@@ -310,8 +320,17 @@ const Shop = () => {
         assignedSerials: h.assignedSerials,
         purchaseDate: h.purchaseDate.toString()
       })));
-      
-      toast.success(`Purchase successful! ₦${totalPrice.toFixed(2)} deducted. Check Purchase History for your serial number${purchaseQuantity > 1 ? 's' : ''}.`);
+
+      // Show purchase summary dialog
+      setPurchaseSummaryData({
+        product: selectedProduct,
+        quantity: purchaseQuantity,
+        serials: assignedSerialNumbers,
+        balanceBefore,
+        balanceAfter: result.newBalance
+      });
+      setShowPurchaseSummaryDialog(true);
+
       setShowBuyDialog(false);
       setSelectedProduct(null);
       setPurchaseQuantity(1);
@@ -583,7 +602,67 @@ const Shop = () => {
         cartItemCount={purchaseHistory.length} 
         onCartClick={() => setShowPurchaseHistory(true)}
       />
-      
+
+      {/* Purchase Summary Dialog */}
+      <Dialog open={showPurchaseSummaryDialog} onOpenChange={setShowPurchaseSummaryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BadgeCheck className="h-5 w-5 text-green-600" />
+              Purchase Successful
+            </DialogTitle>
+            <DialogDescription>
+              Your order has been completed. Below is your transaction summary and serial number(s).
+            </DialogDescription>
+          </DialogHeader>
+          {purchaseSummaryData && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <img src={purchaseSummaryData.product?.image} alt={purchaseSummaryData.product?.name} className="w-16 h-16 rounded-lg object-contain border" />
+                <div>
+                  <div className="font-bold text-lg">{purchaseSummaryData.product?.name}</div>
+                  <div className="text-sm text-gray-500">{purchaseSummaryData.product?.category}</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div className="font-semibold text-gray-700">Wallet Before:</div>
+                <div className="text-gray-800">₦{purchaseSummaryData.balanceBefore.toFixed(2)}</div>
+                <div className="font-semibold text-gray-700">Wallet After:</div>
+                <div className="text-gray-800">₦{purchaseSummaryData.balanceAfter.toFixed(2)}</div>
+                <div className="font-semibold text-gray-700">Quantity:</div>
+                <div className="text-gray-800">{purchaseSummaryData.quantity}</div>
+              </div>
+              <div>
+                <div className="font-semibold text-gray-700 mb-1">Serial Number{purchaseSummaryData.serials.length > 1 ? 's' : ''}:</div>
+                <div className="space-y-2">
+                  {purchaseSummaryData.serials.map((serial, idx) => (
+                    <div key={serial} className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1">
+                      <span className="font-mono text-sm text-blue-700">{serial}</span>
+                      <button
+                        type="button"
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        onClick={() => {
+                          navigator.clipboard.writeText(serial);
+                          toast.success('Serial copied!');
+                        }}
+                        aria-label="Copy serial"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-8-4h8M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPurchaseSummaryDialog(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="pt-24 relative z-10">
         <div className="px-6">
           <div className="container mx-auto">
