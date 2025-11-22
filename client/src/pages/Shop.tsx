@@ -966,8 +966,8 @@ const Shop = () => {
 
       {/* Buy Confirmation Dialog */}
       <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-4 md:p-6">
-          <DialogHeader className="pb-2 md:pb-4">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-3 md:p-4">
+          <DialogHeader className="pb-1 md:pb-2">
             <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
               Confirm Purchase
             </DialogTitle>
@@ -977,20 +977,20 @@ const Shop = () => {
           </DialogHeader>
           
           {selectedProduct && (
-            <div className="space-y-3 md:space-y-4 py-2 md:py-4">
+            <div className="space-y-2 md:space-y-3 py-1 md:py-2">
               {/* Product Image */}
               <div className="flex justify-center">
-                <div className="relative overflow-hidden rounded-xl shadow-lg">
+                <div className="relative overflow-hidden rounded-xl shadow-md">
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
-                    className="w-32 h-32 md:w-48 md:h-48 object-cover rounded-xl"
+                    className="w-24 h-24 md:w-36 md:h-36 object-cover rounded-xl"
                   />
                 </div>
               </div>
               
               {/* Product Details */}
-              <div className="space-y-2 md:space-y-3">
+              <div className="space-y-2 md:space-y-2">
                 <div>
                   <h3 className="text-base md:text-xl font-bold text-gray-900 dark:text-gray-100 mb-1">
                     {selectedProduct.name}
@@ -1004,7 +1004,7 @@ const Shop = () => {
                   {selectedProduct.description}
                 </p>
                 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-800">
                   <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Unit Price:</span>
                   <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-blue-500 to-blue-400 font-bold">
                     ₦{selectedProduct.price}
@@ -1043,7 +1043,7 @@ const Shop = () => {
                   {((selectedProduct.serialNumbers || []).filter(s => !s.isUsed).length)} units available
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
+                <div className="flex items-center justify-between pt-1 border-t border-gray-200 dark:border-gray-800">
                   <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Total:</span>
                   <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-purple-500 to-pink-500 font-bold">
                     ₦{(selectedProduct.price * purchaseQuantity).toFixed(2)}
@@ -1059,7 +1059,7 @@ const Shop = () => {
               </div>
               
               {/* Confirmation Message */}
-              <div className="bg-blue-50 dark:bg-blue-950/30 p-3 md:p-4 rounded-lg border border-blue-200 dark:border-blue-900">
+              <div className="bg-blue-50 dark:bg-blue-950/30 p-2 md:p-3 rounded-lg border border-blue-200 dark:border-blue-900">
                 <p className="text-center text-xs md:text-sm font-medium text-blue-900 dark:text-blue-300">
                   Do you want to pay for {purchaseQuantity} {purchaseQuantity === 1 ? 'item' : 'items'}?
                 </p>
@@ -1067,7 +1067,7 @@ const Shop = () => {
             </div>
           )}
           
-          <DialogFooter className="flex flex-row gap-2 md:gap-3 pt-2 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
+          <DialogFooter className="flex flex-row gap-2 md:gap-3 pt-2 md:pt-3 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-3 md:-mx-4 px-3 md:px-4 pb-0">
             <Button
               variant="outline"
               onClick={handleCancelPurchase}
