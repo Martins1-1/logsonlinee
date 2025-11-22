@@ -809,12 +809,12 @@ const Shop = () => {
 
                                   {/* Description (Mobile Full Width) */}
                                   <div className="px-3 pb-3 md:hidden">
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">{product.description}</p>
                                   </div>
 
                                   {/* Desktop Layout: Description, Price, Button */}
                                   <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 flex-1">{product.description}</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 flex-1">{product.description}</p>
                                     <div className="text-right flex-shrink-0">
                                       <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                                         ₦{product.price.toFixed(2)}
@@ -923,12 +923,12 @@ const Shop = () => {
 
                               {/* Description (Mobile Full Width) */}
                               <div className="px-3 pb-3 md:hidden">
-                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">{product.description}</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-3">{product.description}</p>
                               </div>
 
                               {/* Desktop Layout: Description, Price, Button */}
                               <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 flex-1">{product.description}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 flex-1">{product.description}</p>
                                 <div className="text-right flex-shrink-0">
                                   <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
                                     ₦{product.price.toFixed(2)}
