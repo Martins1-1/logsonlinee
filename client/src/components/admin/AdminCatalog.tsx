@@ -329,6 +329,13 @@ export default function AdminCatalog() {
       return;
     }
 
+    // Check if admin is logged in
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      toast.error("Admin session expired. Please login again.");
+      return;
+    }
+
     // Check if serial already exists in this product
     if (selectedProduct.serialNumbers?.some(s => s.serial === newSerial.trim())) {
       toast.error("Serial number already exists");
@@ -361,7 +368,8 @@ export default function AdminCatalog() {
       toast.success("Serial number added");
     } catch (error) {
       console.error("Error adding serial number:", error);
-      toast.error("Failed to add serial number. Please check your connection.");
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to add serial number: ${errorMsg}`);
     }
   };
 
@@ -371,6 +379,13 @@ export default function AdminCatalog() {
     
     if (!selectedProduct) {
       toast.error("No product selected");
+      return;
+    }
+
+    // Check if admin is logged in
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      toast.error("Admin session expired. Please login again.");
       return;
     }
 
@@ -433,7 +448,8 @@ export default function AdminCatalog() {
         e.target.value = '';
       } catch (error) {
         console.error("Error processing CSV:", error);
-        toast.error("Failed to process CSV file. Please check the format.");
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        toast.error(`Failed to process CSV: ${errorMsg}`);
       } finally {
         setUploadingCSV(false);
       }
