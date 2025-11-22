@@ -685,21 +685,9 @@ const Shop = () => {
         <div className="px-6">
           <div className="container mx-auto">
             {/* Banner Section with Welcome Badge overlay */}
-            <div className="relative mb-10 animate-in fade-in slide-in-from-top duration-500">
-              <div className="relative overflow-hidden rounded-3xl shadow-2xl border-2 border-white/60 dark:border-gray-800">
-                <img
-                  src={bannerImg}
-                  alt="Premium products banner"
-                  className="w-full h-48 md:h-64 object-cover select-none"
-                  draggable={false}
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/30 via-purple-900/30 to-pink-900/30 mix-blend-multiply"></div>
-                <h1 className="absolute bottom-4 left-6 text-3xl md:text-5xl font-extrabold text-white drop-shadow-lg tracking-tight">
-                  Shop Premium Products
-                </h1>
-              </div>
+            <div className="relative mb-6 animate-in fade-in slide-in-from-top duration-500">
               {/* Welcome badge positioned slightly above banner */}
-              <div className="absolute -top-5 right-4 md:right-6">
+              <div className="absolute -top-4 right-4 md:right-6 z-10">
                 <div className="flex items-center gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl px-4 py-2 rounded-full shadow-xl border-2 border-white/70 dark:border-gray-700">
                   <span className="text-sm md:text-base text-gray-700 dark:text-gray-300 font-medium">
                     {user.name || user.email.split('@')[0]}
@@ -708,6 +696,21 @@ const Shop = () => {
                   <span className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
                 </div>
               </div>
+              
+              <div className="relative overflow-hidden rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800">
+                <img
+                  src={bannerImg}
+                  alt="Premium products banner"
+                  className="w-full h-32 md:h-48 object-cover select-none"
+                  draggable={false}
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-900/20 via-purple-900/20 to-pink-900/20 mix-blend-multiply"></div>
+              </div>
+              
+              {/* Title moved below banner */}
+              <h1 className="mt-6 text-center text-3xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 tracking-tight">
+                Shop Premium Products
+              </h1>
             </div>
             
             {/* Header Section (subtitle only now, main title moved into banner) */}
