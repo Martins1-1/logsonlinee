@@ -616,7 +616,7 @@ const Shop = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 md:gap-3">
                     <button
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+                      className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
                       title="View deposit history"
                       onClick={() => setShowDepositHistory(true)}
                     >
@@ -627,7 +627,7 @@ const Shop = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-green-600" /> Deposits</h2>
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-blue-600" /> Deposits</h2>
               <button onClick={() => setShowDepositHistory(false)} className="text-gray-500 hover:text-red-500 text-xl">&times;</button>
             </div>
             <div className="max-h-80 overflow-y-auto">
@@ -637,7 +637,7 @@ const Shop = () => {
                 <ul className="divide-y divide-gray-200 dark:divide-gray-800">
                   {depositHistory.map((d, i) => (
                     <li key={d._id || i} className="py-3 flex flex-col gap-1">
-                      <span className="font-semibold text-green-700 dark:text-green-400">₦{d.amount?.toFixed(2)}</span>
+                      <span className="font-semibold text-blue-700 dark:text-blue-400">₦{d.amount?.toFixed(2)}</span>
                       <span className="text-xs text-gray-600 dark:text-gray-400">{d.method?.toUpperCase()} • {d.status?.toUpperCase()}</span>
                       <span className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
                       {d.reference && <span className="text-xs text-gray-400">Ref: {d.reference}</span>}
@@ -654,7 +654,7 @@ const Shop = () => {
                     </div>
                     <div>
                       <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
-                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-green-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
+                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
                     </div>
                   </div>
                   <Button 
@@ -779,7 +779,7 @@ const Shop = () => {
                                           {product.category}
                                         </Badge>
                                         {availableStock > 0 && (
-                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
                                             {availableStock} in stock
                                           </Badge>
                                         )}
@@ -794,7 +794,7 @@ const Shop = () => {
                                     
                                     {/* Price (Mobile - Right Side) */}
                                     <div className="text-right flex-shrink-0 md:hidden">
-                                      <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                      <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                         ₦{product.price.toFixed(2)}
                                       </p>
                                       {availableStock === 0 && (
@@ -816,7 +816,7 @@ const Shop = () => {
                                   <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
                                     <div className="text-right flex-shrink-0">
-                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                         ₦{product.price.toFixed(2)}
                                       </p>
                                     </div>
@@ -827,7 +827,7 @@ const Shop = () => {
                                     <Button 
                                       onClick={() => handleBuyClick(product)}
                                       disabled={availableStock === 0}
-                                      className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                      className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
                                     >
                                       <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                                       {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
@@ -900,7 +900,7 @@ const Shop = () => {
                                       {product.category}
                                     </Badge>
                                     {availableStock > 0 && (
-                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800">
+                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
                                         {availableStock} in stock
                                       </Badge>
                                     )}
@@ -915,7 +915,7 @@ const Shop = () => {
                                 
                                 {/* Price (Mobile - Right Side) */}
                                 <div className="text-right flex-shrink-0 md:hidden">
-                                  <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                  <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                     ₦{product.price.toFixed(2)}
                                   </p>
                                 </div>
@@ -930,7 +930,7 @@ const Shop = () => {
                               <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
                                 <div className="text-right flex-shrink-0">
-                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600 dark:from-green-400 dark:to-emerald-400">
+                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                     ₦{product.price.toFixed(2)}
                                   </p>
                                 </div>
@@ -941,7 +941,7 @@ const Shop = () => {
                                 <Button 
                                   onClick={() => handleBuyClick(product)}
                                   disabled={availableStock === 0}
-                                  className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                  className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
                                 >
                                   <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
                                   {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
@@ -1006,7 +1006,7 @@ const Shop = () => {
                 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-200 dark:border-gray-800">
                   <span className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Unit Price:</span>
-                  <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-green-500 to-emerald-500 font-bold">
+                  <Badge className="text-sm md:text-lg px-3 md:px-4 py-1 md:py-2 bg-gradient-to-r from-blue-500 to-blue-400 font-bold">
                     ₦{selectedProduct.price}
                   </Badge>
                 </div>
@@ -1052,7 +1052,7 @@ const Shop = () => {
                 
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
-                  <span className="text-xs md:text-sm font-bold text-green-600 dark:text-green-400">
+                  <span className="text-xs md:text-sm font-bold text-blue-600 dark:text-blue-400">
                     ₦{(user?.balance || 0).toFixed(2)}
                   </span>
                 </div>
@@ -1128,7 +1128,7 @@ const Shop = () => {
                           <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
                             {item.name} {item.quantity > 1 && `(x${item.quantity})`}
                           </h4>
-                          <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 font-bold whitespace-nowrap flex-shrink-0">
+                          <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-blue-500 to-blue-400 font-bold whitespace-nowrap flex-shrink-0">
                             ₦{(item.price * item.quantity).toFixed(2)}
                           </Badge>
                         </div>
@@ -1188,7 +1188,7 @@ const Shop = () => {
           href="https://chat.whatsapp.com/Jyr22tl4NNA6GJ5dXIpAlv?mode=wwt"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl hover:scale-110 transition-all duration-300"
+          className="flex items-center justify-center w-14 h-14 bg-blue-500 hover:bg-blue-600 text-white rounded-full shadow-2xl hover:scale-110 transition-all duration-300"
           aria-label="Contact us on WhatsApp"
         >
           <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
