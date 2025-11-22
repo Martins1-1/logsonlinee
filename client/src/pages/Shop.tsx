@@ -254,12 +254,15 @@ const Shop = () => {
         return s;
       });
 
+      // Check if productId is a valid MongoDB ObjectId (24 hex characters)
+      const isMongoDBProduct = /^[0-9a-fA-F]{24}$/.test(selectedProduct.id);
+
       // Complete purchase via backend (deducts balance, updates product, creates history)
       const result = await purchaseHistoryAPI.completePurchase({
         userId: user.id,
         productId: selectedProduct.id,
         quantity: purchaseQuantity,
-        serialUpdates: !['1', '2', '3', '4'].includes(selectedProduct.id) ? updatedSerials : undefined,
+        serialUpdates: isMongoDBProduct ? updatedSerials : undefined,
         purchaseData: {
           userId: user.id,
           email: user.email,

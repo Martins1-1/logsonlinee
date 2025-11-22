@@ -661,15 +661,21 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
     await purchase.save();
     console.log("Purchase history created successfully");
 
-    // Update product serial numbers if provided (only for catalog products)
+    // Update product serial numbers if provided (only for catalog products with MongoDB ObjectId)
     if (serialUpdates && serialUpdates.length > 0) {
       console.log("Updating product serial numbers...");
-      await CatalogProduct.findByIdAndUpdate(
-        productId,
-        { serialNumbers: serialUpdates },
-        { new: true }
-      ).exec();
-      console.log("Serial numbers updated successfully");
+      // Check if productId is a valid MongoDB ObjectId (not a UUID)
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(productId);
+      if (isValidObjectId) {
+        await CatalogProduct.findByIdAndUpdate(
+          productId,
+          { serialNumbers: serialUpdates },
+          { new: true }
+        ).exec();
+        console.log("Serial numbers updated successfully for catalog product");
+      } else {
+        console.log("Skipping serial update for non-catalog product (UUID-based)");
+      }
     }
 
     // Deduct balance from user last (after everything else succeeds)
