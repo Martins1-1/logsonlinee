@@ -56,7 +56,17 @@ export default function CartsTable({ token }: { token: string }) {
 
   if (loading) return <div className="p-4 text-center text-gray-600 dark:text-gray-400">Loading purchase history...</div>;
   if (error) return <div className="p-4 text-center text-red-600 bg-red-50 rounded-lg border border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-900">Error: {error}</div>;
-  if (!purchases || purchases.length === 0) return <div className="p-4 text-center text-gray-600 dark:text-gray-400">No purchase history found.</div>;
+  if (!purchases || purchases.length === 0) {
+    return (
+      <div className="p-4 text-center text-gray-600 dark:text-gray-400">
+        {searchEmail.trim().length > 0 ? (
+          <>No results for <span className="font-semibold">{searchEmail}</span>.</>
+        ) : (
+          <>No purchase history found.</>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
