@@ -1,21 +1,9 @@
 import { useEffect, useState } from "react";
-import { purchaseHistoryAPI } from "@/lib/api";
+import { purchaseHistoryAPI, type PurchaseHistory as ApiPurchaseHistory } from "@/lib/api";
 import { Search } from "lucide-react";
 
-type PurchaseHistory = {
-  _id: string;
-  userId: string;
-  email: string;
-  productId: string;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  quantity: number;
-  assignedSerials: string[];
-  purchaseDate: string;
-};
+// Align with API type to avoid mismatches
+type PurchaseHistory = ApiPurchaseHistory;
 
 export default function CartsTable({ token }: { token: string }) {
   const [purchases, setPurchases] = useState<PurchaseHistory[] | null>(null);
@@ -28,8 +16,8 @@ export default function CartsTable({ token }: { token: string }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await purchaseHistoryAPI.getAll(emailFilter);
-      setPurchases(data as PurchaseHistory[]);
+  const data = await purchaseHistoryAPI.getAll(emailFilter);
+  setPurchases(data);
     } catch (e) {
       setError(String(e));
     } finally {

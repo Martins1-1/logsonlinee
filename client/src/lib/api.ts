@@ -51,7 +51,9 @@ interface CatalogProduct {
   createdAt?: string; // Changed from Date to string
 }
 
-interface PurchaseHistoryItem {
+// Purchase history as returned by the backend
+export interface PurchaseHistory {
+  _id: string;
   userId: string;
   email: string;
   productId: string;
@@ -62,7 +64,8 @@ interface PurchaseHistoryItem {
   category: string;
   quantity: number;
   assignedSerials: string[];
-  purchaseDate: Date;
+  // Dates come over the wire as ISO strings
+  purchaseDate: string;
 }
 
 // Get admin token from localStorage
@@ -120,12 +123,12 @@ export const catalogAPI = {
 
 export const purchaseHistoryAPI = {
   // Get purchase history for a user
-  async getByUserId(userId: string): Promise<PurchaseHistoryItem[]> {
+  async getByUserId(userId: string): Promise<PurchaseHistory[]> {
     return apiFetch(`/api/purchase-history/${userId}`);
   },
 
   // Create a purchase history entry
-  async create(purchase: Omit<PurchaseHistoryItem, 'purchaseDate'>): Promise<PurchaseHistoryItem> {
+  async create(purchase: Omit<PurchaseHistory, '_id' | 'purchaseDate'>): Promise<PurchaseHistory> {
     return apiFetch('/api/purchase-history', {
       method: 'POST',
       headers: {
@@ -136,7 +139,7 @@ export const purchaseHistoryAPI = {
   },
 
   // Get all purchase history (admin only) with optional email search
-  async getAll(email?: string): Promise<PurchaseHistoryItem[]> {
+  async getAll(email?: string): Promise<PurchaseHistory[]> {
     const token = getAdminToken();
     const qs = email && email.trim().length > 0 ? `?email=${encodeURIComponent(email.trim())}` : "";
     return apiFetch(`/api/purchase-history${qs}`, {
@@ -152,8 +155,8 @@ export const purchaseHistoryAPI = {
     productId: string;
     quantity: number;
     serialUpdates?: SerialNumber[];
-    purchaseData: Omit<PurchaseHistoryItem, 'purchaseDate'>;
-  }): Promise<{ success: boolean; newBalance: number; purchase: PurchaseHistoryItem; updatedProduct?: { id: string; serialNumbers?: SerialNumber[] } | null }> {
+    purchaseData: Omit<PurchaseHistory, '_id' | 'purchaseDate'>;
+  }): Promise<{ success: boolean; newBalance: number; purchase: PurchaseHistory; updatedProduct?: { id: string; serialNumbers?: SerialNumber[] } | null }> {
     return apiFetch('/api/purchase/complete', {
       method: 'POST',
       headers: {
