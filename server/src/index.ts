@@ -779,64 +779,112 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
 app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
   try {
     const { userId, email, transRef, status, amount } = req.body as { userId?: string; email?: string; transRef?: string; status?: string; amount?: number };
-    if (!userId || !transRef || !status) return res.status(400).json({ error: "Missing fields" });
-    if (status !== "PAID") return res.status(400).json({ error: "Status not PAID" });
+    
+    if (!userId || !transRef || !status) {
+      return res.status(400).json({ ok: false, error: "Missing required fields" });
+    }
+    
+    if (status !== "PAID") {
+      return res.status(400).json({ ok: false, error: "Payment status is not PAID" });
+    }
 
-    // Attempt to find existing payment first
+    // First, check if this payment already exists and is credited
     let payment = await Payment.findOne({ transactionReference: transRef }).exec();
+    
+    if (payment && payment.isCredited) {
+      // Already credited - return success with existing balance
+      const user = await User.findById(payment.user).exec();
+      return res.json({ 
+        ok: true, 
+        credited: false, 
+        alreadyProcessed: true,
+        amount: payment.amount, 
+        newBalance: user?.balance,
+        message: "Payment already credited" 
+      });
+    }
+
+    // Resolve the user
+    let realUser = await User.findById(userId).exec();
+    if (!realUser && email) {
+      realUser = await User.findOne({ email }).exec();
+    }
+    
+    if (!realUser) {
+      return res.status(404).json({ ok: false, error: "User not found" });
+    }
+
     let resolvedAmount = amount;
 
-    if (!payment && (!resolvedAmount || resolvedAmount <= 0)) {
-      // Try find latest pending ercas payment (any status except completed) for user within last 30 minutes
+    // If no payment record exists, try to find a pending one
+    if (!payment) {
       const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const pending = await Payment.findOne({ user: userId, method: "ercas", status: { $nin: ["completed", "failed"] }, createdAt: { $gte: thirtyMinsAgo } }).sort({ createdAt: -1 }).exec();
+      const pending = await Payment.findOne({ 
+        user: realUser._id, 
+        method: "ercas", 
+        status: { $ne: "success" },
+        isCredited: false,
+        createdAt: { $gte: thirtyMinsAgo } 
+      }).sort({ createdAt: -1 }).exec();
+      
       if (pending) {
         payment = pending;
         resolvedAmount = pending.amount;
       }
     }
 
-    // Resolve real user document (handle case where userId is not a Mongo ObjectId but a local id)
-    let realUser = await User.findById(userId).exec();
-    if (!realUser && email) {
-      realUser = await User.findOne({ email }).exec();
-    }
-
+    // Create payment record if still not found
     if (!payment) {
-      // Create new payment record if still not found; must have amount
-      if (!resolvedAmount || resolvedAmount <= 0) return res.status(400).json({ error: "Invalid or unknown amount" });
-      payment = await Payment.create({
-        user: realUser?._id,
+      if (!resolvedAmount || resolvedAmount <= 0) {
+        return res.status(400).json({ ok: false, error: "Invalid or missing amount" });
+      }
+      
+      payment = new Payment({
+        user: realUser._id,
         amount: resolvedAmount,
         method: "ercas",
-        status: "completed",
+        status: "success",
         transactionReference: transRef,
         reference: transRef,
         isCredited: false,
       });
     } else {
-      // Ensure status is completed and sync transactionReference/reference if missing
-      payment.status = "completed";
-      if (!payment.transactionReference) payment.transactionReference = transRef;
-      if (!payment.reference) payment.reference = transRef;
-      if (!resolvedAmount || resolvedAmount <= 0) resolvedAmount = payment.amount;
-    }
-
-    let newBalance: number | undefined = undefined;
-    if (!payment.isCredited && (payment.user || realUser)) {
-      const targetUserId = payment.user || realUser?._id;
-      const updatedUser = targetUserId ? await User.findByIdAndUpdate(targetUserId, { $inc: { balance: resolvedAmount } }, { new: true }).exec() : null;
-      if (updatedUser) {
-        newBalance = updatedUser.balance || 0;
-        payment.isCredited = true;
+      // Update existing payment
+      payment.status = "success";
+      payment.transactionReference = transRef;
+      payment.reference = transRef;
+      if (!resolvedAmount || resolvedAmount <= 0) {
+        resolvedAmount = payment.amount;
       }
-      await payment.save();
     }
 
-    res.json({ ok: true, credited: payment.isCredited, amount: resolvedAmount, newBalance, creditedUserId: (payment.user || realUser?._id) });
+    // Credit the user account
+    const updatedUser = await User.findByIdAndUpdate(
+      realUser._id, 
+      { $inc: { balance: resolvedAmount } }, 
+      { new: true }
+    ).exec();
+
+    if (!updatedUser) {
+      return res.status(500).json({ ok: false, error: "Failed to update user balance" });
+    }
+
+    // Mark as credited and save
+    payment.isCredited = true;
+    await payment.save();
+
+    return res.json({ 
+      ok: true, 
+      credited: true, 
+      alreadyProcessed: false,
+      amount: resolvedAmount, 
+      newBalance: updatedUser.balance,
+      message: "Payment credited successfully" 
+    });
+    
   } catch (err) {
-    console.error("Ercas credit error", err);
-    res.status(500).json({ error: "Failed to credit Ercas payment" });
+    console.error("Ercas credit error:", err);
+    return res.status(500).json({ ok: false, error: "Failed to process payment" });
   }
 });
 

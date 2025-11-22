@@ -467,31 +467,60 @@ const Shop = () => {
         try {
           const storedRaw = localStorage.getItem("latest_topup");
           let amount: number | undefined = undefined;
-          // Prefer localStorage
+          
+          // Get amount from localStorage or URL param
           if (storedRaw) {
             try {
               const parsed = JSON.parse(storedRaw) as { amount?: number };
               amount = parsed.amount;
             } catch { /* ignore */ }
           }
-          // Fallback to query param
           if ((!amount || amount <= 0) && ercasAmountParam) {
             const parsed = parseFloat(ercasAmountParam);
             if (!isNaN(parsed) && parsed > 0) amount = parsed;
           }
-          // If still missing, we'll let backend attempt recovery without amount
+          
+          // Call backend to credit
           const creditRes = await apiFetch("/api/payments/ercas/credit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: user!.id, email: user!.email, transRef: ercasTransRef, status: ercasStatus, amount }),
+            body: JSON.stringify({ 
+              userId: user!.id, 
+              email: user!.email, 
+              transRef: ercasTransRef, 
+              status: ercasStatus, 
+              amount 
+            }),
           });
-          const { ok, credited, newBalance, amount: backendAmount, error, creditedUserId } = creditRes as { ok: boolean; credited: boolean; newBalance?: number; amount?: number; error?: string; creditedUserId?: string };
-          if (ok && credited) {
+          
+          const { ok, credited, alreadyProcessed, newBalance, amount: backendAmount, error, message } = creditRes as { 
+            ok: boolean; 
+            credited: boolean; 
+            alreadyProcessed?: boolean;
+            newBalance?: number; 
+            amount?: number; 
+            error?: string; 
+            message?: string;
+          };
+          
+          if (ok && (credited || alreadyProcessed)) {
             const finalAmount = backendAmount ?? amount ?? 0;
-            const updatedUser: User = { ...user!, balance: newBalance ?? (user!.balance || 0) + finalAmount };
-            setUser(updatedUser);
-            localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-            toast.success(`₦${finalAmount.toFixed(2)} added to your wallet!`);
+            
+            // CRITICAL: Use newBalance from backend directly - it's already the correct final balance
+            if (typeof newBalance === 'number') {
+              const updatedUser: User = { ...user!, balance: newBalance };
+              setUser(updatedUser);
+              localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+              
+              if (alreadyProcessed) {
+                toast.info("Payment already processed.");
+              } else {
+                toast.success(`₦${finalAmount.toFixed(2)} added to your wallet!`);
+              }
+            } else {
+              toast.error("Balance update failed. Please refresh the page.");
+            }
+            
             // Cleanup URL params
             const url = new URL(window.location.href);
             url.searchParams.delete("status");
@@ -499,14 +528,12 @@ const Shop = () => {
             url.searchParams.delete("ercasAmount");
             window.history.replaceState({}, "", url.toString());
             localStorage.removeItem("latest_topup");
-          } else if (ok && !credited) {
-            toast.info("Payment already credited.");
           } else {
-            toast.error(`Failed to credit Ercas payment${error ? ": " + error : ""}.`);
+            toast.error(error || message || "Failed to process payment");
           }
         } catch (e) {
-          const msg = e instanceof Error ? e.message : "Unknown Ercas credit error";
-          toast.error(`Ercas credit error: ${msg}`);
+          const msg = e instanceof Error ? e.message : "Payment processing error";
+          toast.error(msg);
         } finally {
           setIsVerifyingTopup(false);
         }
