@@ -135,10 +135,11 @@ export const purchaseHistoryAPI = {
     });
   },
 
-  // Get all purchase history (admin only)
-  async getAll(): Promise<PurchaseHistoryItem[]> {
+  // Get all purchase history (admin only) with optional email search
+  async getAll(email?: string): Promise<PurchaseHistoryItem[]> {
     const token = getAdminToken();
-    return apiFetch('/api/purchase-history', {
+    const qs = email && email.trim().length > 0 ? `?email=${encodeURIComponent(email.trim())}` : "";
+    return apiFetch(`/api/purchase-history${qs}`, {
       headers: {
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },

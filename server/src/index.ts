@@ -702,7 +702,14 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
 // Get all purchase history (admin only) - shows ALL purchases including user-deleted for business records
 app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Response) => {
   try {
-    const items = await PurchaseHistory.find().sort({ purchaseDate: -1 }).lean();
+    const { email } = req.query as { email?: string };
+    const filter: Record<string, any> = {};
+    if (email && email.trim().length > 0) {
+      // Case-insensitive partial match from start or anywhere
+      // Using regex enables admin to type partial email and see matches
+      filter.email = { $regex: email.trim(), $options: "i" };
+    }
+    const items = await PurchaseHistory.find(filter).sort({ purchaseDate: -1 }).lean();
     res.json(items);
   } catch (err) {
     console.error("Error fetching all purchase history:", err);
