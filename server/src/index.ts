@@ -624,38 +624,28 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
   try {
     const { userId, productId, quantity, serialUpdates, purchaseData } = req.body;
     
+    console.log("Purchase request received:", { userId, productId, quantity });
+    
     if (!userId || !productId || !quantity || !purchaseData) {
+      console.error("Missing required fields:", { userId, productId, quantity, purchaseData });
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Get user and check balance
     const user = await User.findById(userId).exec();
     if (!user) {
+      console.error("User not found:", userId);
       return res.status(404).json({ error: "User not found" });
     }
 
     const totalPrice = purchaseData.price * quantity;
     if ((user.balance || 0) < totalPrice) {
+      console.error("Insufficient balance:", { balance: user.balance, required: totalPrice });
       return res.status(400).json({ error: "Insufficient balance" });
     }
 
-    // Deduct balance from user
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $inc: { balance: -totalPrice } },
-      { new: true }
-    ).exec();
-
-    // Update product serial numbers if provided
-    if (serialUpdates && serialUpdates.length > 0) {
-      await CatalogProduct.findByIdAndUpdate(
-        productId,
-        { serialNumbers: serialUpdates },
-        { new: true }
-      ).exec();
-    }
-
-    // Create purchase history
+    console.log("Creating purchase history...");
+    // Create purchase history first
     const purchase = new PurchaseHistory({
       userId: purchaseData.userId,
       email: purchaseData.email,
@@ -669,6 +659,27 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
       assignedSerials: purchaseData.assignedSerials || [],
     });
     await purchase.save();
+    console.log("Purchase history created successfully");
+
+    // Update product serial numbers if provided (only for catalog products)
+    if (serialUpdates && serialUpdates.length > 0) {
+      console.log("Updating product serial numbers...");
+      await CatalogProduct.findByIdAndUpdate(
+        productId,
+        { serialNumbers: serialUpdates },
+        { new: true }
+      ).exec();
+      console.log("Serial numbers updated successfully");
+    }
+
+    // Deduct balance from user last (after everything else succeeds)
+    console.log("Deducting balance...");
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { balance: -totalPrice } },
+      { new: true }
+    ).exec();
+    console.log("Balance deducted successfully. New balance:", updatedUser?.balance);
 
     res.json({
       success: true,
@@ -677,7 +688,7 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error completing purchase:", err);
-    res.status(500).json({ error: "Failed to complete purchase" });
+    res.status(500).json({ error: "Failed to complete purchase", details: err instanceof Error ? err.message : String(err) });
   }
 });
 

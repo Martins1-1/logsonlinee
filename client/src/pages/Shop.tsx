@@ -313,9 +313,27 @@ const Shop = () => {
       setShowBuyDialog(false);
       setSelectedProduct(null);
       setPurchaseQuantity(1);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error processing purchase:", error);
-      toast.error("Failed to complete purchase. Please try again.");
+      const errorMessage = error && typeof error === 'object' && 'response' in error 
+        ? (error as { response?: { data?: { error?: string } } }).response?.data?.error 
+        : error instanceof Error 
+        ? error.message 
+        : "Failed to complete purchase. Please try again.";
+      toast.error(errorMessage);
+      
+      // Refresh user balance from server in case of error
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/users/current/${user.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const refreshedUser = { ...user, balance: data.balance };
+          setUser(refreshedUser);
+          localStorage.setItem("currentUser", JSON.stringify(refreshedUser));
+        }
+      } catch (refreshError) {
+        console.error("Error refreshing balance:", refreshError);
+      }
     }
   };
 
