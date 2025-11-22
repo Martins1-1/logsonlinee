@@ -708,12 +708,12 @@ app.post("/api/purchase/complete", async (req: Request, res: Response) => {
   }
 });
 
-// Get all purchase history (admin only)
+// Get all purchase history (admin only) - shows ALL purchases including user-deleted for business records
 app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Response) => {
   try {
     const page = parseInt((req.query.page as string) || "1", 10);
     const limit = parseInt((req.query.limit as string) || "20", 10);
-    const query: any = { softDeleted: { $ne: true } };
+    const query: any = {}; // Admin sees ALL purchases regardless of softDeleted status
     const totalCount = await PurchaseHistory.countDocuments(query);
     const items = await PurchaseHistory.find(query)
       .sort({ purchaseDate: -1 })
