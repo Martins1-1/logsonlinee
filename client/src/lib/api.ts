@@ -144,6 +144,23 @@ export const purchaseHistoryAPI = {
       },
     });
   },
+
+  // Complete purchase (deduct balance, update product, create history)
+  async completePurchase(data: {
+    userId: string;
+    productId: string;
+    quantity: number;
+    serialUpdates?: SerialNumber[];
+    purchaseData: Omit<PurchaseHistoryItem, 'purchaseDate'>;
+  }): Promise<{ success: boolean; newBalance: number; purchase: PurchaseHistoryItem }> {
+    return apiFetch('/api/purchase/complete', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+  },
 };
 
 // ======== CATALOG CATEGORIES API ========

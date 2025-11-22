@@ -619,6 +619,68 @@ app.post("/api/purchase-history", async (req: Request, res: Response) => {
   }
 });
 
+// Complete purchase (deduct balance, update product, create history)
+app.post("/api/purchase/complete", async (req: Request, res: Response) => {
+  try {
+    const { userId, productId, quantity, serialUpdates, purchaseData } = req.body;
+    
+    if (!userId || !productId || !quantity || !purchaseData) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Get user and check balance
+    const user = await User.findById(userId).exec();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const totalPrice = purchaseData.price * quantity;
+    if ((user.balance || 0) < totalPrice) {
+      return res.status(400).json({ error: "Insufficient balance" });
+    }
+
+    // Deduct balance from user
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $inc: { balance: -totalPrice } },
+      { new: true }
+    ).exec();
+
+    // Update product serial numbers if provided
+    if (serialUpdates && serialUpdates.length > 0) {
+      await CatalogProduct.findByIdAndUpdate(
+        productId,
+        { serialNumbers: serialUpdates },
+        { new: true }
+      ).exec();
+    }
+
+    // Create purchase history
+    const purchase = new PurchaseHistory({
+      userId: purchaseData.userId,
+      email: purchaseData.email,
+      productId: purchaseData.productId,
+      name: purchaseData.name,
+      description: purchaseData.description,
+      price: purchaseData.price,
+      image: purchaseData.image,
+      category: purchaseData.category,
+      quantity: purchaseData.quantity,
+      assignedSerials: purchaseData.assignedSerials || [],
+    });
+    await purchase.save();
+
+    res.json({
+      success: true,
+      newBalance: updatedUser?.balance || 0,
+      purchase
+    });
+  } catch (err) {
+    console.error("Error completing purchase:", err);
+    res.status(500).json({ error: "Failed to complete purchase" });
+  }
+});
+
 // Get all purchase history (admin only)
 app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Response) => {
   try {

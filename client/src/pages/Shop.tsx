@@ -241,7 +241,7 @@ const Shop = () => {
       const serialsToAssign = availableSerials.slice(0, purchaseQuantity);
       const assignedSerialNumbers = serialsToAssign.map(s => s.serial);
 
-      // Update product in MongoDB to mark serials as used
+      // Update product serials to mark as used
       const updatedSerials = (selectedProduct.serialNumbers || []).map(s => {
         if (serialsToAssign.some(assigned => assigned.id === s.id)) {
           return {
@@ -254,10 +254,34 @@ const Shop = () => {
         return s;
       });
 
-      // Only update if this is a catalog product (not initial products)
-      if (!['1', '2', '3', '4'].includes(selectedProduct.id)) {
-        await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
-      }
+      // Complete purchase via backend (deducts balance, updates product, creates history)
+      const result = await purchaseHistoryAPI.completePurchase({
+        userId: user.id,
+        productId: selectedProduct.id,
+        quantity: purchaseQuantity,
+        serialUpdates: !['1', '2', '3', '4'].includes(selectedProduct.id) ? updatedSerials : undefined,
+        purchaseData: {
+          userId: user.id,
+          email: user.email,
+          productId: selectedProduct.id,
+          name: selectedProduct.name,
+          description: selectedProduct.description,
+          price: selectedProduct.price,
+          image: selectedProduct.image,
+          category: selectedProduct.category,
+          quantity: purchaseQuantity,
+          assignedSerials: assignedSerialNumbers
+        }
+      });
+
+      // Update local state with new balance from backend
+      const updatedUser: User = { ...user, balance: result.newBalance };
+      setUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      
+      const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
+      const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
+      localStorage.setItem("users", JSON.stringify(updatedUsers));
 
       // Update local products state
       const updatedProducts = products.map(p => {
@@ -270,29 +294,7 @@ const Shop = () => {
         return p;
       });
       setProducts(updatedProducts);
-
-      const updatedUser: User = { ...user, balance: (user.balance || 0) - totalPrice };
-      setUser(updatedUser);
-      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
       
-      const usersRaw = JSON.parse(localStorage.getItem("users") || "[]") as User[];
-      const updatedUsers = usersRaw.map(u => u.id === user.id ? updatedUser : u);
-      localStorage.setItem("users", JSON.stringify(updatedUsers));
-      
-      // Save purchase to MongoDB
-      await purchaseHistoryAPI.create({
-        userId: user.id,
-        email: user.email,
-        productId: selectedProduct.id,
-        name: selectedProduct.name,
-        description: selectedProduct.description,
-        price: selectedProduct.price,
-        image: selectedProduct.image,
-        category: selectedProduct.category,
-        quantity: purchaseQuantity,
-        assignedSerials: assignedSerialNumbers
-      });
-
       // Reload purchase history
       const history = await purchaseHistoryAPI.getByUserId(user.id);
       setPurchaseHistory(history.map(h => ({
