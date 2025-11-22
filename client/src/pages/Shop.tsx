@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
 import { Banknote, ChevronDown, History } from "lucide-react";
-import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus, Trash2 } from "lucide-react";
+import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
 interface SerialNumber {
@@ -31,7 +31,6 @@ interface Product {
 }
 
 interface PurchaseHistoryItem extends Product {
-  _id: string; // MongoDB id for deletion/restore
   purchaseDate: string;
   quantity: number;
   assignedSerials?: string[]; // Array of serial numbers assigned to this purchase
@@ -86,10 +85,6 @@ const Shop = () => {
     }
   };
   const [purchaseHistory, setPurchaseHistory] = useState<PurchaseHistoryItem[]>([]);
-  const [purchasePage, setPurchasePage] = useState(1);
-  const [purchaseTotalPages, setPurchaseTotalPages] = useState(1);
-  const PURCHASE_LIMIT = 10;
-  const [loadingMorePurchases, setLoadingMorePurchases] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loadingProducts, setLoadingProducts] = useState(true);
   
@@ -303,12 +298,9 @@ const Shop = () => {
       });
       setProducts(updatedProducts);
       
-      // Reload purchase history (page 1)
-      const historyPage = await purchaseHistoryAPI.getByUserId(user.id, 1, PURCHASE_LIMIT);
-      setPurchasePage(historyPage.page);
-      setPurchaseTotalPages(historyPage.totalPages);
-      setPurchaseHistory(historyPage.items.map(h => ({
-        _id: (h as unknown as { _id: string })._id,
+      // Reload purchase history
+      const history = await purchaseHistoryAPI.getByUserId(user.id);
+      setPurchaseHistory(history.map(h => ({
         id: h.productId,
         name: h.name,
         description: h.description,
@@ -1140,58 +1132,9 @@ const Shop = () => {
                             ₦{(item.price * item.quantity).toFixed(2)}
                           </Badge>
                         </div>
-                        <div className="flex items-center justify-between mb-1">
-                          <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none">
-                            {item.category}
-                          </Badge>
-                          <button
-                            aria-label="Delete purchase history entry"
-                            title="Delete entry"
-                            onClick={async () => {
-                              if (!user) return;
-                              const confirmDelete = window.confirm('Delete this purchase entry? This action cannot be undone.');
-                              if (!confirmDelete) return;
-                              try {
-                                // We need the record id; assume backend returns _id stored as item.recordId
-                                // Attempt to derive record id; extend typing inline without using 'any'
-                                const recordId = item._id;
-                                if (!recordId) {
-                                  toast.error('Unable to delete: missing record id');
-                                  return;
-                                }
-                                  const snapshot = item; // preserve for undo
-                                  await purchaseHistoryAPI.delete(recordId, user.id);
-                                  setPurchaseHistory(prev => prev.filter((ph) => ph._id !== recordId));
-                                  toast.success('Entry deleted', {
-                                    action: {
-                                      label: 'Undo',
-                                      onClick: async () => {
-                                        try {
-                                          await purchaseHistoryAPI.restore(recordId, user.id);
-                                          // Reinsert at original index
-                                          setPurchaseHistory(prev => {
-                                            const updated = [...prev];
-                                            updated.splice(index, 0, snapshot);
-                                            return updated;
-                                          });
-                                          toast.success('Restored');
-                                        } catch (e) {
-                                          toast.error('Failed to restore');
-                                        }
-                                      }
-                                    },
-                                    duration: 5000
-                                  });
-                              } catch (e) {
-                                console.error(e);
-                                toast.error('Failed to delete entry');
-                              }
-                            }}
-                            className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors group"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400 group-hover:scale-110 transition-transform" />
-                          </button>
-                        </div>
+                        <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950 text-blue-700 dark:text-blue-400 border-none mb-1">
+                          {item.category}
+                        </Badge>
                         <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-1">
                           {item.description}
                         </p>
@@ -1228,45 +1171,7 @@ const Shop = () => {
             )}
           </div>
           
-          <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0 flex flex-col gap-2">
-            {purchasePage < purchaseTotalPages && (
-              <Button
-                disabled={loadingMorePurchases}
-                onClick={async () => {
-                  if (!user) return;
-                  setLoadingMorePurchases(true);
-                  try {
-                    const nextPage = purchasePage + 1;
-                    const historyPage = await purchaseHistoryAPI.getByUserId(user.id, nextPage, PURCHASE_LIMIT);
-                    setPurchasePage(historyPage.page);
-                    setPurchaseTotalPages(historyPage.totalPages);
-                    setPurchaseHistory(prev => ([
-                      ...prev,
-                      ...historyPage.items.map(h => ({
-                        _id: (h as unknown as { _id: string })._id,
-                        id: h.productId,
-                        name: h.name,
-                        description: h.description,
-                        price: h.price,
-                        image: h.image,
-                        category: h.category,
-                        quantity: h.quantity,
-                        assignedSerials: h.assignedSerials,
-                        purchaseDate: h.purchaseDate.toString()
-                      }))
-                    ]));
-                  } catch (e) {
-                    toast.error('Failed to load more');
-                  } finally {
-                    setLoadingMorePurchases(false);
-                  }
-                }}
-                className="w-full h-9 bg-gradient-to-r from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-600 text-gray-800 dark:text-gray-100 hover:from-gray-300 hover:to-gray-400 dark:hover:from-gray-600 dark:hover:to-gray-500"
-                variant="secondary"
-              >
-                {loadingMorePurchases ? 'Loading...' : 'Load More'}
-              </Button>
-            )}
+          <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
             <Button
               onClick={() => setShowPurchaseHistory(false)}
               className="w-full h-10 md:h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
