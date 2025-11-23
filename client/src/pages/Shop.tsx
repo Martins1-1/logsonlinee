@@ -234,9 +234,9 @@ const Shop = () => {
     if (!selectedProduct || !user || isPurchasing) return;
 
     const totalPrice = selectedProduct.price * purchaseQuantity;
-    const balanceBefore = user.balance || 0;
+    const balanceBefore = Math.max(0, user.balance || 0);
 
-    if (!user.balance || user.balance < totalPrice) {
+    if (Math.max(0, user.balance || 0) < totalPrice) {
       toast.error("Insufficient balance. Please add funds to your wallet.");
       setShowBuyDialog(false);
       setSelectedProduct(null);
@@ -831,7 +831,7 @@ const Shop = () => {
                     </div>
                     <div>
                       <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
-                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{(user.balance || 0).toFixed(2)}</span></CardDescription>
+                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{Math.max(0, user.balance || 0).toFixed(2)}</span></CardDescription>
                     </div>
                   </div>
                   <Button 
@@ -1230,7 +1230,7 @@ const Shop = () => {
                 <div className="flex items-center justify-between pt-1">
                   <span className="text-xs md:text-sm font-medium text-gray-600 dark:text-gray-400">Your Balance:</span>
                   <span className="text-xs md:text-sm font-bold text-blue-600 dark:text-blue-400">
-                    ₦{(user?.balance || 0).toFixed(2)}
+                    ₦{Math.max(0, user?.balance || 0).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -1255,7 +1255,7 @@ const Shop = () => {
             </Button>
             <Button
               onClick={handleConfirmPurchase}
-              disabled={isPurchasing || !user?.balance || !selectedProduct || user.balance < (selectedProduct.price * purchaseQuantity)}
+              disabled={isPurchasing || Math.max(0, user?.balance || 0) < (selectedProduct?.price || 0) * purchaseQuantity}
               className="flex-1 h-10 md:h-11 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPurchasing ? (
@@ -1269,7 +1269,7 @@ const Shop = () => {
               ) : (
                 <>
                   <span className="mr-1 md:mr-2">₦</span>
-                  {user?.balance && selectedProduct && user.balance >= (selectedProduct.price * purchaseQuantity) ? "Continue" : "Insufficient Balance"}
+                  {Math.max(0, user?.balance || 0) >= (selectedProduct?.price || 0) * purchaseQuantity ? "Continue" : "Insufficient Balance"}
                 </>
               )}
             </Button>
