@@ -51,7 +51,7 @@ router.post('/create-session', async (req, res) => {
       customerPhoneNumber: '', // Optional - can be added to frontend form
       redirectUrl: redirectUrlWithRef,
       description: `Wallet top-up for user ${userId}`,
-      feeBearer: 'customer',
+      feeBearer: 'merchant',
       metadata: {
         userId,
         type: 'wallet-topup',
