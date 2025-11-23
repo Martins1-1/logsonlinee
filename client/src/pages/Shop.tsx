@@ -61,6 +61,9 @@ const Shop = () => {
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [showDepositHistory, setShowDepositHistory] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [processedTransactions, setProcessedTransactions] = useState<Set<string>>(new Set());
+  // Track if Ercas redirect has been processed in this session
+  const [ercasRedirectProcessed, setErcasRedirectProcessed] = useState(false);
   const [depositHistory, setDepositHistory] = useState<Array<{
     _id?: string;
     amount?: number;
@@ -169,7 +172,7 @@ const Shop = () => {
     const interval = setInterval(refreshBalance, 10000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, ercasRedirectProcessed, processedTransactions]);
 
   const loadProductsAndHistory = async (userId: string) => {
     try {
@@ -454,20 +457,32 @@ const Shop = () => {
 
   // On return from payment provider, auto-resume verification if we see our reference in URL
   useEffect(() => {
+    if (!user) return;
+
     const params = new URLSearchParams(window.location.search);
     let pref = params.get("pref");
     const ercasStatus = params.get("status");
-  const ercasTransRef = params.get("transRef");
-  const ercasAmountParam = params.get("ercasAmount");
+    const ercasTransRef = params.get("transRef");
+    const ercasAmountParam = params.get("ercasAmount");
 
     // Handle Ercas redirect first (status=PAID & transRef present, no pref)
     if (!pref && ercasStatus === "PAID" && ercasTransRef) {
+      // Prevent duplicate processing: check both processedTransactions and ercasRedirectProcessed
+      if (processedTransactions.has(ercasTransRef) || ercasRedirectProcessed) {
+        console.log("Transaction already processed or redirect already handled:", ercasTransRef);
+        return;
+      }
+
+      // Mark as processed for this session
+      setErcasRedirectProcessed(true);
+      setProcessedTransactions(prev => new Set(prev).add(ercasTransRef));
+
       (async () => {
         setIsVerifyingTopup(true);
         try {
           const storedRaw = localStorage.getItem("latest_topup");
           let amount: number | undefined = undefined;
-          
+
           // Get amount from localStorage or URL param
           if (storedRaw) {
             try {
@@ -479,39 +494,39 @@ const Shop = () => {
             const parsed = parseFloat(ercasAmountParam);
             if (!isNaN(parsed) && parsed > 0) amount = parsed;
           }
-          
+
           // Call backend to credit
           const creditRes = await apiFetch("/api/payments/ercas/credit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-              userId: user!.id, 
-              email: user!.email, 
-              transRef: ercasTransRef, 
-              status: ercasStatus, 
-              amount 
+            body: JSON.stringify({
+              userId: user!.id,
+              email: user!.email,
+              transRef: ercasTransRef,
+              status: ercasStatus,
+              amount
             }),
           });
-          
-          const { ok, credited, alreadyProcessed, newBalance, amount: backendAmount, error, message } = creditRes as { 
-            ok: boolean; 
-            credited: boolean; 
+
+          const { ok, credited, alreadyProcessed, newBalance, amount: backendAmount, error, message } = creditRes as {
+            ok: boolean;
+            credited: boolean;
             alreadyProcessed?: boolean;
-            newBalance?: number; 
-            amount?: number; 
-            error?: string; 
+            newBalance?: number;
+            amount?: number;
+            error?: string;
             message?: string;
           };
-          
+
           if (ok && (credited || alreadyProcessed)) {
             const finalAmount = backendAmount ?? amount ?? 0;
-            
+
             // CRITICAL: Use newBalance from backend directly - it's already the correct final balance
             if (typeof newBalance === 'number') {
               const updatedUser: User = { ...user!, balance: newBalance };
               setUser(updatedUser);
               localStorage.setItem("currentUser", JSON.stringify(updatedUser));
-              
+
               if (alreadyProcessed) {
                 toast.info("Payment already processed.");
               } else {
@@ -520,8 +535,8 @@ const Shop = () => {
             } else {
               toast.error("Balance update failed. Please refresh the page.");
             }
-            
-            // Cleanup URL params
+
+            // Cleanup URL params IMMEDIATELY after processing
             const url = new URL(window.location.href);
             url.searchParams.delete("status");
             url.searchParams.delete("transRef");
