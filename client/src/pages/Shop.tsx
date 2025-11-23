@@ -467,15 +467,25 @@ const Shop = () => {
 
     // Handle Ercas redirect first (status=PAID & transRef present, no pref)
     if (!pref && ercasStatus === "PAID" && ercasTransRef) {
-      // Prevent duplicate processing: check both processedTransactions and ercasRedirectProcessed
-      if (processedTransactions.has(ercasTransRef) || ercasRedirectProcessed) {
-        console.log("Transaction already processed or redirect already handled:", ercasTransRef);
+      const handledKey = `ercas_handled_${ercasTransRef}`;
+      const processingKey = `ercas_processing_${ercasTransRef}`;
+
+      // If we've already handled this transRef before (even across refreshes), skip and clean URL
+      if (sessionStorage.getItem(handledKey) === '1' || processedTransactions.has(ercasTransRef) || ercasRedirectProcessed) {
+        console.log("Ercas redirect already handled. Skipping.", ercasTransRef);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("status");
+        url.searchParams.delete("transRef");
+        url.searchParams.delete("ercasAmount");
+        window.history.replaceState({}, "", url.toString());
         return;
       }
 
       // Mark as processed for this session
-      setErcasRedirectProcessed(true);
-      setProcessedTransactions(prev => new Set(prev).add(ercasTransRef));
+  setErcasRedirectProcessed(true);
+  setProcessedTransactions(prev => new Set(prev).add(ercasTransRef));
+  // Mark as processing in this browser session (survives refresh)
+  sessionStorage.setItem(processingKey, '1');
 
       (async () => {
         setIsVerifyingTopup(true);
@@ -536,7 +546,9 @@ const Shop = () => {
               toast.error("Balance update failed. Please refresh the page.");
             }
 
-            // Cleanup URL params IMMEDIATELY after processing
+            // Mark handled, clear processing flag and cleanup URL params IMMEDIATELY after processing
+            sessionStorage.setItem(handledKey, '1');
+            sessionStorage.removeItem(processingKey);
             const url = new URL(window.location.href);
             url.searchParams.delete("status");
             url.searchParams.delete("transRef");
@@ -545,6 +557,8 @@ const Shop = () => {
             localStorage.removeItem("latest_topup");
           } else {
             toast.error(error || message || "Failed to process payment");
+            // Clear processing flag on failure so user can retry
+            sessionStorage.removeItem(processingKey);
           }
         } catch (e) {
           const msg = e instanceof Error ? e.message : "Payment processing error";
@@ -623,7 +637,7 @@ const Shop = () => {
         setIsVerifyingTopup(false);
       }
     })();
-  }, [user]);
+  }, [user, ercasRedirectProcessed, processedTransactions]);
 
   const handleSignOut = () => {
     localStorage.removeItem("currentUser");
