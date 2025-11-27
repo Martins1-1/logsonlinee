@@ -1095,6 +1095,16 @@ const Shop = () => {
                                   <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                     ₦{product.price.toFixed(2)}
                                   </p>
+                                  {availableStock > 0 && (
+                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 block">
+                                      {availableStock} in stock
+                                    </Badge>
+                                  )}
+                                  {availableStock === 0 && (
+                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800 block">
+                                      Out of stock
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
 
