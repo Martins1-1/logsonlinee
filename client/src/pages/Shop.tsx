@@ -1123,16 +1123,19 @@ const Shop = () => {
                                 </div>
                               </div>
 
-                              {/* Buy Button (Mobile Full Width) */}
-                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0">
+                              {/* Buy Button and Price (Mobile Full Width) */}
+                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 flex items-center justify-between gap-2">
                                 <Button 
                                   onClick={() => handleBuyClick(product)}
                                   disabled={availableStock === 0}
-                                  className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                  className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
                                 >
-                                  <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                  <ShoppingCart className="h-3 w-3 mr-1" />
                                   {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
                                 </Button>
+                                <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                  ₦{product.price.toFixed(2)}
+                                </span>
                               </div>
                             </div>
                           </CardContent>
