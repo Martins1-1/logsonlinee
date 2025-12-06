@@ -1412,7 +1412,7 @@ const Shop = () => {
 
       <div className="fixed bottom-8 right-6 z-50">
         <a
-          href="https://t.me/@LEGITSUPPORT2"
+          href="https://t.me/LEGITSUPPORT2"
           target="_blank"
           rel="noopener noreferrer"
           className="flex flex-col items-center gap-1 group"
