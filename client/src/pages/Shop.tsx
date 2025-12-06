@@ -956,7 +956,7 @@ const Shop = () => {
                                           {product.category}
                                         </Badge>
                                         {availableStock > 0 && (
-                                            <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
+                                          <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
                                               {availableStock} in stock
                                             </Badge>
                                           )}
@@ -966,21 +966,24 @@ const Shop = () => {
                                           </Badge>
                                         )}
                                       </div>
-                                      <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                                      <div className="flex items-center justify-between gap-3 w-full">
+                                        <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal flex-1 min-w-0">{product.name}</h3>
+                                        <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300 flex-shrink-0">
+                                          ₦{product.price.toFixed(2)}
+                                        </p>
+                                      </div>
                                     </div>
                                     
                                     {/* Price (Mobile - Right Side) */}
                                     <div className="text-right flex-shrink-0 md:hidden">
-                                      <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
-                                        ₦{product.price.toFixed(2)}
-                                      </p>
-                                      {availableStock === 0 && (
+                                     
+                                      {/* {availableStock === 0 && (
                                         <div className="mt-0.5">
                                           <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                                             Out of stock
                                           </Badge>
                                         </div>
-                                      )}
+                                      )} */}
                                     </div>
                                   </div>
 
@@ -999,16 +1002,30 @@ const Shop = () => {
                                     </div>
                                   </div>
 
-                                  {/* Buy Button (Mobile Full Width) */}
-                                  <div className="px-3 pb-3 md:p-0 md:flex-shrink-0">
+                                  {/* Buy Button and Price (Mobile Full Width) */}
+                                  <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                     <Button 
                                       onClick={() => handleBuyClick(product)}
                                       disabled={availableStock === 0}
-                                      className={`w-full md:w-auto h-9 md:h-10 px-4 md:px-6 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs md:text-sm`}
+                                      className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
                                     >
-                                      <ShoppingCart className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+                                      <ShoppingCart className="h-3 w-3 mr-1" />
                                       {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
                                     </Button>
+                                    <div className="flex flex-col items-end">
+                                      {/* <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                        ₦{product.price.toFixed(2)}
+                                      </span> */}
+                                      {availableStock > 0 ? (
+                                        <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 block">
+                                          {availableStock} in stock
+                                        </Badge>
+                                      ) : (
+                                        <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800 block">
+                                          Out of stock
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               </CardContent>
@@ -1077,7 +1094,7 @@ const Shop = () => {
                                       {product.category}
                                     </Badge>
                                     {availableStock > 0 && (
-                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
+                                      <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
                                         {availableStock} in stock
                                       </Badge>
                                     )}
@@ -1085,27 +1102,27 @@ const Shop = () => {
                                       <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                                         Out of stock
                                       </Badge>
-                                    )}
+                                    )} 
                                   </div>
                                   <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                                  {/* Desktop-only stock line under product name to avoid name overflow */}
+                                  {availableStock > 0 ? (
+                                    <div className="hidden md:block mt-1">
+                                      <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
+                                        {availableStock} in stock
+                                      </Badge>
+                                    </div>
+                                  ) : (
+                                    <div className="hidden md:block mt-1">
+                                      <Badge variant="outline" className="text-[11px] px-1.5 py-0.5 bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                        Out of stock
+                                      </Badge>
+                                    </div>
+                                  )}
                                 </div>
                                 
-                                {/* Price (Mobile - Right Side) */}
-                                <div className="text-right flex-shrink-0 md:hidden">
-                                  <p className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
-                                    ₦{product.price.toFixed(2)}
-                                  </p>
-                                  {availableStock > 0 && (
-                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 block">
-                                      {availableStock} in stock
-                                    </Badge>
-                                  )}
-                                  {availableStock === 0 && (
-                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800 block">
-                                      Out of stock
-                                    </Badge>
-                                  )}
-                                </div>
+                                {/* Price (Mobile) - moved to buy button area to avoid duplication */}
+                                <div className="hidden" />
                               </div>
 
                               {/* Description (Mobile Full Width) */}
@@ -1124,7 +1141,7 @@ const Shop = () => {
                               </div>
 
                               {/* Buy Button and Price (Mobile Full Width) */}
-                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 flex items-center justify-between gap-2">
+                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                 <Button 
                                   onClick={() => handleBuyClick(product)}
                                   disabled={availableStock === 0}
@@ -1133,9 +1150,20 @@ const Shop = () => {
                                   <ShoppingCart className="h-3 w-3 mr-1" />
                                   {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
                                 </Button>
-                                <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
-                                  ₦{product.price.toFixed(2)}
-                                </span>
+                                <div className="flex flex-col items-end">
+                                  <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                    ₦{product.price.toFixed(2)}
+                                  </span>
+                                  {availableStock > 0 ? (
+                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 block">
+                                      {availableStock} in stock
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800 block">
+                                      Out of stock
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </CardContent>
