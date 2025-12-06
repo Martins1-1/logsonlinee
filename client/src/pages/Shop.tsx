@@ -1326,11 +1326,18 @@ const Shop = () => {
                       
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 line-clamp-1">
-                            {item.name} {item.quantity > 1 && `(x${item.quantity})`}
-                          </h4>
-                          <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-blue-500 to-blue-400 font-bold whitespace-nowrap flex-shrink-0">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-1">
+                          <div className="min-w-0 flex items-center gap-2">
+                            <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 truncate line-clamp-1 flex-1 min-w-0">
+                              {item.name}
+                            </h4>
+                            {item.quantity > 1 && (
+                              <Badge className="text-[10px] px-1.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 whitespace-nowrap flex-shrink-0">
+                                x{item.quantity}
+                              </Badge>
+                            )}
+                          </div>
+                          <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-blue-500 to-blue-400 font-bold whitespace-nowrap flex-shrink-0 mt-1 md:mt-0">
                             ₦{(item.price * item.quantity).toFixed(2)}
                           </Badge>
                         </div>
