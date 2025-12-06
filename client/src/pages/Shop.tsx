@@ -956,10 +956,10 @@ const Shop = () => {
                                           {product.category}
                                         </Badge>
                                         {availableStock > 0 && (
-                                          <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
-                                            {availableStock} in stock
-                                          </Badge>
-                                        )}
+                                            <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800">
+                                              {availableStock} in stock
+                                            </Badge>
+                                          )}
                                         {availableStock === 0 && (
                                           <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                                             Out of stock
@@ -1082,7 +1082,7 @@ const Shop = () => {
                                       </Badge>
                                     )}
                                     {availableStock === 0 && (
-                                      <Badge variant="outline" className="px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                                      <Badge variant="outline" className="hidden md:inline-flex px-1.5 py-0.5 text-[10px] bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                                         Out of stock
                                       </Badge>
                                     )}
@@ -1327,7 +1327,7 @@ const Shop = () => {
                       {/* Product Details */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-1">
-                          <div className="min-w-0 flex items-center gap-2">
+                          <div className="min-w-0 flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
                             <h4 className="font-semibold text-xs md:text-sm text-gray-900 dark:text-gray-100 truncate line-clamp-1 flex-1 min-w-0">
                               {item.name}
                             </h4>
