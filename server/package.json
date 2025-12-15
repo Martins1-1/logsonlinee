@@ -1,7 +1,8 @@
 {
-  "name": "joy-buy-plaza-server",
+  "name": "logs-online-server",
   "version": "0.1.0",
   "private": true,
+  "description": "Backend server for LOGs Online e-commerce platform with MongoDB and Ercaspay integration",
   "main": "dist/index.js",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only --poll --ignore-watch node_modules src/index.ts",

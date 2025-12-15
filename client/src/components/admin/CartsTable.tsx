@@ -59,7 +59,7 @@ export default function CartsTable({ token }: { token: string }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+        <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
           Buy History ({purchases.length})
         </h2>
         <form onSubmit={handleSearch} className="flex items-center gap-2 w-full md:w-auto">

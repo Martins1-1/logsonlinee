@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import mongoose from "mongoose";
@@ -8,17 +10,15 @@ import axios from "axios";
 import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory } from "./models";
 import paymentsRouter from "./routes/payments";
 
-dotenv.config();
-
 const app = express();
 // allow CORS from local dev and a production frontend URL set via env
 const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:8080";
 app.use(cors({
   origin: [
     FRONTEND_URL, 
-    'https://legitstorez.com',
-    'https://www.legitstorez.com',
-    'https://legitstore.vercel.app',
+    'https://logs-online.com',
+    'https://www.logs-online.com',
+    'https://logs-online.vercel.app',
     'http://localhost:8080', 
     'http://localhost:8081', 
     'http://localhost:4001', 
@@ -775,118 +775,7 @@ app.post("/api/payments/initialize", async (req: Request, res: Response) => {
   }
 });
 
-// Credit Ercas payment (client-side confirmation when redirected back with status=PAID&transRef=...)
-app.post("/api/payments/ercas/credit", async (req: Request, res: Response) => {
-  try {
-    const { userId, email, transRef, status, amount } = req.body as { userId?: string; email?: string; transRef?: string; status?: string; amount?: number };
-    
-    if (!userId || !transRef || !status) {
-      return res.status(400).json({ ok: false, error: "Missing required fields" });
-    }
-    
-    if (status !== "PAID") {
-      return res.status(400).json({ ok: false, error: "Payment status is not PAID" });
-    }
-
-    // First, check if this payment already exists and is credited
-    let payment = await Payment.findOne({ transactionReference: transRef }).exec();
-    
-    if (payment && payment.isCredited) {
-      // Already credited - return success with existing balance
-      const user = await User.findById(payment.user).exec();
-      return res.json({ 
-        ok: true, 
-        credited: false, 
-        alreadyProcessed: true,
-        amount: payment.amount, 
-        newBalance: user?.balance,
-        message: "Payment already credited" 
-      });
-    }
-
-    // Resolve the user
-    let realUser = await User.findById(userId).exec();
-    if (!realUser && email) {
-      realUser = await User.findOne({ email }).exec();
-    }
-    
-    if (!realUser) {
-      return res.status(404).json({ ok: false, error: "User not found" });
-    }
-
-    let resolvedAmount = amount;
-
-    // If no payment record exists, try to find a pending one
-    if (!payment) {
-      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
-      const pending = await Payment.findOne({ 
-        user: realUser._id, 
-        method: "ercas", 
-        status: { $ne: "success" },
-        isCredited: false,
-        createdAt: { $gte: thirtyMinsAgo } 
-      }).sort({ createdAt: -1 }).exec();
-      
-      if (pending) {
-        payment = pending;
-        resolvedAmount = pending.amount;
-      }
-    }
-
-    // Create payment record if still not found
-    if (!payment) {
-      if (!resolvedAmount || resolvedAmount <= 0) {
-        return res.status(400).json({ ok: false, error: "Invalid or missing amount" });
-      }
-      
-      payment = new Payment({
-        user: realUser._id,
-        amount: resolvedAmount,
-        method: "ercas",
-        status: "success",
-        transactionReference: transRef,
-        reference: transRef,
-        isCredited: false,
-      });
-    } else {
-      // Update existing payment
-      payment.status = "success";
-      payment.transactionReference = transRef;
-      payment.reference = transRef;
-      if (!resolvedAmount || resolvedAmount <= 0) {
-        resolvedAmount = payment.amount;
-      }
-    }
-
-    // Credit the user account
-    const updatedUser = await User.findByIdAndUpdate(
-      realUser._id, 
-      { $inc: { balance: resolvedAmount } }, 
-      { new: true }
-    ).exec();
-
-    if (!updatedUser) {
-      return res.status(500).json({ ok: false, error: "Failed to update user balance" });
-    }
-
-    // Mark as credited and save
-    payment.isCredited = true;
-    await payment.save();
-
-    return res.json({ 
-      ok: true, 
-      credited: true, 
-      alreadyProcessed: false,
-      amount: resolvedAmount, 
-      newBalance: updatedUser.balance,
-      message: "Payment credited successfully" 
-    });
-    
-  } catch (err) {
-    console.error("Ercas credit error:", err);
-    return res.status(500).json({ ok: false, error: "Failed to process payment" });
-  }
-});
+// Credit Ercas payment endpoint moved to routes/payments.ts
 
 // Verify Paystack transaction
 // Robust verification endpoint: accepts path or various query param names (reference, pref, ref, transRef)

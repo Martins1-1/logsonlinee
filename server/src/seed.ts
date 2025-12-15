@@ -14,20 +14,20 @@ async function main() {
     console.log("MongoDB connected");
 
     // Upsert admin user
-    const adminPass = await bcrypt.hash("adminpass", 10);
+    const adminPass = await bcrypt.hash("LogsOnline2025!", 10);
     await Admin.findOneAndUpdate(
-      { email: "admin@local" },
-      { $set: { password: adminPass, name: "Administrator" } },
+      { email: "admin@logsonline.com" },
+      { $set: { password: adminPass, name: "Logs Online Administrator" } },
       { upsert: true }
     ).exec();
 
     // Create a sample user if not exists
-    const existing = await User.findOne({ email: "user1@example.com" }).exec();
+    const existing = await User.findOne({ email: "user@logsonline.com" }).exec();
     if (!existing) {
       const user = new User({
-        email: "user1@example.com",
-        name: "First User",
-        password: await bcrypt.hash("password", 10),
+        email: "user@logsonline.com",
+        name: "Sample User",
+        password: await bcrypt.hash("UserPass2025!", 10),
       });
       await user.save();
 

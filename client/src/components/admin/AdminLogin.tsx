@@ -46,13 +46,13 @@ const AdminLogin = ({ onLogin }: Props) => {
         <CardHeader className="relative text-center space-y-3 pb-4">
           <div className="inline-flex items-center justify-center mx-auto">
             <img
-              src="/logo.png"
-              alt="Legit Store Logo"
-              className="h-16 w-auto drop-shadow-xl transition-transform duration-300 hover:scale-105"
+              src="/logonobg.png"
+              alt="LOGs Online Logo"
+              className="h-12 w-auto drop-shadow-xl transition-transform duration-300 hover:scale-105"
             />
           </div>
           <CardTitle
-            className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400"
+            className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500"
             style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
           >
             Admin Sign In
@@ -108,7 +108,7 @@ const AdminLogin = ({ onLogin }: Props) => {
                 type="submit"
                 disabled={loading}
                 aria-label="Sign in"
-                className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
               >
                 {loading ? "Signing in..." : "Sign In"}
               </Button>

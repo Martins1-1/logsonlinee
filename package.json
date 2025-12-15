@@ -1,8 +1,9 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "logs-online",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "LOGs Online - A modern e-commerce platform with secure payments and fast delivery",
   "scripts": {
     "dev": "npm run dev --prefix client",
     "dev:full": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",

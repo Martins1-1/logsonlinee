@@ -1,25 +1,25 @@
-# Server (backend)
+# LOGs Online Server (backend)
 
-Express + MongoDB backend with Paystack integration for payments.
+Express + MongoDB backend with Ercaspay integration for payments.
 
 Prereqs
 - Node >= 18
-- MongoDB (local or remote). You can use Docker to run a dev MongoDB: `docker run -p 27017:27017 -d --name joy-mongo mongo:6`
+- MongoDB (local or remote). You can use Docker to run a dev MongoDB: `docker run -p 27017:27017 -d --name logs-mongo mongo:6`
 
 Setup
 
 1. cd server
 2. npm install
-3. copy `.env.example` to `.env` and edit (set `MONGODB_URL`, `JWT_SECRET`, `PAYSTACK_SECRET`)
+3. copy `.env.example` to `.env` and edit (set `MONGODB_URL`, `JWT_SECRET`, `ECRS_SECRET_KEY`)
 4. npm run dev
 
 Seeding
 
-- Run `npx ts-node src/seed.ts` to create an admin (`admin@local` / `adminpass`) and a sample user.
+- Run `npx ts-node src/seed.ts` to create an admin (`admin@logsonline.com` / `LogsOnline2025!`) and a sample user.
 
-Paystack
+Ercaspay
 
-- Set `PAYSTACK_SECRET` in your `.env`. For testing you can use your Paystack test secret key. The server provides `/api/payments/initialize` and `/api/payments/verify/:reference` endpoints.
+- Set `ECRS_SECRET_KEY` in your `.env`. The server provides `/api/payments/ercas/initiate` and `/api/payments/ercas/verify/:reference` endpoints.
 
 Notes
-- The server listens on PORT (default 4000). Admin login seeded as `admin@local` / `adminpass` by the seed script.
+- The server listens on PORT (default 5002). Admin login seeded as `admin@logsonline.com` / `LogsOnline2025!` by the seed script.

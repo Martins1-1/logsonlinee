@@ -1,10 +1,73 @@
-# Welcome to your Lovable project
+# LOGs Online
 
-## Project info
+A modern e-commerce platform built with React, TypeScript, Express, MongoDB, and Ercaspay payment integration.
 
-**URL**: https://lovable.dev/projects/87937907-5f52-4ca3-9a79-930f289cb8e4
+## Features
 
-## How can I edit this code?
+- User authentication and admin panel
+- Product catalog and shopping cart
+- Secure payments with Ercaspay
+- Responsive design with Tailwind CSS and shadcn/ui
+- Real-time notifications
+
+## Tech Stack
+
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, shadcn/ui
+- **Backend**: Express.js, TypeScript, MongoDB, JWT
+- **Payments**: Ercaspay
+- **Deployment**: Ready for Vercel (frontend) and Render (backend)
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js >= 18
+- MongoDB (local or Atlas)
+- Ercaspay account for payments
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   cd client && npm install
+   cd ../server && npm install
+   ```
+3. Set up environment variables (see `.env.example` in each folder)
+4. Run the seed script to create admin user:
+   ```bash
+   cd server
+   npx ts-node src/seed.ts
+   ```
+5. Start development servers:
+   ```bash
+   cd ..
+   npm run dev:full
+   ```
+
+## Admin Access
+
+- **Email**: `admin@logsonline.com`
+- **Password**: `LogsOnline2025!`
+- **URL**: `/admin` (when running locally)
+
+## Project Structure
+
+- `client/` - React frontend
+- `server/` - Express backend
+- `prisma/` - Database schema (if applicable)
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## License
+
+MIT License
 
 There are several ways of editing your application.
 

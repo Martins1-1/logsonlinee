@@ -1,33 +1,35 @@
 import express from 'express';
+import axios from 'axios';
 import Ercaspay from '@capitalsage/ercaspay-nodejs';
 
 const router = express.Router();
 
 // Validate Ercaspay configuration
 const ECRS_SECRET_KEY = process.env.ECRS_SECRET_KEY;
+const ECRS_API_BASE = process.env.ECRS_API_BASE || 'https://api.ercaspay.com';
 if (!ECRS_SECRET_KEY || ECRS_SECRET_KEY.trim() === '') {
   console.error('FATAL: ECRS_SECRET_KEY is not set in environment variables!');
 }
 
 // Initialize Ercaspay client - MUST use baseURL (uppercase) not baseUrl
 const ercaspay = new Ercaspay({
-  baseURL: 'https://api.ercaspay.com',
-  secretKey: ECRS_SECRET_KEY || '',
+  baseURL: ECRS_API_BASE,
+  secretKey: (ECRS_SECRET_KEY || '').trim(),
 });
 
 /**
- * POST /api/payments/create-session
+ * POST /api/payments/ercas/initiate
  * Creates a new payment checkout session with Ercaspay
  */
-router.post('/create-session', async (req, res) => {
+router.post('/ercas/initiate', async (req, res) => {
   try {
-    const { amount, currency, userId, email, callbackUrl } = req.body;
+    const { amount, currency = 'NGN', userId, email, callbackUrl } = req.body;
 
     // Validate required fields
-    if (!amount || !currency || !userId || !email) {
+    if (!amount || !userId || !email) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields: amount, currency, userId, email',
+        error: 'Missing required fields: amount, userId, email',
       });
     }
 
@@ -66,8 +68,40 @@ router.post('/create-session', async (req, res) => {
       hasSecretKey: Boolean(ECRS_SECRET_KEY && ECRS_SECRET_KEY.length > 0)
     });
 
-  // Initiate transaction with Ercaspay
-  const response = await ercaspay.initiateTransaction(transactionData);
+    // Call Ercaspay API
+    // Use direct Axios call to ensure headers are correct and handle errors better
+    let response;
+    try {
+        const cleanKey = (ECRS_SECRET_KEY || '').trim();
+        const axiosRes = await axios.post(
+            `${ECRS_API_BASE}/api/v1/payment/initiate`,
+            transactionData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${cleanKey}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }
+        );
+        response = {
+            requestSuccessful: true,
+            responseBody: axiosRes.data.responseBody,
+            responseMessage: axiosRes.data.responseMessage
+        };
+    } catch (err: any) {
+        console.error("Ercaspay Initiate Error (Axios):", err.response?.data || err.message);
+        if (err.response?.status === 401) {
+             return res.status(401).json({
+                success: false,
+                error: "Invalid Ercaspay Secret Key. Please check your .env file.",
+             });
+        }
+        throw { 
+            message: err.response?.data?.errorMessage || err.message, 
+            responseData: err.response?.data 
+        };
+    }
 
     // Check if transaction was successful
     if (response.requestSuccessful && response.responseBody) {
@@ -146,8 +180,8 @@ router.get('/verify', async (req, res) => {
     console.log('=== Verify Payment ===');
     console.log('Verifying reference:', cleanReference);
 
-  // Verify transaction with Ercaspay
-  const response = await ercaspay.verifyTransaction(cleanReference);
+    // Call Ercaspay API
+    const response = await ercaspay.verifyTransaction(cleanReference);
 
     console.log('Ercaspay verify response:', JSON.stringify({
       requestSuccessful: response.requestSuccessful,
@@ -164,6 +198,79 @@ router.get('/verify', async (req, res) => {
       let status = 'pending';
       if (response.responseCode === 'success') {
         status = 'success';
+
+        // Credit the user if not already credited
+        try {
+            const { Payment, User } = await import('../models');
+            const amount = Number(transactionData.amount || 0);
+            const transRef = transactionData.transactionReference || cleanReference;
+            
+            // Find payment
+            let payment = await Payment.findOne({ 
+                $or: [{ transactionReference: transRef }, { reference: cleanReference }] 
+            });
+
+            if (payment && payment.isCredited) {
+                // Already credited
+                const user = await User.findById(payment.user);
+                return res.status(200).json({
+                    success: true,
+                    status: 'success',
+                    amount,
+                    newBalance: user?.balance,
+                    alreadyCredited: true,
+                    reference: cleanReference,
+                    data: transactionData,
+                });
+            }
+
+            // If not credited, credit now
+            if (amount > 0) {
+                // Ensure payment record exists
+                if (!payment) {
+                    payment = new Payment({
+                        userLocalId: transactionData.metadata?.userId,
+                        email: transactionData.customerEmail,
+                        amount,
+                        method: 'ercaspay',
+                        status: 'completed',
+                        transactionReference: transRef,
+                        reference: cleanReference,
+                        isCredited: false
+                    });
+                } else {
+                    payment.status = 'completed';
+                    payment.amount = amount;
+                }
+
+                // Find user to credit
+                const userId = payment.user || payment.userLocalId || transactionData.metadata?.userId;
+                if (userId) {
+                    const user = await User.findByIdAndUpdate(
+                        userId,
+                        { $inc: { balance: amount } },
+                        { new: true }
+                    );
+                    
+                    if (user) {
+                        payment.isCredited = true;
+                        payment.user = user._id as any;
+                        await payment.save();
+                        
+                        return res.status(200).json({
+                            success: true,
+                            status: 'success',
+                            amount,
+                            newBalance: user.balance,
+                            reference: cleanReference,
+                            data: transactionData,
+                        });
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Error crediting in verify:", e);
+        }
       } else if (response.responseCode === 'failed') {
         status = 'failed';
       }
@@ -304,6 +411,103 @@ router.get('/status/:reference', async (req, res) => {
     return res.status(500).json({
       success: false,
       error: error.responseData?.responseMessage || error.message || 'Internal server error',
+    });
+  }
+});
+
+/**
+ * POST /api/payments/ercas/credit
+ * Verifies payment and credits user balance
+ */
+router.post('/ercas/credit', async (req, res) => {
+  try {
+    const { userId, email, transRef, status, amount } = req.body;
+    
+    if (!userId || !transRef) {
+      return res.status(400).json({ ok: false, error: "Missing required fields" });
+    }
+
+    console.log(`Crediting payment: ${transRef} for user ${userId}`);
+
+    // Verify with Ercaspay
+    const verifyResp = await ercaspay.verifyTransaction(transRef);
+    
+    if (!verifyResp.requestSuccessful || !verifyResp.responseBody || verifyResp.responseCode !== 'success') {
+       console.error("Verification failed:", verifyResp);
+       return res.status(400).json({ ok: false, error: "Payment verification failed with gateway" });
+    }
+
+    const verifiedAmount = Number(verifyResp.responseBody.amount);
+    
+    if (isNaN(verifiedAmount) || verifiedAmount <= 0) {
+        return res.status(400).json({ ok: false, error: "Invalid verified amount" });
+    }
+
+    const { Payment, User } = await import('../models');
+
+    // Check if already credited
+    let payment = await Payment.findOne({ 
+        $or: [{ transactionReference: transRef }, { reference: transRef }] 
+    });
+
+    if (payment && payment.isCredited) {
+        const user = await User.findById(payment.user || userId);
+        return res.json({ 
+            ok: true, 
+            credited: false, 
+            alreadyProcessed: true, 
+            amount: payment.amount, 
+            newBalance: user?.balance 
+        });
+    }
+
+    // Update or create payment record
+    if (!payment) {
+        payment = new Payment({
+            user: userId,
+            userLocalId: userId,
+            email,
+            amount: verifiedAmount,
+            method: 'ercaspay',
+            status: 'completed',
+            transactionReference: transRef,
+            reference: verifyResp.responseBody.paymentReference || transRef,
+            isCredited: false
+        });
+    } else {
+        payment.status = 'completed';
+        payment.amount = verifiedAmount; // Ensure amount matches verified
+    }
+
+    // Credit user
+    const user = await User.findByIdAndUpdate(
+        userId,
+        { $inc: { balance: verifiedAmount } },
+        { new: true }
+    );
+
+    if (!user) {
+        return res.status(404).json({ ok: false, error: "User not found" });
+    }
+
+    payment.isCredited = true;
+    payment.user = user._id as any; // Ensure user link
+    await payment.save();
+
+    console.log(`Credited ${verifiedAmount} to user ${userId}. New balance: ${user.balance}`);
+
+    return res.json({
+        ok: true,
+        credited: true,
+        amount: verifiedAmount,
+        newBalance: user.balance
+    });
+
+  } catch (error: any) {
+    console.error('Error crediting payment:', error);
+    return res.status(500).json({
+        ok: false,
+        error: error.message || "Internal server error"
     });
   }
 });

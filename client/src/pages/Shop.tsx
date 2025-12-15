@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -8,9 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote, ChevronDown, History, Copy } from "lucide-react";
-import bannerImg from "@/assets/banner.jpg";
-import { Plus, Wallet, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
+import { Banknote, ChevronDown, History, Copy, Home, Menu, LogIn, FileText, Headphones, MessageCircle, Wallet } from "lucide-react";
+import bannerImg from "@/assets/ban.jpg";
+import { Plus, LogOut, BadgeCheck, X, ShoppingCart, Minus } from "lucide-react";
 // Removed demo product assets; shop now shows only database products
 
 interface SerialNumber {
@@ -50,6 +50,7 @@ const initialProducts: Product[] = [];
 
 const Shop = () => {
   const navigate = useNavigate();
+  const isFirstMount = useRef(true);
   const [user, setUser] = useState<User | null>(null);
   const [addFundsAmount, setAddFundsAmount] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
@@ -61,6 +62,10 @@ const Shop = () => {
   const [isVerifyingTopup, setIsVerifyingTopup] = useState(false);
   const [showPurchaseHistory, setShowPurchaseHistory] = useState(false);
   const [showDepositHistory, setShowDepositHistory] = useState(false);
+  const [showCategoryDrawer, setShowCategoryDrawer] = useState(false);
+  const [showMenuDrawer, setShowMenuDrawer] = useState(false);
+  const [showCustomerCareOptions, setShowCustomerCareOptions] = useState(false);
+  const [showBalanceModal, setShowBalanceModal] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [processedTransactions, setProcessedTransactions] = useState<Set<string>>(new Set());
   // Track if Ercas redirect has been processed in this session
@@ -169,7 +174,10 @@ const Shop = () => {
     };
 
     // Refresh immediately on mount, then every 10 seconds
-    refreshBalance();
+    if (isFirstMount.current) {
+      refreshBalance();
+      isFirstMount.current = false;
+    }
     const interval = setInterval(refreshBalance, 10000);
 
     return () => clearInterval(interval);
@@ -422,7 +430,7 @@ const Shop = () => {
 
     try {
       // Create payment session
-      const res = await apiFetch("/api/payments/create-session", {
+      const res = await apiFetch("/api/payments/ercas/initiate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -655,16 +663,18 @@ const Shop = () => {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden pb-20 transition-colors duration-300">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 relative pb-20 transition-colors duration-300">
       {/* Animated gradient orbs */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
+      {/* <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-gradient-to-br from-pink-400/15 to-blue-400/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div> */}
       
       <Navbar 
         isShopPage 
         cartItemCount={purchaseHistory.length} 
         onCartClick={() => setShowPurchaseHistory(true)}
+        onMenuClick={() => setShowCategoryDrawer(true)}
+        onGeneralMenuClick={() => setShowMenuDrawer(true)}
       />
 
       {/* Purchase Summary Dialog */}
@@ -744,7 +754,7 @@ const Shop = () => {
         </DialogContent>
       </Dialog>
 
-      <div className="pt-24 relative z-10">
+      <div className="pt-24 relative">
         {/* Banner Section with Welcome Badge - Full Width */}
         <div className="relative mb-6 animate-in fade-in slide-in-from-top duration-500">
           {/* Welcome badge positioned slightly above banner - smaller on mobile */}
@@ -759,7 +769,7 @@ const Shop = () => {
           </div>
           
           <a 
-            href="https://chat.whatsapp.com/Jyr22tl4NNA6GJ5dXIpAlv?mode=wwt" 
+            href="https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee" 
             target="_blank" 
             rel="noopener noreferrer"
             className="block relative overflow-hidden rounded-2xl shadow-xl border-2 border-white/60 dark:border-gray-800 hover:border-blue-400 transition-colors mx-auto w-3/4 md:w-full"
@@ -774,74 +784,68 @@ const Shop = () => {
           </a>
           
           {/* Title moved below banner */}
-          <h1 className="mt-6 text-center text-3xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 dark:from-blue-400 dark:via-purple-400 dark:to-pink-400 tracking-tight">
-            Shop Premium Products
+          <h1 className="mt-6 text-center text-3xl md:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 tracking-tight">
+            Shop Premium LOGs
           </h1>
         </div>
 
-        <div className="px-6">
+        <div className="px-0 md:px-6">
           <div className="container mx-auto">
             
             {/* Header Section (subtitle only now, main title moved into banner) */}
-            <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700">
+            <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700 px-6 md:px-0">
               <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">Discover our curated collection of high-quality social media accounts</p>
             </div>
 
-            {/* Wallet Section */}
-            <Card className="mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
+            {/* Mobile full-bleed wallet card */}
+            <Card className="block md:hidden w-full mb-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-t-0 border-l-0 border-r-0 border-white/60 dark:border-gray-800 animate-in fade-in duration-700 rounded-none">
+              <CardHeader className="p-4 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-blue-700">Your Wallet</CardTitle>
+                    <CardDescription className="text-sm font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{Math.max(0, user.balance || 0).toFixed(2)}</span></CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0 px-4 pb-4">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Enter amount"
+                    value={addFundsAmount}
+                    onChange={(e) => setAddFundsAmount(e.target.value)}
+                    min="0"
+                    step="0.01"
+                    className="h-10 border-2 border-gray-200 dark:border-gray-700 focus:border-purple-500 transition-all duration-300 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm"
+                  />
+                  <Button 
+                    onClick={handleAddFunds}
+                    className="h-10 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm w-full"
+                  >
+                    <Plus className="h-3 w-3 mr-2" />
+                    Add Funds
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Desktop/tablet wallet card (hidden on small screens) */}
+            <Card className="hidden md:block -mx-6 md:mx-0 px-6 md:px-0 mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
               <CardHeader className="pb-3 md:pb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-2 md:gap-3">
-                    <button
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-700 flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-                      title="View deposit history"
-                      onClick={() => setShowDepositHistory(true)}
-                    >
-                      <Banknote className="w-6 h-6 text-white" />
-                    </button>
-      {/* Deposit history modal component inline */}
-      {showDepositHistory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl p-6 w-full max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2"><Banknote className="w-5 h-5 text-blue-600" /> Deposits</h2>
-              <button onClick={() => setShowDepositHistory(false)} className="text-gray-500 hover:text-red-500 text-xl">&times;</button>
-            </div>
-            <div className="max-h-80 overflow-y-auto">
-              {depositHistory.length === 0 ? (
-                <div className="text-gray-500 text-center py-8">No deposits found.</div>
-              ) : (
-                <ul className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {depositHistory.map((d, i) => (
-                    <li key={d._id || i} className="py-3 flex flex-col gap-1">
-                      <span className="font-semibold text-blue-700 dark:text-blue-400">₦{d.amount?.toFixed(2)}</span>
-                      <span className="text-xs text-gray-600 dark:text-gray-400">{d.method?.toUpperCase()} • {d.status?.toUpperCase()}</span>
-                      <span className="text-xs text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
-                      {d.reference && <span className="text-xs text-gray-400">Ref: {d.reference}</span>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center flex-shrink-0">
+
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
                       <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Your Wallet</CardTitle>
+                      <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800">Your Wallet</CardTitle>
                       <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{Math.max(0, user.balance || 0).toFixed(2)}</span></CardDescription>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleSignOut} 
-                    className="hover:bg-red-50 hover:text-red-600 transition-all duration-300 flex items-center gap-2 text-sm md:text-base h-9 md:h-auto"
-                  >
-                    <LogOut className="h-4 w-4 md:h-5 md:w-5" />
-                    <span>Sign Out</span>
-                  </Button>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
@@ -857,7 +861,7 @@ const Shop = () => {
                   />
                   <Button 
                     onClick={handleAddFunds}
-                    className="h-10 md:h-12 px-4 md:px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm md:text-base w-full sm:w-auto"
+                    className="h-10 md:h-12 px-4 md:px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl text-sm md:text-base w-full sm:w-auto"
                   >
                     <Plus className="h-3 w-3 md:h-4 md:w-4 mr-2" />
                     Add Funds
@@ -870,13 +874,13 @@ const Shop = () => {
 
         {/* Products Section - Full Width on Mobile */}
         <div className="px-0 md:px-6">
-          <div className="container mx-auto">
+          <div className="container mx-auto px-0 md:px-8">
             {/* Products and Buy Dialog */}
             <div className="grid lg:grid-cols-1 gap-8">
               {/* Products Grid */}
               <div className="lg:col-span-1">
                 <h2 
-                  className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 px-3 md:px-0"
+                  className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 px-3 md:px-0"
                   style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
                 >
                   Our Products
@@ -891,7 +895,7 @@ const Shop = () => {
                         setActiveCategory(cat);
                         scrollToCategory(cat);
                       }}
-                      className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-800 dark:text-gray-300'}`}
+                      className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-blue-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:bg-gray-800 dark:text-gray-300'}`}
                     >
                       {cat}
                     </Button>
@@ -911,7 +915,7 @@ const Shop = () => {
                       return (
                       <div key={category} id={`category-${category}`} className="scroll-mt-24">
                         <div className="flex items-center justify-between mb-4 md:mb-6 px-3 md:px-0">
-                          <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
+                          <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
                             {category}
                           </h3>
                           {hasMore && (
@@ -936,9 +940,9 @@ const Shop = () => {
                               style={{ animationDelay: `${index * 50}ms` }}
                             >
                               <CardContent className="p-0">
-                                <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
+                                <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4 p-3">
                                   {/* Top Section: Image and Info (Mobile Full Width) */}
-                                  <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
+                                  <div className="flex items-start gap-3 p-0 md:p-0 md:flex-1">
                                     {/* Small Product Image */}
                                     <div className="relative overflow-hidden rounded-lg flex-shrink-0">
                                       <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
@@ -967,8 +971,8 @@ const Shop = () => {
                                         )}
                                       </div>
                                       <div className="flex items-center justify-between gap-3 w-full">
-                                        <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal flex-1 min-w-0">{product.name}</h3>
-                                        <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300 flex-shrink-0">
+                                        <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800 dark:from-blue-400 dark:to-blue-500 truncate md:whitespace-normal flex-1 min-w-0">{product.name}</h3>
+                                        <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 flex-shrink-0">
                                           ₦{product.price.toFixed(2)}
                                         </p>
                                       </div>
@@ -988,7 +992,7 @@ const Shop = () => {
                                   </div>
 
                                   {/* Description (Mobile Full Width) */}
-                                  <div className="px-3 pb-3 md:hidden">
+                                  <div className="px-0 pb-3 md:hidden">
                                     <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
                                   </div>
 
@@ -996,18 +1000,18 @@ const Shop = () => {
                                   <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
                                     <div className="text-right flex-shrink-0">
-                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
                                         ₦{product.price.toFixed(2)}
                                       </p>
                                     </div>
                                   </div>
 
                                   {/* Buy Button and Price (Mobile Full Width) */}
-                                  <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
+                                  <div className="px-0 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                     <Button 
                                       onClick={() => handleBuyClick(product)}
                                       disabled={availableStock === 0}
-                                      className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
+                                      className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
                                     >
                                       <ShoppingCart className="h-3 w-3 mr-1" />
                                       {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
@@ -1049,7 +1053,7 @@ const Shop = () => {
                       return (
                         <>
                           <div className="flex items-center justify-between mb-4 md:mb-6 px-3 md:px-0">
-                            <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
+                            <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
                               {activeCategory}
                             </h3>
                             {hasMore && (
@@ -1074,9 +1078,9 @@ const Shop = () => {
                           style={{ animationDelay: `${index * 50}ms` }}
                         >
                           <CardContent className="p-0">
-                            <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4">
+                            <div className="flex flex-col md:flex-row md:items-center gap-0 md:gap-4 md:p-4 p-3">
                               {/* Top Section: Image and Info (Mobile Full Width) */}
-                              <div className="flex items-start gap-3 p-3 md:p-0 md:flex-1">
+                              <div className="flex items-start gap-3 p-0 md:p-0 md:flex-1">
                                 {/* Small Product Image */}
                                 <div className="relative overflow-hidden rounded-lg flex-shrink-0">
                                   <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 to-purple-400/0 group-hover:from-blue-400/20 group-hover:to-purple-400/20 transition-all duration-300 z-10"></div>
@@ -1104,7 +1108,7 @@ const Shop = () => {
                                       </Badge>
                                     )} 
                                   </div>
-                                  <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 truncate md:whitespace-normal">{product.name}</h3>
+                                  <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800 dark:from-blue-400 dark:to-blue-500 truncate md:whitespace-normal">{product.name}</h3>
                                   {/* Desktop-only stock line under product name to avoid name overflow */}
                                   {availableStock > 0 ? (
                                     <div className="hidden md:block mt-1">
@@ -1126,7 +1130,7 @@ const Shop = () => {
                               </div>
 
                               {/* Description (Mobile Full Width) */}
-                              <div className="px-3 pb-3 md:hidden">
+                              <div className="px-0 pb-3 md:hidden">
                                 <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
                               </div>
 
@@ -1134,24 +1138,24 @@ const Shop = () => {
                               <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
                                 <div className="text-right flex-shrink-0">
-                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
                                     ₦{product.price.toFixed(2)}
                                   </p>
                                 </div>
                               </div>
 
                               {/* Buy Button and Price (Mobile Full Width) */}
-                              <div className="px-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
+                              <div className="px-0 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                 <Button 
                                   onClick={() => handleBuyClick(product)}
                                   disabled={availableStock === 0}
-                                  className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-400 hover:from-blue-700 hover:to-blue-500'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
+                                  className={`h-8 px-3 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-xs`}
                                 >
                                   <ShoppingCart className="h-3 w-3 mr-1" />
                                   {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
                                 </Button>
                                 <div className="flex flex-col items-end">
-                                  <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                  <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
                                     ₦{product.price.toFixed(2)}
                                   </span>
                                   {availableStock > 0 ? (
@@ -1186,7 +1190,7 @@ const Shop = () => {
       <Dialog open={showBuyDialog} onOpenChange={setShowBuyDialog}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-3 md:p-4">
           <DialogHeader className="pb-1 md:pb-2">
-            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">
+            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
               Confirm Purchase
             </DialogTitle>
             <DialogDescription className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
@@ -1297,7 +1301,7 @@ const Shop = () => {
             <Button
               onClick={handleConfirmPurchase}
               disabled={isPurchasing || Math.max(0, user?.balance || 0) < (selectedProduct?.price || 0) * purchaseQuantity}
-              className="flex-1 h-10 md:h-11 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 h-10 md:h-11 text-sm md:text-base bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isPurchasing ? (
                 <>
@@ -1322,7 +1326,7 @@ const Shop = () => {
       <Dialog open={showPurchaseHistory} onOpenChange={setShowPurchaseHistory}>
         <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-2 border-white/60 dark:border-gray-800 p-4 md:p-6">
           <DialogHeader className="pb-3 md:pb-4">
-            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 flex items-center gap-2">
+            <DialogTitle className="text-lg md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 flex items-center gap-2">
               <ShoppingCart className="h-5 w-5 md:h-6 md:w-6" />
               Purchase History
             </DialogTitle>
@@ -1422,8 +1426,382 @@ const Shop = () => {
           <DialogFooter className="pt-3 md:pt-4 sticky bottom-0 bg-white/95 dark:bg-gray-900/95 -mx-4 md:-mx-6 px-4 md:px-6 pb-0">
             <Button
               onClick={() => setShowPurchaseHistory(false)}
-              className="w-full h-10 md:h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold"
+              className="w-full h-10 md:h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold"
             >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Deposit History Modal */}
+      {showDepositHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md mx-auto overflow-hidden border border-gray-200 dark:border-gray-800">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+                <Banknote className="w-5 h-5 text-blue-600" /> 
+                Deposit History
+              </h2>
+              <button 
+                onClick={() => setShowDepositHistory(false)} 
+                className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-4">
+              {depositHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                    <History className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 font-medium">No deposits found</p>
+                  <p className="text-xs text-gray-400 mt-1">Your deposit history will appear here</p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {depositHistory.map((d, i) => (
+                    <li key={d._id || i} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-800 flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-blue-600 dark:text-blue-400 text-lg">₦{d.amount?.toFixed(2)}</span>
+                        <Badge variant={d.status === 'success' || d.status === 'completed' ? 'default' : 'secondary'} className={d.status === 'success' || d.status === 'completed' ? 'bg-green-500 hover:bg-green-600' : ''}>
+                          {d.status?.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <span>{d.method?.toUpperCase()}</span>
+                        <span>{new Date(d.createdAt).toLocaleDateString()} {new Date(d.createdAt).toLocaleTimeString()}</span>
+                      </div>
+                      {d.reference && (
+                        <div className="mt-1 pt-1 border-t border-gray-200 dark:border-gray-700">
+                          <span className="text-[10px] text-gray-400 font-mono">Ref: {d.reference}</span>
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="p-4 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50">
+              <Button onClick={() => setShowDepositHistory(false)} className="w-full">
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category Drawer */}
+      {showCategoryDrawer && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setShowCategoryDrawer(false)}
+          />
+          
+          {/* Drawer */}
+          <div className={`fixed top-0 left-0 h-[100dvh] w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out flex flex-col ${
+            showCategoryDrawer ? 'translate-x-0' : '-translate-x-full'
+          }`}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Categories</h2>
+              <button
+                onClick={() => setShowCategoryDrawer(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+            
+            {/* Categories List */}
+            <div className="flex-1 overflow-y-auto py-4 pb-20">
+              {categories.map((category) => {
+                const isActive = activeCategory === category;
+                const categoryProducts = category === "All" 
+                  ? products 
+                  : products.filter(p => p.category === category);
+                const productCount = categoryProducts.length;
+                
+                // Choose appropriate icon for each category
+                const getCategoryIcon = (cat: string) => {
+                  switch (cat.toLowerCase()) {
+                    case 'all':
+                      return <Menu className="h-5 w-5" />;
+                    case 'social media':
+                    case 'instagram':
+                    case 'facebook':
+                    case 'twitter':
+                    case 'tiktok':
+                      return <div className="h-5 w-5 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold">S</div>;
+                    case 'gaming':
+                      return <div className="h-5 w-5 rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold">G</div>;
+                    case 'music':
+                    case 'spotify':
+                      return <div className="h-5 w-5 rounded-full bg-gradient-to-r from-red-500 to-yellow-500 flex items-center justify-center text-white text-xs font-bold">M</div>;
+                    case 'business':
+                    case 'professional':
+                      return <div className="h-5 w-5 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white text-xs font-bold">B</div>;
+                    default:
+                      return <div className="h-5 w-5 rounded-full bg-gradient-to-r from-gray-500 to-gray-600 flex items-center justify-center text-white text-xs font-bold">C</div>;
+                  }
+                };
+                
+                return (
+                  <button
+                    key={category}
+                    onClick={() => {
+                      setActiveCategory(category);
+                      scrollToCategory(category);
+                      setShowCategoryDrawer(false);
+                    }}
+                    className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors ${
+                      isActive ? 'bg-blue-100 dark:bg-blue-900 border-r-4 border-blue-600' : ''
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 ${isActive ? 'text-blue-600' : 'text-gray-600 dark:text-gray-400'}`}>
+                      {getCategoryIcon(category)}
+                    </div>
+                    <div className="flex-1 text-left">
+                      <div className={`font-medium ${isActive ? 'text-blue-600' : 'text-gray-800 dark:text-gray-200'}`}>
+                        {category}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {productCount} {productCount === 1 ? 'product' : 'products'}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* General Menu Drawer (Right Side) */}
+      {showMenuDrawer && (
+        <>
+          {/* Overlay */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden"
+            onClick={() => setShowMenuDrawer(false)}
+          />
+          
+          {/* Drawer */}
+          <div className={`fixed top-0 right-0 h-[100dvh] w-80 max-w-[85vw] bg-white dark:bg-gray-900 shadow-2xl z-50 md:hidden transform transition-transform duration-300 ease-in-out flex flex-col ${
+            showMenuDrawer ? 'translate-x-0' : 'translate-x-full'
+          }`}>
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">Menu</h2>
+              <button
+                onClick={() => setShowMenuDrawer(false)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+              </button>
+            </div>
+            
+            {/* Menu Items */}
+            <div className="flex-1 overflow-y-auto py-4 pb-20">
+              <button
+                onClick={() => {
+                  // Navigate to auth page or show login instructions
+                  navigate('/auth');
+                  setShowMenuDrawer(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                  <LogIn className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-800 dark:text-gray-200">How to Login</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Learn how to access your account</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowBalanceModal(true);
+                  setShowMenuDrawer(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                  <Wallet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Balance</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">View your account balance</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  // Could navigate to a rules page or show rules modal
+                  // For now, just close the drawer
+                  setShowMenuDrawer(false);
+                  // You could add navigation to a rules page here
+                }}
+                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Rules</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Terms and conditions</div>
+                </div>
+              </button>
+              
+              <button
+                onClick={() => {
+                  setShowCustomerCareOptions(!showCustomerCareOptions);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                  <Headphones className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="flex-1 text-left">
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Customer Care</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Get help and support</div>
+                </div>
+                <div className={`transform transition-transform duration-200 ${showCustomerCareOptions ? 'rotate-180' : ''}`}>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </div>
+              </button>
+              
+              {showCustomerCareOptions && (
+                <div className="ml-6 space-y-2 animate-in slide-in-from-top duration-200">
+                  <button
+                    onClick={() => {
+                      window.open('https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee', '_blank');
+                      setShowMenuDrawer(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-green-50 dark:hover:bg-green-950 transition-colors rounded-lg"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-gray-800 dark:text-gray-200">WhatsApp</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Chat with our team</div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    onClick={() => {
+                      window.open('https://t.me/logsonlinee', '_blank');
+                      setShowMenuDrawer(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors rounded-lg"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                      <MessageCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="text-left">
+                      <div className="font-medium text-gray-800 dark:text-gray-200">Telegram</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Message our support</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Balance Modal */}
+      <Dialog open={showBalanceModal} onOpenChange={setShowBalanceModal}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wallet className="h-5 w-5 text-blue-600" />
+              Account Balance & Statistics
+            </DialogTitle>
+            <DialogDescription>
+              View your current balance and transaction history
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Current Balance */}
+            <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 p-6 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="text-center">
+                <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Current Balance</div>
+                <div className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
+                  ₦{Math.max(0, user.balance || 0).toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            {/* Transaction Statistics */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Transaction Statistics</h3>
+              
+              {/* Stats Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <History className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Purchases</span>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600">{purchaseHistory.length}</div>
+                  <div className="text-xs text-gray-500">Total transactions</div>
+                </div>
+                
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Banknote className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Deposits</span>
+                  </div>
+                  <div className="text-2xl font-bold text-blue-600">{depositHistory.length}</div>
+                  <div className="text-xs text-gray-500">Fund additions</div>
+                </div>
+              </div>
+
+              {/* Simple Transaction Chart */}
+              <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-3">Recent Activity</h4>
+                <div className="space-y-2">
+                  {purchaseHistory.slice(0, 5).map((item, index) => (
+                    <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span className="text-sm text-gray-800 dark:text-gray-200 truncate max-w-[150px]">{item.name}</span>
+                      </div>
+                      <div className="text-sm font-medium text-green-600">-₦{item.price.toFixed(2)}</div>
+                    </div>
+                  ))}
+                  {depositHistory.slice(0, 3).map((deposit, index) => (
+                    <div key={deposit._id || index} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-b-0">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <span className="text-sm text-gray-800 dark:text-gray-200">Deposit</span>
+                      </div>
+                      <div className="text-sm font-medium text-blue-600">+₦{deposit.amount?.toFixed(2)}</div>
+                    </div>
+                  ))}
+                  {purchaseHistory.length === 0 && depositHistory.length === 0 && (
+                    <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                      No transactions yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowBalanceModal(false)}>
               Close
             </Button>
           </DialogFooter>
@@ -1433,7 +1811,7 @@ const Shop = () => {
       {/* Floating Social Support Icons */}
       <div className="fixed bottom-8 left-6 z-50">
         <a
-          href="https://chat.whatsapp.com/Jyr22tl4NNA6GJ5dXIpAlv?mode=wwt"
+          href="https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee"
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-2xl hover:scale-110 transition-all duration-300"
@@ -1447,7 +1825,7 @@ const Shop = () => {
 
       <div className="fixed bottom-8 right-6 z-50">
         <a
-          href="https://t.me/LEGITSUPPORT2"
+          href="https://t.me/logsonlinee"
           target="_blank"
           rel="noopener noreferrer"
           className="flex flex-col items-center gap-1 group"
@@ -1459,6 +1837,69 @@ const Shop = () => {
             </svg>
           </div>
         </a>
+      </div>
+
+      {/* Mobile Bottom Navigation */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t-2 border-white/60 dark:border-gray-800 shadow-2xl">
+        <div className="flex items-center justify-around py-2 px-4">
+          <button
+            onClick={() => navigate("/")}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1"
+            aria-label="Home"
+          >
+            <Home className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Home</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              // Scroll to enter amount input
+              const enterAmountInput = document.querySelector('input[placeholder="Enter amount"]');
+              if (enterAmountInput) {
+                enterAmountInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1"
+            aria-label="Add Funds"
+          >
+            <Wallet className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Add Funds</span>
+          </button>
+          
+          <button
+            onClick={() => setShowPurchaseHistory(true)}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1 relative"
+            aria-label="Purchase History"
+          >
+            <div className="relative">
+              <History className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              {purchaseHistory.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-lg">
+                  {purchaseHistory.length}
+                </span>
+              )}
+            </div>
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">History</span>
+          </button>
+          
+          <button
+            onClick={() => setShowDepositHistory(true)}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1"
+            aria-label="Deposit History"
+          >
+            <History className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Deposit</span>
+          </button>
+          
+          <button
+            onClick={handleSignOut}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 transition-all duration-300 group min-w-0 flex-1"
+            aria-label="Sign Out"
+          >
+            <LogOut className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">Sign Out</span>
+          </button>
+        </div>
       </div>
     </div>
   );

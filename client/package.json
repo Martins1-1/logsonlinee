@@ -1,8 +1,9 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "logs-online-client",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "description": "Frontend client for LOGs Online e-commerce platform",
   "scripts": {
     "dev": "vite",
     "dev:full": "concurrently \"npm run dev --prefix server\" \"npm run dev\"",

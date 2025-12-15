@@ -178,3 +178,13 @@ All colors MUST be HSL.
     }
   }
 }
+
+/* Marquee (horizontal scrolling list) */
+@layer utilities {
+  .marquee { overflow: hidden; }
+  .marquee-track { display: flex; gap: 2rem; align-items: center; animation: marquee 20s linear infinite; }
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+}

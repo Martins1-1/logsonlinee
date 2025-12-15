@@ -158,27 +158,27 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 relative overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center px-6 py-12 bg-gray-50 dark:bg-gray-900 relative overflow-hidden transition-colors duration-300">
       {/* Animated gradient orbs */}
-      <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
+      {/* <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/30 to-purple-400/30 rounded-full blur-3xl animate-pulse"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-400/30 to-pink-400/30 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-pink-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '0.5s' }}></div> */}
       
       <div className="w-full max-w-md relative z-10">
         {/* Header with logo */}
         <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-500">
           <div className="inline-flex items-center justify-center mb-4">
             <img 
-              src="/logo.png" 
-              alt="Legit Store" 
-              className="h-20 w-auto drop-shadow-2xl"
+              src="/logonobg.png" 
+              alt="LOGs Online" 
+              className="h-16 w-auto drop-shadow-2xl"
             />
           </div>
           <h1 
-            className="text-4xl md:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 mb-3 animate-shimmer"
+            className="text-2xl md:text-3xl font-bold text-blue-600 mb-3 animate-shimmer"
             style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
           >
-            Welcome to Legit Store
+            Welcome to Logs Online
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-lg">Your trusted marketplace for authentic accounts</p>
         </div>
@@ -205,7 +205,7 @@ const Auth = () => {
             <Card className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-white/60 dark:border-gray-800 border-2 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 pointer-events-none"></div>
               <CardHeader className="relative space-y-1 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Sign In</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800">Sign In</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Enter your credentials to access your account</CardDescription>
               </CardHeader>
               <CardContent className="relative">
@@ -246,10 +246,10 @@ const Auth = () => {
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-blue-600 transition-colors" />
                     </div>
                   </div>
-                  <Button 
+                  <Button
                     type="submit"
                     disabled={isSigningIn}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     <span className="flex items-center justify-center gap-2">
                       {isSigningIn ? "Signing In..." : "Sign In"}
@@ -272,7 +272,7 @@ const Auth = () => {
                       </DialogTrigger>
                       <DialogContent className="bg-white/95 backdrop-blur-xl border-2 border-white/60 shadow-2xl dark:bg-gray-900/95 dark:border-gray-800">
                         <DialogHeader>
-                          <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400 flex items-center gap-2">
+                          <DialogTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800 dark:from-blue-400 dark:to-blue-500 flex items-center gap-2">
                             <Mail className="w-5 h-5 text-blue-600" />
                             Reset Your Password
                           </DialogTitle>
@@ -310,7 +310,7 @@ const Auth = () => {
                             </Button>
                             <Button 
                               type="submit" 
-                              className="flex-1 h-11 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                              className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                             >
                               Send Reset Link
                             </Button>
@@ -328,7 +328,7 @@ const Auth = () => {
             <Card className="bg-white/95 backdrop-blur-xl shadow-2xl border-white/60 border-2 overflow-hidden dark:bg-gray-900/95 dark:border-gray-800">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-50/50 via-transparent to-pink-50/50 dark:from-purple-950/30 dark:via-transparent dark:to-pink-950/30 pointer-events-none"></div>
               <CardHeader className="relative space-y-1 pb-6">
-                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700 dark:from-blue-400 dark:to-purple-400">Create Account</CardTitle>
+                <CardTitle className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800 dark:from-blue-400 dark:to-blue-500">Create Account</CardTitle>
                 <CardDescription className="text-gray-600 dark:text-gray-400">Sign up to start your shopping journey</CardDescription>
               </CardHeader>
               <CardContent className="relative">
@@ -390,7 +390,7 @@ const Auth = () => {
                   <Button 
                     type="submit"
                     disabled={isSigningUp}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]"
                   >
                     <span className="flex items-center justify-center gap-2">
                       {isSigningUp ? "Creating Account..." : "Create Account"}

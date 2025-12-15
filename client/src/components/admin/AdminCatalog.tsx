@@ -588,9 +588,9 @@ export default function AdminCatalog() {
           <CardHeader>
             <div className="flex items-center gap-3 justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center"><Database className="h-6 w-6 text-white" /></div>
+                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center"><Database className="h-6 w-6 text-white" /></div>
                 <div>
-                  <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-purple-700">Catalog Manager</CardTitle>
+                  <CardTitle className="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800">Catalog Manager</CardTitle>
                   <CardDescription>Manage categories and products stored locally</CardDescription>
                 </div>
               </div>
