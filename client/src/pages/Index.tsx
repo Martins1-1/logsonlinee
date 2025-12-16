@@ -34,13 +34,13 @@ const Index = () => {
       {/* 🏠 Hero Section */}
       <section
         id="home"
-        className="relative pt-28 md:pt-32 pb-12 md:pb-20 px-4 md:px-6 overflow-hidden"
+        className="relative pt-28 md:pt-32 pb-12 md:pb-20 px-2 md:px-6 overflow-hidden"
         aria-label="Welcome to Logs Online"
       >
         <div className="container mx-auto relative z-10">
           <div className="grid md:grid-cols-2 gap-12 items-start md:items-center">
             {/* 📝 Hero Text */}
-            <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-left duration-700 order-1 md:order-1">
+            <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-left duration-700 order-1 md:order-1 min-w-0">
               <div className="space-y-3 md:space-y-4">
                 {/* Marquee: small horizontal list of platforms with icons */}
                 <div className="mb-3 overflow-hidden">
@@ -83,12 +83,12 @@ const Index = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col items-start gap-2">
-                  <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-white bg-blue-600 px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-lg inline-block">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-lg md:text-xl lg:text-2xl font-medium text-white bg-blue-600 px-4 py-2 md:px-6 md:py-3 rounded-lg inline-block">
                     Welcome to
                   </h3>
                   <h1
-                    className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight text-blue-600 bg-white px-4 py-2 md:px-6 md:py-3 rounded-lg shadow-lg inline-block"
+                    className="text-lg md:text-5xl lg:text-6xl font-bold leading-tight text-blue-600 bg-white px-4 py-2 md:px-6 md:py-3 rounded-lg inline-block"
                     style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
                   >
                     Logs Online
@@ -96,16 +96,16 @@ const Index = () => {
                 </div>
               </div>
 
-              <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 max-w-[280px] md:max-w-lg leading-relaxed">
-                Your trusted marketplace for <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">authentic social media accounts</span> designed to last and serve you better.
+              <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 w-full md:max-w-lg leading-relaxed break-words">
+                Your trusted marketplace for <span className="font-semibold text-blue-600">authentic social media accounts</span> designed to last and serve you better.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 items-start">
+              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 items-stretch sm:items-start w-full sm:w-auto">
                 <Button
                   size="lg"
                   onClick={() => navigate("/auth")}
                   aria-label="Get started on Logs Online"
-                  className="h-10 md:h-14 px-8 md:px-8 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-lg font-semibold shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-[1.05] rounded-xl w-48 sm:w-auto"
+                  className="h-10 md:h-14 px-8 md:px-8 bg-blue-600 hover:bg-blue-700 text-white text-sm md:text-lg font-semibold shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/50 transition-all duration-300 transform hover:scale-[1.05] rounded-xl w-full sm:w-auto"
                 >
                   <span className="flex items-center gap-2 justify-center">
                     Get Started
@@ -121,7 +121,7 @@ const Index = () => {
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
                   aria-label="Learn more about Logs Online"
-                  className="h-10 md:h-14 px-8 md:px-8 text-sm md:text-lg font-semibold border-2 border-purple-300 hover:bg-white/80 backdrop-blur-sm transition-all duration-300 rounded-xl w-48 sm:w-auto"
+                  className="h-10 md:h-14 px-8 md:px-8 text-sm md:text-lg font-semibold border-2 border-purple-300 hover:bg-white/80 backdrop-blur-sm transition-all duration-300 rounded-xl w-full sm:w-auto"
                 >
                   Learn More
                 </Button>
@@ -129,13 +129,13 @@ const Index = () => {
             </div>
 
             {/* 🖼 Hero Image */}
-            <figure className="relative group animate-in fade-in slide-in-from-right duration-700 order-2 md:order-2">
+            <figure className="relative group animate-in fade-in slide-in-from-right duration-700 order-2 md:order-2 w-full">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60 w-fit md:w-full">
+              <div className="relative w-full">
                 <img
                   src={heroImage}
                   alt="Modern shopping experience on Logs Online"
-                  className="rounded-2xl w-[224px] h-[192px] md:w-full md:h-auto object-fill shadow-xl"
+                  className="rounded-2xl w-full h-auto object-cover"
                 />
               </div>
             </figure>
@@ -144,7 +144,7 @@ const Index = () => {
       </section>
 
       {/* ℹ️ About Section */}
-      <section id="about" className="py-16 md:py-24 px-6 relative" aria-labelledby="about-title">
+      <section id="about" className="py-16 md:py-24 px-2 md:px-6 relative" aria-labelledby="about-title">
         <div className="container mx-auto relative z-10">
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
             {/* Features Grid */}
@@ -206,28 +206,28 @@ const Index = () => {
             </div>
 
             {/* About Text */}
-            <div className="order-1 md:order-2 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right duration-700">
-              <div className="relative inline-block">
+            <div className="order-1 md:order-2 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right duration-700 text-center md:text-left">
+              <div className="relative w-full">
                 <h2 
                   id="about-title" 
-                  className="text-2xl md:text-4xl lg:text-5xl font-bold text-blue-600 bg-white px-6 py-3 rounded-lg shadow-lg relative z-10"
+                  className="text-2xl md:text-4xl lg:text-5xl font-bold text-blue-600 bg-white py-3 rounded-lg relative z-10 w-full whitespace-nowrap text-center"
                   style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
                 >
                   About Logs Online
                 </h2>
               </div>
-              <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed">
+              <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300 leading-relaxed text-justify">
                 We offer a wide range of accounts tailored to various needs. Professional social media growth services
-                <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">   Foreign & local Facebook • Instagram • TikTok • YouTube • Twitter,
+                <span className="font-semibold text-blue-600">   Foreign & local Facebook • Instagram • TikTok • YouTube • Twitter,
                   Virtual numbers for verification WhatsApp • Telegram • SMS • OTP. </span>, We will help you gain more followers and boost your account.
                  We also sell, Discord Accounts, Old email, Twitch, and many more.
               </p>
               <p
-                className="text-sm md:text-base lg:text-lg text-gray-700 dark:text-gray-300 leading-relaxed tracking-wide"
+                className="text-sm md:text-base lg:text-lg text-gray-700 dark:text-gray-300 leading-relaxed tracking-wide text-justify"
                 style={{ fontFamily: '"Times New Roman", Times, serif' }}
               >
                 With thousands of satisfied customers worldwide, we've built a
-                reputation for <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">reliability, quality, and customer satisfaction</span>. Join our community today and experience the difference.
+                reputation for <span className="font-semibold text-blue-600">reliability, quality, and customer satisfaction</span>. Join our community today and experience the difference.
               </p>
             </div>
           </div>
@@ -240,7 +240,7 @@ const Index = () => {
           <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
               id="features-title" 
-              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg shadow-lg inline-block"
+              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg inline-block"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               Powerful Features
@@ -277,13 +277,13 @@ const Index = () => {
               ))}
             </div>
 
-            <figure className="relative group animate-in fade-in slide-in-from-right duration-700">
+            <figure className="relative group animate-in fade-in slide-in-from-right duration-700 w-full">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60">
+              <div className="relative w-full">
                                 <img
                   src={featuresImage}
                   alt="Features overview"
-                  className="rounded-2xl shadow-xl w-full h-48 md:h-auto object-cover"
+                  className="rounded-2xl w-full h-auto object-cover"
                   loading="lazy"
                 />
               </div>
@@ -298,7 +298,7 @@ const Index = () => {
           <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
               id="how-title" 
-              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg shadow-lg inline-block"
+              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg inline-block"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               How It Works
@@ -309,13 +309,13 @@ const Index = () => {
           </header>
 
           <div className="grid md:grid-cols-2 gap-12 md:gap-16 items-center">
-            <figure className="relative group animate-in fade-in slide-in-from-left duration-700">
+            <figure className="relative group animate-in fade-in slide-in-from-left duration-700 w-full">
               <div className="absolute inset-0 bg-gradient-to-br from-blue-400/20 to-cyan-400/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500"></div>
-              <div className="relative bg-white/80 backdrop-blur-md p-3 md:p-6 rounded-3xl shadow-2xl border-2 border-white/60">
+              <div className="relative w-full">
                 <img
                   src={howItWorksImage}
                   alt="How Logs Online works"
-                  className="rounded-2xl shadow-xl w-full h-48 md:h-auto object-cover"
+                  className="rounded-2xl w-full h-auto object-cover"
                   loading="lazy"
                 />
               </div>

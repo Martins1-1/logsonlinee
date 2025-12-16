@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { History, Menu, MoreVertical } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
-import logo from "@/assets/logonobg.png";
+import logo from "@/assets/imagelogo2.PNG";
 
 interface NavbarProps {
   isShopPage?: boolean;
