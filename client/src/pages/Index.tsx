@@ -235,12 +235,12 @@ const Index = () => {
       </section>
 
       {/* 💎 Features Section */}
-      <section id="features" className="py-16 md:py-24 px-6 relative" aria-labelledby="features-title">
+      <section id="features" className="py-16 md:py-24 px-2 md:px-6 relative" aria-labelledby="features-title">
         <div className="container mx-auto relative z-10">
           <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
               id="features-title" 
-              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg inline-block"
+              className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg inline-block whitespace-nowrap"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
               Powerful Features
@@ -269,7 +269,7 @@ const Index = () => {
                   gradient: "from-blue-600 to-blue-700"
                 },
               ].map((item, i) => (
-                <div key={i} className="group bg-white/80 backdrop-blur-xl p-5 md:p-8 rounded-2xl shadow-xl border-2 border-white/60 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                <div key={i} className="group bg-white/80 backdrop-blur-xl p-5 md:p-8 rounded-2xl shadow-xl border-2 border-white/60 hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 w-full">
                   <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-5 transition-opacity duration-300 rounded-2xl" style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}></div>
                   <h3 className={`text-lg md:text-2xl lg:text-3xl font-bold mb-2 md:mb-4 bg-clip-text text-transparent bg-gradient-to-r ${item.gradient}`}>{item.title}</h3>
                   <p className="text-sm md:text-lg text-gray-600 leading-relaxed">{item.desc}</p>
@@ -293,7 +293,7 @@ const Index = () => {
       </section>
 
       {/* ⚙️ How It Works */}
-      <section id="how-it-works" className="py-16 md:py-24 px-6 relative" aria-labelledby="how-title">
+      <section id="how-it-works" className="py-16 md:py-24 px-2 md:px-6 relative" aria-labelledby="how-title">
         <div className="container mx-auto relative z-10">
           <header className="text-center mb-12 md:mb-20 animate-in fade-in slide-in-from-top duration-700">
             <h2 
@@ -354,7 +354,7 @@ const Index = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className={`text-lg md:text-2xl lg:text-3xl font-bold mb-2 md:mb-3 bg-clip-text text-transparent bg-gradient-to-r ${gradient}`}>{title}</h3>
-                    <p className="text-sm md:text-lg text-gray-600 leading-relaxed">{desc}</p>
+                    <p className="text-sm md:text-lg text-gray-600 leading-relaxed text-justify break-words">{desc}</p>
                   </div>
                 </li>
               ))}
