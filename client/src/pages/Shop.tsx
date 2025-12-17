@@ -951,9 +951,6 @@ const Shop = () => {
                                       </div>
                                       <div className="flex items-center justify-between gap-3 w-full">
                                         <h3 className="font-bold text-sm md:text-base lg:text-lg mb-0.5 md:mb-1 bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800 dark:from-blue-400 dark:to-blue-500 truncate md:whitespace-normal flex-1 min-w-0">{product.name}</h3>
-                                        <p className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 flex-shrink-0">
-                                          ₦{product.price.toFixed(2)}
-                                        </p>
                                       </div>
                                     </div>
                                     
@@ -996,9 +993,9 @@ const Shop = () => {
                                       {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
                                     </Button>
                                     <div className="flex flex-col items-end">
-                                      {/* <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
+                                      <span className="text-base font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-400 dark:from-blue-400 dark:to-blue-300">
                                         ₦{product.price.toFixed(2)}
-                                      </span> */}
+                                      </span>
                                       {availableStock > 0 ? (
                                         <Badge variant="outline" className="mt-1 px-1.5 py-0.5 text-[10px] bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:border-blue-800 block">
                                           {availableStock} in stock
