@@ -879,28 +879,7 @@ const Shop = () => {
             <div className="grid lg:grid-cols-1 gap-8">
               {/* Products Grid */}
               <div className="lg:col-span-1">
-                <h2 
-                  className="text-2xl md:text-4xl lg:text-5xl font-bold mb-6 md:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 px-3 md:px-0"
-                  style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
-                >
-                  Our Products
-                </h2>
-                {/* Category Filters */}
-                <div className="flex flex-wrap gap-2 md:gap-3 mb-6 md:mb-8 animate-in fade-in slide-in-from-left duration-500 px-3 md:px-0">
-                  {categories.map(cat => (
-                    <Button
-                      key={cat}
-                      variant={activeCategory === cat ? "default" : "outline"}
-                      onClick={() => {
-                        setActiveCategory(cat);
-                        scrollToCategory(cat);
-                      }}
-                      className={`rounded-full px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-semibold transition-all duration-300 shadow ${activeCategory === cat ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white/70 backdrop-blur border-2 border-white/60 hover:bg-blue-50 dark:bg-gray-900/70 dark:border-gray-800 dark:hover:bg-gray-800 dark:text-gray-300'}`}
-                    >
-                      {cat}
-                    </Button>
-                  ))}
-                </div>
+
 
                 {/* Display products grouped by category */}
                 {activeCategory === "All" ? (
@@ -1714,6 +1693,22 @@ const Shop = () => {
                   </button>
                 </div>
               )}
+
+              <button
+                onClick={() => {
+                  handleSignOut();
+                  setShowMenuDrawer(false);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-4 hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                  <LogOut className="h-5 w-5 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="text-left">
+                  <div className="font-medium text-gray-800 dark:text-gray-200">Sign Out</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">Log out of your account</div>
+                </div>
+              </button>
             </div>
           </div>
         </>
@@ -1891,14 +1886,7 @@ const Shop = () => {
             <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Deposit</span>
           </button>
           
-          <button
-            onClick={handleSignOut}
-            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950 transition-all duration-300 group min-w-0 flex-1"
-            aria-label="Sign Out"
-          >
-            <LogOut className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors" />
-            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">Sign Out</span>
-          </button>
+
         </div>
       </div>
     </div>
