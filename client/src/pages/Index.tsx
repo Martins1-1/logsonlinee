@@ -1,9 +1,9 @@
 import Navbar from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import heroImage from "@/assets/boyown.png";
-import featuresImage from "@/assets/girlown.png";
-import howItWorksImage from "@/assets/front3g.jpg";
+import heroImage from "@/assets/image1.JPG";
+import featuresImage from "@/assets/image2.JPG";
+import howItWorksImage from "@/assets/image3.JPG";
 import facebookImg from "@/assets/facebook (2).jpg";
 import instagramImg from "@/assets/Instargram.jpg";
 import numberImg from "@/assets/number.jpg";
@@ -34,7 +34,7 @@ const Index = () => {
       {/* 🏠 Hero Section */}
       <section
         id="home"
-        className="relative pt-28 md:pt-32 pb-12 md:pb-20 px-2 md:px-6 overflow-hidden"
+        className="relative pt-20 md:pt-24 pb-12 md:pb-20 px-2 md:px-6 overflow-hidden"
         aria-label="Welcome to Logs Online"
       >
         <div className="container mx-auto relative z-10">
@@ -97,7 +97,7 @@ const Index = () => {
               </div>
 
               <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 w-full md:max-w-lg leading-relaxed break-words">
-                Your trusted marketplace for <span className="font-semibold text-blue-600">authentic social media accounts</span> designed to last and serve you better.
+                A secure and trusted platform delivering <span className="font-semibold text-blue-600">genuine social media accounts</span> that stand the test of time.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 items-stretch sm:items-start w-full sm:w-auto">
@@ -243,7 +243,7 @@ const Index = () => {
               className="text-2xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-blue-600 bg-white px-6 py-3 rounded-lg inline-block whitespace-nowrap"
               style={{ fontFamily: 'Poppins, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial' }}
             >
-              Powerful Features
+              Key Features
             </h2>
             <p className="text-base md:text-xl lg:text-2xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto leading-relaxed">
               Everything you need for a <span className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700">seamless shopping experience</span>.
@@ -345,7 +345,7 @@ const Index = () => {
                   step: 4,
                   title: "Enjoy Your Purchase",
                   gradient: "from-blue-600 to-blue-700",
-                  desc: "Relax while we prepare and ship your order directly to your door.",
+                  desc: "Sit back and relax as your chosen item makes its way to you with instant delivery.",
                 },
               ].map(({ step, title, desc, gradient }) => (
                 <li key={step} className="flex gap-4 md:gap-6 group">
