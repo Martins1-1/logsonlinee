@@ -790,23 +790,25 @@ const Shop = () => {
         </div>
 
         <div className="px-0 md:px-6">
-          <div className="container mx-auto">
+          <div className="container mx-auto px-0 md:px-8">
             
             {/* Header Section (subtitle only now, main title moved into banner) */}
             <div className="text-center mb-8 md:mb-12 animate-in fade-in slide-in-from-top duration-700 px-6 md:px-0">
               <p className="text-sm md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">Discover our curated collection of high-quality social media accounts</p>
             </div>
 
-            {/* Mobile full-bleed wallet card */}
-            <Card className="block md:hidden w-full mb-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border-t-0 border-l-0 border-r-0 border-white/60 dark:border-gray-800 animate-in fade-in duration-700 rounded-none">
+            {/* Mobile wallet card */}
+            <Card className="block md:hidden ml-[5%] w-[85%] mb-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl shadow-2xl border border-white/60 dark:border-gray-800 animate-in fade-in duration-700 rounded-xl">
               <CardHeader className="p-4 pb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/30">
                     <Wallet className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-semibold text-blue-700">Your Wallet</CardTitle>
-                    <CardDescription className="text-sm font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{Math.max(0, user.balance || 0).toFixed(2)}</span></CardDescription>
+                    <CardTitle className="text-lg font-bold text-white mb-0.5">Your Wallet</CardTitle>
+                    <CardDescription className="text-sm font-medium text-blue-100 flex items-center">
+                      Balance: <span className="text-white font-bold text-lg ml-1.5">₦{Math.max(0, user.balance || 0).toFixed(2)}</span>
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -836,14 +838,15 @@ const Shop = () => {
             <Card className="hidden md:block -mx-6 md:mx-0 px-6 md:px-0 mb-6 md:mb-8 bg-white/90 dark:bg-gray-900/80 backdrop-blur-xl shadow-2xl border-2 border-white/60 dark:border-gray-800 animate-in fade-in slide-in-from-left duration-700">
               <CardHeader className="pb-3 md:pb-6">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 md:gap-3">
-
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-                      <Wallet className="h-5 w-5 md:h-6 md:w-6 text-white" />
+                  <div className="flex items-center gap-4 p-6 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg w-full">
+                    <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/30">
+                      <Wallet className="h-7 w-7 text-white" />
                     </div>
-                    <div>
-                      <CardTitle className="text-lg md:text-2xl bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-800">Your Wallet</CardTitle>
-                      <CardDescription className="text-sm md:text-lg font-semibold text-gray-700 dark:text-gray-300">Balance: <span className="text-blue-600">₦{Math.max(0, user.balance || 0).toFixed(2)}</span></CardDescription>
+                    <div className="flex-1">
+                      <CardTitle className="text-2xl font-bold text-white mb-1">Your Wallet</CardTitle>
+                      <CardDescription className="text-lg font-medium text-blue-100 flex items-center">
+                        Balance: <span className="text-white font-bold text-2xl ml-2">₦{Math.max(0, user.balance || 0).toFixed(2)}</span>
+                      </CardDescription>
                     </div>
                   </div>
                 </div>
@@ -983,7 +986,7 @@ const Shop = () => {
                                   </div>
 
                                   {/* Buy Button and Price (Mobile Full Width) */}
-                                  <div className="px-0 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
+                                  <div className="pl-0 pr-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                     <Button 
                                       onClick={() => handleBuyClick(product)}
                                       disabled={availableStock === 0}
@@ -1121,7 +1124,7 @@ const Shop = () => {
                               </div>
 
                               {/* Buy Button and Price (Mobile Full Width) */}
-                              <div className="px-0 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
+                              <div className="pl-0 pr-3 pb-3 md:p-0 md:flex-shrink-0 md:hidden flex items-center justify-between gap-2">
                                 <Button 
                                   onClick={() => handleBuyClick(product)}
                                   disabled={availableStock === 0}
