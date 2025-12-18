@@ -16,6 +16,8 @@ const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:8080";
 app.use(cors({
   origin: [
     FRONTEND_URL, 
+    'https://logsonlinee.com',
+    'https://www.logsonlinee.com',
     'https://logs-online.com',
     'https://www.logs-online.com',
     'https://logs-online.vercel.app',
