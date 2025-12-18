@@ -776,15 +776,15 @@ const Shop = () => {
         {/* Banner Section with Welcome Badge - Full Width */}
         <div className="relative mb-6 animate-in fade-in slide-in-from-top duration-500">
           {/* Welcome badge positioned slightly above banner - smaller on mobile */}
-          {/* <div className="absolute -top-3 right-2 md:-top-4 md:right-6 z-10">
+          <div className="absolute -top-3 right-2 md:-top-4 md:right-6 z-10">
             <div className="flex items-center gap-1 md:gap-2 bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl px-2 py-1 md:px-4 md:py-2 rounded-full shadow-xl border-2 border-white/70 dark:border-gray-700">
+              <span className="text-[10px] md:text-sm text-gray-600 dark:text-gray-400 font-semibold">Welcome</span>
               <span className="text-xs md:text-base text-gray-700 dark:text-gray-300 font-medium">
                 {user.name || user.email.split('@')[0]}
               </span>
               <BadgeCheck className="h-3 w-3 md:h-5 md:w-5 text-blue-600" />
-              <span className="text-[10px] md:text-sm text-gray-600 dark:text-gray-400 font-semibold">welcome back</span>
             </div>
-          </div> */}
+          </div>
           
           {/* <a 
             href="https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee" 
