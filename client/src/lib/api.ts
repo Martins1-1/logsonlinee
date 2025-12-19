@@ -175,6 +175,7 @@ export const purchaseHistoryAPI = {
 export interface CatalogCategoryDTO {
   id: string;
   name: string;
+  icon?: string;
   createdAt?: string;
 }
 
@@ -182,7 +183,7 @@ export const catalogCategoriesAPI = {
   async getAll(): Promise<CatalogCategoryDTO[]> {
     return apiFetch('/api/catalog-categories');
   },
-  async create(name: string): Promise<CatalogCategoryDTO> {
+  async create(name: string, icon?: string): Promise<CatalogCategoryDTO> {
     const token = localStorage.getItem('admin_token');
     return apiFetch('/api/catalog-categories', {
       method: 'POST',
@@ -190,7 +191,18 @@ export const catalogCategoriesAPI = {
         'Content-Type': 'application/json',
         ...(token && { 'Authorization': `Bearer ${token}` }),
       },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, icon }),
+    });
+  },
+  async update(id: string, data: { name?: string; icon?: string }): Promise<CatalogCategoryDTO> {
+    const token = localStorage.getItem('admin_token');
+    return apiFetch(`/api/catalog-categories/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` }),
+      },
+      body: JSON.stringify(data),
     });
   },
   async delete(id: string): Promise<void> {

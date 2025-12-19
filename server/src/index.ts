@@ -556,14 +556,33 @@ app.get("/api/catalog-categories", async (req: Request, res: Response) => {
 // Create category (admin)
 app.post("/api/catalog-categories", requireAdmin, async (req: Request, res: Response) => {
   try {
-    const { id, name } = req.body as { id?: string; name?: string };
+    const { id, name, icon } = req.body as { id?: string; name?: string; icon?: string };
     if (!name) return res.status(400).json({ error: "Name is required" });
-    const cat = new CatalogCategory({ id: id || crypto.randomUUID(), name });
+    const cat = new CatalogCategory({ id: id || crypto.randomUUID(), name, icon });
     await cat.save();
     res.json(cat);
   } catch (err) {
     console.error("Error creating category:", err);
     res.status(500).json({ error: "Failed to create category" });
+  }
+});
+
+// Update category (admin)
+app.put("/api/catalog-categories/:id", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, icon } = req.body as { name?: string; icon?: string };
+    
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (icon !== undefined) updateData.icon = icon;
+
+    const updated = await CatalogCategory.findOneAndUpdate({ id }, updateData, { new: true });
+    if (!updated) return res.status(404).json({ error: "Category not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error("Error updating category:", err);
+    res.status(500).json({ error: "Failed to update category" });
   }
 });
 

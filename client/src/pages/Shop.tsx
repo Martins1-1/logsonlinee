@@ -117,6 +117,7 @@ const Shop = () => {
   const [loadingProducts, setLoadingProducts] = useState(true);
   // Categories from API
   const [categories, setCategories] = useState<string[]>(["All"]);
+  const [categoryIcons, setCategoryIcons] = useState<Record<string, string>>({});
 
   // New: Purchase summary dialog state
   const [showPurchaseSummaryDialog, setShowPurchaseSummaryDialog] = useState(false);
@@ -216,6 +217,7 @@ const Shop = () => {
 
   setProducts(catalogProducts);
       setCategories(["All", ...cats.map(c => c.name)]);
+      setCategoryIcons(Object.fromEntries(cats.map(c => [c.name, c.icon || ""])));
       
       // Defer purchase history so UI renders fast
       (async () => {
@@ -822,6 +824,9 @@ const Shop = () => {
                     const productCount = categoryProducts.length;
                     
                     const getCategoryIcon = (cat: string) => {
+                      if (categoryIcons[cat]) {
+                        return <img src={categoryIcons[cat]} alt="" className="h-4 w-4 object-contain" />;
+                      }
                       switch (cat.toLowerCase()) {
                         case 'all': return <Menu className="h-4 w-4" />;
                         case 'social media': case 'instagram': case 'facebook': case 'twitter': case 'tiktok':
@@ -1696,6 +1701,9 @@ const Shop = () => {
                 
                 // Choose appropriate icon for each category
                 const getCategoryIcon = (cat: string) => {
+                  if (categoryIcons[cat]) {
+                    return <img src={categoryIcons[cat]} alt="" className="h-5 w-5 object-contain" />;
+                  }
                   switch (cat.toLowerCase()) {
                     case 'all':
                       return <Menu className="h-5 w-5" />;

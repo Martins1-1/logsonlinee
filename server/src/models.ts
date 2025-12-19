@@ -106,6 +106,7 @@ export interface IPurchaseHistory extends Document {
 export interface ICatalogCategory extends Document {
   id: string;
   name: string;
+  icon?: string;
   createdAt: Date;
 }
 
@@ -222,6 +223,7 @@ export const PurchaseHistory = mongoose.model<IPurchaseHistory>("PurchaseHistory
 const CatalogCategorySchema = new Schema<ICatalogCategory>({
   id: { type: String, required: true, unique: true },
   name: { type: String, required: true },
+  icon: { type: String }, // Base64 or URL
   createdAt: { type: Date, default: Date.now },
 });
 

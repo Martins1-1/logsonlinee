@@ -27,6 +27,7 @@ interface SerialNumber {
 interface CatalogCategory {
   id: string;
   name: string;
+  icon?: string;
   createdAt: string;
 }
 
@@ -51,6 +52,13 @@ export default function AdminCatalog() {
 
   // Category form state
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryIcon, setNewCategoryIcon] = useState("");
+  const [uploadingCatIcon, setUploadingCatIcon] = useState(false);
+  const [editCatDialogOpen, setEditCatDialogOpen] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<CatalogCategory | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [editCatIcon, setEditCatIcon] = useState("");
+  const [uploadingEditCatIcon, setUploadingEditCatIcon] = useState(false);
 
   // Product form state
   const [pName, setPName] = useState("");
@@ -200,11 +208,67 @@ export default function AdminCatalog() {
     try {
       const list = await catalogCategoriesAPI.getAll();
       if (list.length > 0) {
-        setCategories(list.map(c => ({ id: c.id, name: c.name, createdAt: c.createdAt || new Date().toISOString() })));
+        setCategories(list.map(c => ({ id: c.id, name: c.name, icon: c.icon, createdAt: c.createdAt || new Date().toISOString() })));
       }
     } catch (e) {
       // fall back silently; defaults remain
       console.error("Error loading categories", e);
+    }
+  };
+
+  const handleCategoryIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error("Please upload an image file"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image size should be less than 2MB"); return; }
+
+    setUploadingCatIcon(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewCategoryIcon(event.target?.result as string);
+      setUploadingCatIcon(false);
+      toast.success("Icon uploaded");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditCategoryIconUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) { toast.error("Please upload an image file"); return; }
+    if (file.size > 2 * 1024 * 1024) { toast.error("Image size should be less than 2MB"); return; }
+
+    setUploadingEditCatIcon(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditCatIcon(event.target?.result as string);
+      setUploadingEditCatIcon(false);
+      toast.success("Icon uploaded");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openEditCategory = (cat: CatalogCategory) => {
+    setEditingCategory(cat);
+    setEditCatName(cat.name);
+    setEditCatIcon(cat.icon || "");
+    setEditCatDialogOpen(true);
+  };
+
+  const updateCategory = async () => {
+    if (!editingCategory) return;
+    const name = editCatName.trim();
+    if (!name) { toast.error("Category name required"); return; }
+    
+    try {
+      const updated = await catalogCategoriesAPI.update(editingCategory.id, { name, icon: editCatIcon });
+      setCategories(prev => prev.map(c => c.id === editingCategory.id ? { ...c, name: updated.name, icon: updated.icon } : c));
+      setEditCatDialogOpen(false);
+      setEditingCategory(null);
+      toast.success("Category updated");
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update category");
     }
   };
 
@@ -247,10 +311,11 @@ export default function AdminCatalog() {
     if (!name) { toast.error("Category name required"); return; }
     if (categories.some(c => c.name.toLowerCase() === name.toLowerCase())) { toast.error("Category already exists"); return; }
     try {
-      const created = await catalogCategoriesAPI.create(name);
-      const cat: CatalogCategory = { id: created.id, name: created.name, createdAt: created.createdAt || new Date().toISOString() };
+      const created = await catalogCategoriesAPI.create(name, newCategoryIcon);
+      const cat: CatalogCategory = { id: created.id, name: created.name, icon: created.icon, createdAt: created.createdAt || new Date().toISOString() };
       setCategories(prev => [...prev, cat]);
       setNewCategoryName("");
+      setNewCategoryIcon("");
       toast.success("Category added");
     } catch (e) {
       console.error(e);
@@ -610,23 +675,50 @@ export default function AdminCatalog() {
             {/* Categories */}
             <div className="space-y-4">
               <h3 className="text-xl font-semibold flex items-center gap-2"><Package className="h-5 w-5 text-blue-600" /> Categories</h3>
-              <div className="flex gap-2">
-                <Input placeholder="New category name" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="h-11" />
-                <Button onClick={addCategory} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 px-6">Add</Button>
+              <div className="flex gap-2 items-start">
+                <div className="flex-1 space-y-2">
+                  <Input placeholder="New category name" value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)} className="h-11" />
+                  <div className="flex items-center gap-2">
+                    <Input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleCategoryIconUpload}
+                      disabled={uploadingCatIcon}
+                      className="text-xs"
+                    />
+                    {newCategoryIcon && (
+                      <div className="relative w-10 h-10 rounded border overflow-hidden flex-shrink-0">
+                        <img src={newCategoryIcon} alt="Icon" className="w-full h-full object-contain" />
+                        <button onClick={() => setNewCategoryIcon("")} className="absolute inset-0 bg-black/50 text-white opacity-0 hover:opacity-100 flex items-center justify-center"><Trash2 className="h-3 w-3" /></button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <Button onClick={addCategory} disabled={uploadingCatIcon} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white h-11 px-6">Add</Button>
               </div>
               {categories.length === 0 && <p className="text-sm text-gray-500">No categories yet.</p>}
               <div className="flex flex-wrap gap-3">
                 {categories.map(cat => (
                   <div key={cat.id} className="group relative">
                     <Badge className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow cursor-default flex items-center gap-2">
+                      {cat.icon && <img src={cat.icon} alt="" className="w-4 h-4 object-contain bg-white rounded-sm" />}
                       {cat.name}
-                      <button
-                        onClick={() => removeCategory(cat.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-1 text-white/80 hover:text-white"
-                        aria-label="Remove category"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </button>
+                      <div className="flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => openEditCategory(cat)}
+                          className="text-white/80 hover:text-white"
+                          aria-label="Edit category"
+                        >
+                          <Edit2 className="h-3 w-3" />
+                        </button>
+                        <button
+                          onClick={() => removeCategory(cat.id)}
+                          className="text-white/80 hover:text-white"
+                          aria-label="Remove category"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
                     </Badge>
                   </div>
                 ))}
@@ -923,6 +1015,56 @@ export default function AdminCatalog() {
             <Button variant="outline" onClick={() => setSerialDialogOpen(false)}>
               Close
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Category Dialog */}
+      <Dialog open={editCatDialogOpen} onOpenChange={setEditCatDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Category</DialogTitle>
+            <DialogDescription>Update category name and icon</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Name</label>
+              <Input value={editCatName} onChange={e => setEditCatName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Icon</label>
+              <div className="flex items-center gap-4">
+                <div className="relative w-16 h-16 border rounded-lg overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center">
+                  {editCatIcon ? (
+                    <img src={editCatIcon} alt="Icon" className="w-full h-full object-contain" />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-gray-400" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <Input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleEditCategoryIconUpload}
+                    disabled={uploadingEditCatIcon}
+                  />
+                  {editCatIcon && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setEditCatIcon("")}
+                      className="mt-2 text-red-600 hover:text-red-700 h-auto p-0"
+                    >
+                      Remove Icon
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCatDialogOpen(false)}>Cancel</Button>
+            <Button onClick={updateCategory} disabled={uploadingEditCatIcon}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
