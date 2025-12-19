@@ -745,11 +745,11 @@ const Shop = () => {
                 </div>
                 <div className="space-y-2">
                   {purchaseSummaryData.serials.map((serial, idx) => (
-                    <div key={serial} className="flex items-center gap-2 bg-gray-100 rounded px-2 py-1">
-                      <span className="font-mono text-sm text-blue-700">{serial}</span>
+                    <div key={serial} className="flex items-start gap-2 bg-gray-100 rounded px-2 py-2">
+                      <span className="font-mono text-sm text-blue-700 break-all whitespace-pre-wrap leading-relaxed flex-1">{serial}</span>
                       <button
                         type="button"
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        className="ml-2 text-blue-600 hover:text-blue-800 flex-shrink-0 mt-1"
                         onClick={() => {
                           navigator.clipboard.writeText(serial);
                           toast.success('Serial copied!');

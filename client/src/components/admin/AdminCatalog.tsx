@@ -882,8 +882,8 @@ export default function AdminCatalog() {
                         : "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"
                     }`}
                   >
-                    <div className="flex-1">
-                      <p className="font-mono font-semibold text-sm">{serial.serial}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-mono font-semibold text-sm break-all whitespace-pre-wrap leading-relaxed">{serial.serial}</p>
                       {serial.isUsed && serial.usedBy && (
                         <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                           Used by: {serial.usedBy} {serial.usedAt && `on ${new Date(serial.usedAt).toLocaleDateString()}`}
