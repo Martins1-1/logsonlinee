@@ -1556,14 +1556,14 @@ const Shop = () => {
                             </p>
                             <div className="space-y-1">
                               {item.assignedSerials.map((serial, idx) => (
-                                <div key={idx} className="flex items-center gap-2">
-                                  <Badge className="text-xs font-mono bg-blue-600 hover:bg-blue-700 px-2 py-0.5 flex-1">
+                                <div key={idx} className="flex items-start gap-2">
+                                  <Badge className="text-xs font-mono bg-blue-600 hover:bg-blue-700 px-2 py-2 flex-1 break-all whitespace-pre-wrap leading-relaxed text-left h-auto">
                                     {serial}
                                   </Badge>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-900"
+                                    className="h-6 w-6 p-0 hover:bg-blue-100 dark:hover:bg-blue-900 flex-shrink-0 mt-1"
                                     onClick={() => {
                                       navigator.clipboard.writeText(serial);
                                       toast.success('Serial number copied!');
