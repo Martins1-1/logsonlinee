@@ -1270,7 +1270,7 @@ const Shop = () => {
              <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-4 px-2">Menu</h2>
              <div className="space-y-2">
               <button
-                onClick={() => navigate('/auth')}
+                onClick={() => window.open('https://drive.google.com/drive/folders/10zf4evrldtQlb6L5NkPMwTSOs1WW3y7d', '_blank')}
                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
@@ -1294,6 +1294,7 @@ const Shop = () => {
               </button>
               
               <button
+                onClick={() => navigate('/rules')}
                 className="w-full flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900 flex items-center justify-center">
@@ -1777,8 +1778,7 @@ const Shop = () => {
             <div className="flex-1 overflow-y-auto py-4 pb-20">
               <button
                 onClick={() => {
-                  // Navigate to auth page or show login instructions
-                  navigate('/auth');
+                  window.open('https://drive.google.com/drive/folders/10zf4evrldtQlb6L5NkPMwTSOs1WW3y7d', '_blank');
                   setShowMenuDrawer(false);
                 }}
                 className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
@@ -1810,10 +1810,8 @@ const Shop = () => {
               
               <button
                 onClick={() => {
-                  // Could navigate to a rules page or show rules modal
-                  // For now, just close the drawer
                   setShowMenuDrawer(false);
-                  // You could add navigation to a rules page here
+                  navigate('/rules');
                 }}
                 className="w-full flex items-center gap-3 px-4 py-4 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
               >
