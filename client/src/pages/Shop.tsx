@@ -2056,12 +2056,21 @@ const Shop = () => {
           </button>
           
           <button
+            onClick={() => setShowCategoryDrawer(true)}
+            className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1"
+            aria-label="Categories"
+          >
+            <Menu className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Category</span>
+          </button>
+          
+          <button
             onClick={() => setShowPurchaseHistory(true)}
             className="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-950 transition-all duration-300 group min-w-0 flex-1 relative"
             aria-label="Purchase History"
           >
             <div className="relative">
-              <History className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
+              <ShoppingCart className="h-5 w-5 text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
               {purchaseHistory.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center shadow-lg">
                   {purchaseHistory.length}
