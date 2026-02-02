@@ -344,26 +344,77 @@ router.post('/webhook', async (req, res) => {
     // Confirm with gateway to avoid spoofing
     const verifyResp = await ercaspay.verifyTransaction(reference);
     if (verifyResp.requestSuccessful && verifyResp.responseBody) {
+      const transactionData = verifyResp.responseBody;
       const code = verifyResp.responseCode;
       const success = code === 'success';
-      const amt = Number(verifyResp.responseBody.amount || 0);
+      const amt = Number(transactionData.amount || 0);
+
       try {
-        const { Payment } = await import('../models');
-        await Payment.findOneAndUpdate(
-          { $or: [{ transactionReference: reference }, { reference }] },
-          {
-            userLocalId: metadata?.userId,
-            email,
-            amount: isNaN(amt) ? 0 : amt,
-            method: 'ercaspay',
-            status: success ? 'completed' : 'failed',
-            transactionReference: reference,
-            reference: verifyResp.responseBody.paymentReference || undefined,
-          },
-          { upsert: true }
-        );
+        const { Payment, User } = await import('../models');
+        
+        // 1. Find existing payment
+        let payment = await Payment.findOne({ 
+          $or: [{ transactionReference: reference }, { reference }] 
+        });
+
+        // 2. Check if already credited
+        if (payment && payment.isCredited) {
+          console.log('Webhook: Payment already processed and credited:', reference);
+        } else {
+          // 3. Process if success
+          if (success && amt > 0) {
+            // Ensure payment record exists or update it
+            if (!payment) {
+              payment = new Payment({
+                userLocalId: metadata?.userId,
+                email,
+                amount: amt,
+                method: 'ercaspay',
+                status: 'completed',
+                transactionReference: reference,
+                reference: transactionData.paymentReference || reference, 
+                isCredited: false
+              });
+            } else {
+              payment.status = 'completed';
+              payment.amount = amt;
+              // Ensure transaction ref is set
+              if (!payment.transactionReference) payment.transactionReference = reference;
+            }
+
+            // 4. Find user and credit balance
+            const userId = payment.user || payment.userLocalId || metadata?.userId;
+            
+            if (userId) {
+               const user = await User.findByIdAndUpdate(
+                  userId,
+                  { $inc: { balance: amt } },
+                  { new: true }
+               );
+
+               if (user) {
+                  payment.isCredited = true;
+                  payment.user = user._id as any;
+                  await payment.save();
+                  console.log(`Webhook: Successfully credited user ${userId} amount ${amt}`);
+               } else {
+                  console.warn(`Webhook: User ${userId} not found, payment marked completed but not credited`);
+                  await payment.save(); 
+               }
+            } else {
+               console.warn('Webhook: No user ID linked to payment, saved as uncredited');
+               await payment.save();
+            }
+          } else if (!success) {
+             // Handle failed/pending updates if record exists
+             if (payment) {
+                payment.status = 'failed';
+                await payment.save();
+             }
+          }
+        }
       } catch (e) {
-        console.error('Failed to upsert Payment from webhook:', (e as Error).message);
+        console.error('Failed to process Payment in webhook:', (e as Error).message);
       }
     } else {
       console.warn('Gateway verification failed in webhook:', verifyResp.responseMessage);
