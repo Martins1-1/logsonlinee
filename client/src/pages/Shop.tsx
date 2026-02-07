@@ -1085,10 +1085,20 @@ const Shop = () => {
                                   {/* Desktop Layout: Description, Price, Button */}
                                   <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
-                                    <div className="text-right flex-shrink-0">
-                                      <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
-                                        ₦{product.price.toFixed(2)}
-                                      </p>
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                      <div className="text-right flex-shrink-0">
+                                        <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
+                                          ₦{product.price.toFixed(2)}
+                                        </p>
+                                      </div>
+                                      <Button 
+                                        onClick={() => handleBuyClick(product)}
+                                        disabled={availableStock === 0}
+                                        className={`h-9 px-4 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-sm`}
+                                      >
+                                        <ShoppingCart className="h-4 w-4 mr-2" />
+                                        {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
+                                      </Button>
                                     </div>
                                   </div>
 
@@ -1223,10 +1233,20 @@ const Shop = () => {
                               {/* Desktop Layout: Description, Price, Button */}
                               <div className="hidden md:flex md:items-center md:gap-4 md:flex-1">
                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5 flex-1">{product.description}</p>
-                                <div className="text-right flex-shrink-0">
-                                  <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
-                                    ₦{product.price.toFixed(2)}
-                                  </p>
+                                <div className="flex flex-col items-end gap-2 shrink-0">
+                                  <div className="text-right flex-shrink-0">
+                                    <p className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
+                                      ₦{product.price.toFixed(2)}
+                                    </p>
+                                  </div>
+                                  <Button 
+                                    onClick={() => handleBuyClick(product)}
+                                    disabled={availableStock === 0}
+                                    className={`h-9 px-4 ${availableStock === 0 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-sm`}
+                                  >
+                                    <ShoppingCart className="h-4 w-4 mr-2" />
+                                    {availableStock === 0 ? 'Out of Stock' : 'Buy Now'}
+                                  </Button>
                                 </div>
                               </div>
 
