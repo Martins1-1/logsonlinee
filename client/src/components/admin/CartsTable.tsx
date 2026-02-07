@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { purchaseHistoryAPI, type PurchaseHistory as ApiPurchaseHistory } from "@/lib/api";
-import { Search } from "lucide-react";
+import { Search, Info } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 // Align with API type to avoid mismatches
 type PurchaseHistory = ApiPurchaseHistory;
@@ -11,6 +13,7 @@ export default function CartsTable({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null);
   const [searchEmail, setSearchEmail] = useState("");
   const [searching, setSearching] = useState(false);
+  const [selectedPurchase, setSelectedPurchase] = useState<PurchaseHistory | null>(null);
 
   async function loadData(emailFilter?: string) {
     setLoading(true);
@@ -106,7 +109,20 @@ export default function CartsTable({ token }: { token: string }) {
               return (
                 <tr key={p._id} className="border-t border-gray-200 dark:border-gray-800 hover:bg-blue-50/50 dark:hover:bg-gray-800/50 transition-colors">
                   <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{p.email || "—"}</td>
-                  <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{p.name || "—"}</td>
+                  <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">
+                    <div className="flex items-center gap-2">
+                      <span>{p.name || "—"}</span>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-gray-500 hover:text-blue-600" 
+                        onClick={() => setSelectedPurchase(p)}
+                        title="View Description"
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </td>
                   <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{p.category || "—"}</td>
                   <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">{p.quantity || 0}</td>
                   <td className="p-3 md:p-4 text-sm md:text-base text-gray-800 dark:text-gray-200">₦{(p.price || 0).toFixed(2)}</td>
@@ -118,6 +134,22 @@ export default function CartsTable({ token }: { token: string }) {
           </tbody>
         </table>
       </div>
+
+      <Dialog open={!!selectedPurchase} onOpenChange={(open) => !open && setSelectedPurchase(null)}>
+        <DialogContent className="max-w-md max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{selectedPurchase?.name}</DialogTitle>
+            <DialogDescription>
+              Product Description
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 flex-1 overflow-y-auto">
+            <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
+              {selectedPurchase?.description || "No description available."}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
