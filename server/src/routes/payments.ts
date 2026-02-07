@@ -328,13 +328,28 @@ router.get('/verify', async (req, res) => {
  * Ercaspay webhook endpoint to receive transaction updates
  * Note: For production, verify signatures if the provider supports it.
  */
+router.get('/webhook', (req, res) => {
+  res.status(200).json({ status: "active", message: "Webhook endpoint is operational. Send POST requests here." });
+});
+
 router.post('/webhook', async (req, res) => {
   try {
     const evt = req.body || {};
-    const reference: string | undefined = evt.transactionReference || evt.reference || evt.transactionRef || evt?.data?.reference;
+    
+    // Extract reference from various possible fields (snake_case or camelCase)
+    const reference: string | undefined = 
+      evt.transaction_reference || 
+      evt.payment_reference || 
+      evt.transactionReference || 
+      evt.reference || 
+      evt.transactionRef || 
+      evt?.data?.reference;
+
     const statusRaw: string = (evt.status || evt.event || evt?.data?.status || '').toString().toLowerCase();
     const metadata = evt.metadata || evt?.data?.metadata || {};
-    const email = evt.customerEmail || evt?.data?.customer?.email || undefined;
+    const email = evt.customerEmail || evt?.data?.customer?.email || metadata?.email || undefined;
+
+    console.log('Webhook received:', { reference, status: statusRaw, amount: evt.amount });
 
     if (!reference) {
       console.warn('Webhook without reference:', evt);
@@ -346,15 +361,21 @@ router.post('/webhook', async (req, res) => {
     if (verifyResp.requestSuccessful && verifyResp.responseBody) {
       const transactionData = verifyResp.responseBody;
       const code = verifyResp.responseCode;
-      const success = code === 'success';
-      const amt = Number(transactionData.amount || 0);
+      const success = code === 'success' || statusRaw === 'successful' || statusRaw === 'success';
+      const amt = Number(transactionData.amount || evt.amount || 0);
 
       try {
         const { Payment, User } = await import('../models');
         
-        // 1. Find existing payment
+        // 1. Find existing payment using either transaction reference or payment reference
+        // We check both because reference could be either
         let payment = await Payment.findOne({ 
-          $or: [{ transactionReference: reference }, { reference }] 
+          $or: [
+            { transactionReference: reference }, 
+            { reference: reference },
+            { reference: evt.payment_reference },
+            { transactionReference: evt.transaction_reference }
+          ] 
         });
 
         // 2. Check if already credited
@@ -371,15 +392,18 @@ router.post('/webhook', async (req, res) => {
                 amount: amt,
                 method: 'ercaspay',
                 status: 'completed',
-                transactionReference: reference,
-                reference: transactionData.paymentReference || reference, 
+                transactionReference: evt.transaction_reference || reference,
+                reference: evt.payment_reference || transactionData.paymentReference || reference, 
                 isCredited: false
               });
             } else {
               payment.status = 'completed';
               payment.amount = amt;
-              // Ensure transaction ref is set
-              if (!payment.transactionReference) payment.transactionReference = reference;
+              // Ensure transaction refs are set
+              if (!payment.transactionReference && evt.transaction_reference) {
+                payment.transactionReference = evt.transaction_reference;
+              }
+              if (payment.status !== 'completed') payment.status = 'completed';
             }
 
             // 4. Find user and credit balance
