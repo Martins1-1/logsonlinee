@@ -31,7 +31,16 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-app.use(express.json());
+
+// Increase payload limit and add error handling for malformed JSON
+app.use(express.json({ limit: '10mb' }));
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('Bad JSON request:', err);
+    return res.status(400).send({ status: 400, message: 'Invalid JSON payload received' });
+  }
+  next();
+});
 
 // Payment routes (Ercaspay integration)
 app.use("/api/payments", paymentsRouter);
