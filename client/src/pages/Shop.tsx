@@ -2147,7 +2147,7 @@ const Shop = () => {
              <Button
               onClick={() => {
                 setShowManualFundsDialog(false);
-                window.open('https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee', '_blank');
+                window.open('https://wa.me/2347066806173', '_blank');
               }}
               className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
             >
