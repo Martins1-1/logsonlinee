@@ -121,6 +121,7 @@ const Shop = () => {
 
   // New: Purchase summary dialog state
   const [showPurchaseSummaryDialog, setShowPurchaseSummaryDialog] = useState(false);
+  const [showManualFundsDialog, setShowManualFundsDialog] = useState(false);
   const [purchaseSummaryData, setPurchaseSummaryData] = useState<{
     product: Product | null;
     quantity: number;
@@ -934,6 +935,14 @@ const Shop = () => {
                     Add Funds
                   </Button>
                 </div>
+                <Button 
+                  onClick={() => setShowManualFundsDialog(true)}
+                  variant="outline"
+                  className="h-10 px-4 border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl text-xs w-full mt-3"
+                >
+                  <Banknote className="h-3 w-3 mr-2" />
+                  Add Funds Manually
+                </Button>
               </CardContent>
             </Card>
 
@@ -2064,6 +2073,97 @@ const Shop = () => {
           </div>
         </a>
       </div> */}
+
+
+      {/* Manual Funds Dialog */}
+      <Dialog open={showManualFundsDialog} onOpenChange={setShowManualFundsDialog}>
+        <DialogContent className="max-w-md bg-white dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800 rounded-xl shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600">
+              <Banknote className="h-6 w-6 text-blue-600" />
+              Manual Funding
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 dark:text-gray-400">
+              Transfer the exact amount to the account below.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+              <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Bank Name</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">Moniepoint</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Account Number</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-lg font-bold text-blue-600 dark:text-blue-400">8148056295</span>
+                  <button 
+                    onClick={() => {
+                      navigator.clipboard.writeText("8148056295");
+                      toast.success("Account number copied!");
+                    }}
+                    className="p-1 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5 text-blue-600" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-gray-200 dark:border-gray-700 pb-2">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Account Name</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">Nzube John</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-sm text-gray-500 dark:text-gray-400">Description / Narration</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">Bills</span>
+              </div>
+            </div>
+
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/30 p-3 rounded-lg flex gap-3 items-start">
+              <div className="mt-0.5 bg-red-100 dark:bg-red-900/40 p-1 rounded-full">
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-red-600 dark:text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-xs md:text-sm text-red-700 dark:text-red-300 font-medium">
+                IMPORTANT: Please contact support immediately after making the payment with your proof of payment to get credited.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const details = `Bank: Moniepoint\nAccount: 8148056295\nName: Nzube John\nDescription: Bills`;
+                navigator.clipboard.writeText(details);
+                toast.success("Bank details copied to clipboard!");
+              }}
+              className="w-full sm:w-auto border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              <Copy className="h-4 w-4 mr-2" />
+              Copy Details
+            </Button>
+             <Button
+              onClick={() => {
+                setShowManualFundsDialog(false);
+                window.open('https://chat.whatsapp.com/JIFGET5YVMc2ZhnruWA8Ee', '_blank');
+              }}
+              className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white"
+            >
+              <MessageCircle className="h-4 w-4 mr-2" />
+              I've Paid
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => setShowManualFundsDialog(false)}
+              className="w-full sm:w-auto"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Mobile Bottom Navigation */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t-2 border-white/60 dark:border-gray-800 shadow-2xl">

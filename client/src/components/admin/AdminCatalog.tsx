@@ -558,6 +558,42 @@ export default function AdminCatalog() {
     }
   };
 
+  const deleteAllSerialNumbers = async () => {
+    if (!selectedProduct) return;
+
+    if (!window.confirm("Are you sure you want to delete ALL serial numbers for this product? This action cannot be undone.")) {
+      return;
+    }
+
+    // Check if admin is logged in
+    const token = localStorage.getItem('admin_token');
+    if (!token) {
+      toast.error("Admin session expired. Please login again.");
+      return;
+    }
+
+    try {
+      await catalogAPI.update(selectedProduct.id, { serialNumbers: [] });
+      
+      setProducts(prev => prev.map(p => {
+        if (p.id === selectedProduct.id) {
+          return {
+            ...p,
+            serialNumbers: []
+          };
+        }
+        return p;
+      }));
+
+      setSelectedProduct(prev => prev ? { ...prev, serialNumbers: [] } : null);
+      toast.success("All serial numbers deleted");
+    } catch (error) {
+      console.error("Error deleting all serial numbers:", error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      toast.error(`Failed to delete serial numbers: ${errorMsg}`);
+    }
+  };
+
   const toggleSerialUsed = async (productId: string, serialId: string) => {
     const product = products.find(p => p.id === productId);
     if (!product) return;
@@ -957,6 +993,16 @@ export default function AdminCatalog() {
                   <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
                     {selectedProduct?.serialNumbers?.filter(s => s.isUsed).length || 0} Used
                   </Badge>
+                  {(selectedProduct?.serialNumbers?.length || 0) > 0 && (
+                    <Button 
+                      variant="destructive" 
+                      size="sm" 
+                      onClick={deleteAllSerialNumbers}
+                      className="h-6 px-2 text-xs"
+                    >
+                      Delete All
+                    </Button>
+                  )}
                 </div>
               </div>
 
