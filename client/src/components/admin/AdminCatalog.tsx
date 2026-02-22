@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Trash2, Plus, Package, Image as ImageIcon, Database, Hash, Edit2, ChevronDown, RefreshCw } from "lucide-react";
+import Papa from "papaparse";
 import {
   Dialog,
   DialogContent,
@@ -461,71 +462,74 @@ export default function AdminCatalog() {
     }
 
     setUploadingCSV(true);
-    const reader = new FileReader();
     
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        const lines = text.split(/\r?\n/).filter(line => line.trim());
-        
-        // Parse CSV - expect each line to be a serial number
-        const newSerials: SerialNumber[] = [];
-        
-        for (const line of lines) {
-          const serial = line.trim();
-          if (serial) {
-            // Check if serial already exists
-            const exists = (selectedProduct.serialNumbers || []).some(s => s.serial === serial);
-            if (!exists && !newSerials.some(s => s.serial === serial)) {
-              newSerials.push({
-                id: crypto.randomUUID(),
-                serial: serial,
-                isUsed: false,
-              });
+    // Parse using PapaParse to handle quoted multi-line content correctly
+    Papa.parse(file, {
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          if (results.errors.length) {
+            console.warn("CSV parsing errors:", results.errors);
+          }
+          
+          const rows = results.data as string[][];
+          const newSerials: SerialNumber[] = [];
+          
+          for (const row of rows) {
+            // Join columns if multiple exist
+            const serialContent = row.filter(cell => cell && typeof cell === 'string' && cell.trim()).join(", ").trim();
+           
+            if (serialContent) {
+              const exists = (selectedProduct.serialNumbers || []).some(s => s.serial === serialContent);
+              if (!exists && !newSerials.some(s => s.serial === serialContent)) {
+                newSerials.push({
+                  id: crypto.randomUUID(),
+                  serial: serialContent,
+                  isUsed: false,
+                });
+              }
             }
           }
-        }
 
-        if (newSerials.length === 0) {
-          toast.info("No new serial numbers to add (duplicates or empty file)");
-          setUploadingCSV(false);
-          return;
-        }
-
-        const updatedSerials = [...(selectedProduct.serialNumbers || []), ...newSerials];
-        
-        await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
-        
-        setProducts(prev => prev.map(p => {
-          if (p.id === selectedProduct.id) {
-            return {
-              ...p,
-              serialNumbers: updatedSerials
-            };
+          if (newSerials.length === 0) {
+            toast.info("No new serial numbers to add (duplicates or empty file)");
+            setUploadingCSV(false);
+            return;
           }
-          return p;
-        }));
 
-        setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
-        toast.success(`${newSerials.length} serial numbers added from CSV`);
-        
-        // Reset file input
-        e.target.value = '';
-      } catch (error) {
-        console.error("Error processing CSV:", error);
-        const errorMsg = error instanceof Error ? error.message : String(error);
-        toast.error(`Failed to process CSV: ${errorMsg}`);
-      } finally {
+          const updatedSerials = [...(selectedProduct.serialNumbers || []), ...newSerials];
+          
+          await catalogAPI.update(selectedProduct.id, { serialNumbers: updatedSerials });
+          
+          setProducts(prev => prev.map(p => {
+            if (p.id === selectedProduct.id) {
+              return {
+                ...p,
+                serialNumbers: updatedSerials
+              };
+            }
+            return p;
+          }));
+
+          setSelectedProduct(prev => prev ? { ...prev, serialNumbers: updatedSerials } : null);
+          toast.success(`${newSerials.length} serial numbers added from CSV`);
+          
+          // Reset file input
+          e.target.value = '';
+        } catch (error) {
+          console.error("Error saving serials:", error);
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          toast.error(`Failed to save serial numbers: ${errorMsg}`);
+        } finally {
+          setUploadingCSV(false);
+        }
+      },
+      error: (error) => {
+        console.error("CSV parse error:", error);
+        toast.error(`Failed to parse CSV: ${error.message}`);
         setUploadingCSV(false);
       }
-    };
-
-    reader.onerror = () => {
-      toast.error("Failed to read CSV file");
-      setUploadingCSV(false);
-    };
-
-    reader.readAsText(file);
+    });
   };
 
   const removeSerialNumber = async (productId: string, serialId: string) => {

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote, ChevronDown, History, Copy, Home, Menu, LogIn, FileText, Headphones, MessageCircle, Wallet, Eye, EyeOff } from "lucide-react";
+import { Banknote, ChevronDown, History, Copy, Home, Menu, LogIn, FileText, Headphones, MessageCircle, Wallet, Eye, EyeOff, CreditCard } from "lucide-react";
 import bannerImg from "@/assets/ban.jpg";
 import bannerLog1 from "@/assets/bannerlog1.jpg";
 import bannerLog2 from "@/assets/bannerlog2.jpg";
@@ -122,6 +122,7 @@ const Shop = () => {
   // New: Purchase summary dialog state
   const [showPurchaseSummaryDialog, setShowPurchaseSummaryDialog] = useState(false);
   const [showManualFundsDialog, setShowManualFundsDialog] = useState(false);
+  const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
   const [purchaseSummaryData, setPurchaseSummaryData] = useState<{
     product: Product | null;
     quantity: number;
@@ -439,12 +440,24 @@ const Shop = () => {
     }
   };
 
-  const handleAddFunds = async () => {
+  const handleAddFunds = () => {
+     const amount = parseFloat(addFundsAmount);
+     if (isNaN(amount) || amount <= 0) {
+       toast.error("Please enter a valid amount");
+       return;
+     }
+     setShowPaymentMethodDialog(true);
+  };
+
+  const initiateErcasPayment = async () => {
     const amount = parseFloat(addFundsAmount);
     if (isNaN(amount) || amount <= 0) {
       toast.error("Please enter a valid amount");
       return;
     }
+
+    // Close method selection if open
+    setShowPaymentMethodDialog(false);
 
     // Show loading state
     setIsCreatingTopup(true);
@@ -935,14 +948,6 @@ const Shop = () => {
                     Add Funds
                   </Button>
                 </div>
-                <Button 
-                  onClick={() => setShowManualFundsDialog(true)}
-                  variant="outline"
-                  className="h-10 px-4 border-dashed border-2 border-blue-300 text-blue-600 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/30 font-semibold shadow-sm hover:shadow-md transition-all duration-300 rounded-xl text-xs w-full mt-3"
-                >
-                  <Banknote className="h-3 w-3 mr-2" />
-                  Add Funds Manually
-                </Button>
               </CardContent>
             </Card>
 
@@ -2161,6 +2166,34 @@ const Shop = () => {
             >
               Close
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Selection Dialog */}
+      <Dialog open={showPaymentMethodDialog} onOpenChange={setShowPaymentMethodDialog}>
+        <DialogContent className="sm:max-w-md w-[90%] rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Select Payment Method</DialogTitle>
+             <DialogDescription>
+              Choose how you want to add funds to your wallet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <Button onClick={() => initiateErcasPayment()} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-md">
+              <CreditCard className="mr-3 h-5 w-5" />
+              Pay with ERCAS
+            </Button>
+            <Button onClick={() => {
+                setShowPaymentMethodDialog(false);
+                setShowManualFundsDialog(true);
+            }} variant="outline" className="w-full h-14 justify-start px-4 text-left font-semibold text-base border-2 hover:bg-gray-50 dark:hover:bg-gray-800">
+              <Banknote className="mr-3 h-5 w-5" />
+              Add Funds Manually
+            </Button>
+          </div>
+          <DialogFooter>
+             <Button variant="ghost" onClick={() => setShowPaymentMethodDialog(false)} className="w-full">Cancel</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
