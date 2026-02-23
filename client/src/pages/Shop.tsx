@@ -2182,14 +2182,14 @@ const Shop = () => {
           <div className="grid gap-4 py-4">
             <Button onClick={() => initiateErcasPayment()} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-md">
               <CreditCard className="mr-3 h-5 w-5" />
-              Pay with ERCAS
+              Instant payment (ercas)
             </Button>
             <Button onClick={() => {
                 setShowPaymentMethodDialog(false);
                 setShowManualFundsDialog(true);
             }} variant="outline" className="w-full h-14 justify-start px-4 text-left font-semibold text-base border-2 hover:bg-gray-50 dark:hover:bg-gray-800">
               <Banknote className="mr-3 h-5 w-5" />
-              Add Funds Manually
+              Manual deposit
             </Button>
           </div>
           <DialogFooter>
