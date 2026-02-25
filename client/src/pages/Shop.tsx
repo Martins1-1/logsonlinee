@@ -1093,7 +1093,7 @@ const Shop = () => {
 
                                   {/* Description (Mobile Full Width) */}
                                   <div className="px-0 pb-3 md:hidden">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
                                   </div>
 
                                   {/* Desktop Layout: Description, Price, Button */}
@@ -1241,7 +1241,7 @@ const Shop = () => {
 
                               {/* Description (Mobile Full Width) */}
                               <div className="px-0 pb-3 md:hidden">
-                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-5">{product.description}</p>
                               </div>
 
                               {/* Desktop Layout: Description, Price, Button */}
