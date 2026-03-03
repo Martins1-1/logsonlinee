@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { apiFetch, catalogAPI, purchaseHistoryAPI, catalogCategoriesAPI } from "@/lib/api";
-import { Banknote, ChevronDown, History, Copy, Home, Menu, LogIn, FileText, Headphones, MessageCircle, Wallet, Eye, EyeOff, CreditCard } from "lucide-react";
+import { Banknote, ChevronDown, History, Copy, Home, Menu, LogIn, FileText, Headphones, MessageCircle, Wallet, Eye, EyeOff, CreditCard, Zap } from "lucide-react";
 import bannerImg from "@/assets/ban.jpg";
 import bannerLog1 from "@/assets/bannerlog1.jpg";
 import bannerLog2 from "@/assets/bannerlog2.jpg";
@@ -1021,16 +1021,7 @@ const Shop = () => {
                           <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
                             {category}
                           </h3>
-                          {hasMore && (
-                            <Button
-                              variant="ghost"
-                              onClick={() => toggleCategoryExpansion(category)}
-                              className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
-                            >
-                              <span className="text-sm md:text-base">{isExpanded ? 'Show Less' : 'See More'}</span>
-                              <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                            </Button>
-                          )}
+                          {/* 'See More' button removed as requested */}
                         </div>
                         <div className="space-y-3 md:space-y-4">
                           {displayedProducts.map((product, index) => {
@@ -1166,16 +1157,7 @@ const Shop = () => {
                             <h3 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500 border-b-2 border-gray-200 dark:border-gray-800 pb-2 flex-1">
                               {activeCategory}
                             </h3>
-                            {hasMore && (
-                              <Button
-                                variant="ghost"
-                                onClick={() => toggleCategoryExpansion(activeCategory)}
-                                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold"
-                              >
-                                <span className="text-sm md:text-base">{isExpanded ? 'Show Less' : 'See More'}</span>
-                                <ChevronDown className={`h-4 w-4 md:h-5 md:w-5 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
-                              </Button>
-                            )}
+                            {/* 'See More' button removed as requested */}
                           </div>
                           <div className="space-y-3 md:space-y-4">
                             {displayedProducts.map((product, index) => {
@@ -2183,6 +2165,13 @@ const Shop = () => {
             <Button onClick={() => initiateErcasPayment()} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-md">
               <CreditCard className="mr-3 h-5 w-5" />
               Instant payment (ercas)
+            </Button>
+            <Button onClick={() => {
+                setShowPaymentMethodDialog(false);
+                toast.info("Quick Pay integration coming soon!");
+            }} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-purple-600 hover:bg-purple-700 shadow-md">
+              <Zap className="mr-3 h-5 w-5" />
+              Quick Pay
             </Button>
             <Button onClick={() => {
                 setShowPaymentMethodDialog(false);
