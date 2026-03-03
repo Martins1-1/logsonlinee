@@ -212,6 +212,9 @@ const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
   purchaseDate: { type: Date, default: Date.now },
 });
 
+// Index for efficient sorting by purchaseDate
+PurchaseHistorySchema.index({ purchaseDate: -1 });
+
 export const Cart = mongoose.model<ICart>("Cart", CartSchema);
 export const Payment = mongoose.model<IPayment>("Payment", PaymentSchema);
 export const User = mongoose.model<IUser>("User", UserSchema);

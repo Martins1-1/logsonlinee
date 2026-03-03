@@ -758,7 +758,7 @@ app.get("/api/purchase-history", requireAdmin, async (req: Request, res: Respons
       // Using regex enables admin to type partial email and see matches
       filter.email = { $regex: email.trim(), $options: "i" };
     }
-    const items = await PurchaseHistory.find(filter).sort({ purchaseDate: -1 }).lean();
+    const items = await PurchaseHistory.find(filter).sort({ purchaseDate: -1 }).allowDiskUse(true).lean();
     res.json(items);
   } catch (err) {
     console.error("Error fetching all purchase history:", err);
