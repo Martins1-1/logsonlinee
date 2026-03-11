@@ -18,6 +18,7 @@ const Auth = () => {
   const [signUpConfirmPassword, setSignUpConfirmPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [isSendingReset, setIsSendingReset] = useState(false);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [showWakingMessage, setShowWakingMessage] = useState(false);
@@ -135,7 +136,7 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!resetEmail) {
@@ -143,17 +144,27 @@ const Auth = () => {
       return;
     }
 
-    // Mock password reset - in real app this would call backend API
-    const mockUsers = JSON.parse(localStorage.getItem("users") || "[]");
-    const userExists = mockUsers.find((u: { email: string }) => u.email === resetEmail);
-    
-    if (userExists) {
-      // In a real app, this would send an email with a reset link
-      toast.success(`Password reset link sent to ${resetEmail}. Check your inbox!`);
+    setIsSendingReset(true);
+    const wakingTimer = setTimeout(() => {
+      setShowWakingMessage(true);
+    }, 2000);
+
+    try {
+      await apiFetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+
+      toast.success("If an account exists for that email, a reset link has been sent.");
       setResetEmail("");
       setIsResetDialogOpen(false);
-    } else {
-      toast.error("No account found with this email address");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to request password reset");
+    } finally {
+      clearTimeout(wakingTimer);
+      setShowWakingMessage(false);
+      setIsSendingReset(false);
     }
   };
 
@@ -310,9 +321,10 @@ const Auth = () => {
                             </Button>
                             <Button 
                               type="submit" 
+                              disabled={isSendingReset}
                               className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                             >
-                              Send Reset Link
+                              {isSendingReset ? "Sending..." : "Send Reset Link"}
                             </Button>
                           </div>
                         </form>

@@ -5,14 +5,16 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import mongoose from "mongoose";
 import axios from "axios";
-import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory } from "./models";
+import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory, PasswordResetToken } from "./models";
 import paymentsRouter from "./routes/payments";
+import { sendPasswordResetEmail } from "./mailer";
 
 const app = express();
 // allow CORS from local dev and a production frontend URL set via env
-const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:8080";
+const FRONTEND_URL = process.env.FRONTEND_URL ?? "http://localhost:5173";
 app.use(cors({
   origin: [
     FRONTEND_URL, 
@@ -45,7 +47,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Payment routes (Ercaspay integration)
 app.use("/api/payments", paymentsRouter);
 
-const PORT = parseInt(process.env.PORT || "4000", 10);
+const PORT = parseInt(process.env.PORT || "5002", 10);
 const JWT_SECRET = process.env.JWT_SECRET || "change-this-secret";
 const MONGODB_URL = process.env.MONGODB_URL || "mongodb://localhost:27017/joybuy";
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET || "";
@@ -194,6 +196,90 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ error: "Failed to login" });
+  }
+});
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Request password reset (always returns ok to avoid account enumeration)
+app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
+  try {
+    const emailRaw = typeof req.body?.email === "string" ? req.body.email : "";
+    const email = emailRaw.trim();
+    if (!email) return res.status(400).send("Email is required");
+
+    const emailRegex = new RegExp(`^${escapeRegExp(email)}$`, "i");
+    const user = await User.findOne({ email: emailRegex }).exec();
+
+    if (user) {
+      // Invalidate any existing unused tokens for this user
+      await PasswordResetToken.deleteMany({ user: user._id, usedAt: { $exists: false } }).exec();
+
+      const rawToken = crypto.randomBytes(32).toString("hex");
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+
+      await PasswordResetToken.create({
+        user: user._id,
+        tokenHash,
+        expiresAt,
+      });
+
+      const frontendUrl = (process.env.FRONTEND_URL ?? "http://localhost:5173").replace(/\/$/, "");
+      const resetUrl = `${frontendUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+      if (process.env.NODE_ENV !== "production") {
+        console.log("Password reset link (dev):", resetUrl);
+      }
+
+      try {
+        await sendPasswordResetEmail({ to: user.email, resetUrl });
+      } catch (mailErr) {
+        console.error("Failed to send password reset email:", mailErr);
+        // Still return ok (do not reveal email existence / delivery status)
+      }
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    return res.status(500).send("Failed to request password reset");
+  }
+});
+
+// Reset password using token
+app.post("/api/auth/reset-password", async (req: Request, res: Response) => {
+  try {
+    const token = typeof req.body?.token === "string" ? req.body.token : "";
+    const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+    if (!token || !newPassword) return res.status(400).send("Missing token or newPassword");
+    if (newPassword.length < 6) return res.status(400).send("Password must be at least 6 characters");
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const reset = await PasswordResetToken.findOne({ tokenHash }).exec();
+    if (!reset) return res.status(400).send("Invalid or expired reset link");
+    if (reset.usedAt) return res.status(400).send("Reset link has already been used");
+    if (reset.expiresAt.getTime() < Date.now()) return res.status(400).send("Invalid or expired reset link");
+
+    const hashedPassword = await bcrypt.hash(newPassword, 8);
+    const user = await User.findById(reset.user).exec();
+    if (!user) return res.status(400).send("Invalid reset link");
+
+    user.password = hashedPassword;
+    await user.save();
+
+    reset.usedAt = new Date();
+    await reset.save();
+
+    // Best-effort cleanup of other tokens
+    await PasswordResetToken.deleteMany({ user: user._id, usedAt: { $exists: false } }).exec();
+
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    return res.status(500).send("Failed to reset password");
   }
 });
 

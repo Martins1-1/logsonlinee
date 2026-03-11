@@ -37,6 +37,14 @@ export interface IUser extends Document {
   createdAt: Date;
 }
 
+export interface IPasswordResetToken extends Document {
+  user: mongoose.Types.ObjectId;
+  tokenHash: string;
+  expiresAt: Date;
+  usedAt?: Date;
+  createdAt: Date;
+}
+
 export interface IAdmin extends Document {
   email: string;
   password: string;
@@ -159,6 +167,15 @@ const UserSchema = new Schema<IUser>({
   createdAt: { type: Date, default: Date.now },
 });
 
+const PasswordResetTokenSchema = new Schema<IPasswordResetToken>({
+  user: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  tokenHash: { type: String, required: true, index: true },
+  // TTL index: token will be automatically removed after expiresAt
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+  usedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const AdminSchema = new Schema<IAdmin>({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -218,6 +235,7 @@ PurchaseHistorySchema.index({ purchaseDate: -1 });
 export const Cart = mongoose.model<ICart>("Cart", CartSchema);
 export const Payment = mongoose.model<IPayment>("Payment", PaymentSchema);
 export const User = mongoose.model<IUser>("User", UserSchema);
+export const PasswordResetToken = mongoose.model<IPasswordResetToken>("PasswordResetToken", PasswordResetTokenSchema);
 export const Admin = mongoose.model<IAdmin>("Admin", AdminSchema);
 export const Product = mongoose.model<IProduct>("Product", ProductSchema);
 export const CatalogProduct = mongoose.model<ICatalogProduct>("CatalogProduct", CatalogProductSchema);

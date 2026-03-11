@@ -10,7 +10,7 @@ Setup
 
 1. cd server
 2. npm install
-3. copy `.env.example` to `.env` and edit (set `MONGODB_URL`, `JWT_SECRET`, `ECRS_SECRET_KEY`)
+3. copy `.env.example` to `.env` and edit (set `MONGODB_URL`, `JWT_SECRET`, `ECRS_SECRET_KEY`, `FRONTEND_URL`, and SMTP vars for password reset)
 4. npm run dev
 
 Seeding

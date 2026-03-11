@@ -23,6 +23,7 @@
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.0.0",
+    "nodemailer": "^6.10.1",
     "typescript": "^5.0.0"
   },
   "devDependencies": {
@@ -38,6 +39,7 @@
     "@types/strip-bom": "^3.0.0",
     "@types/webidl-conversions": "^7.0.3",
     "@types/whatwg-url": "^13.0.0",
+    "@types/nodemailer": "^6.4.17",
     "ts-node-dev": "^2.0.0"
   }
 }
