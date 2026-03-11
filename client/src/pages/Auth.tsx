@@ -136,9 +136,7 @@ const Auth = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const handleForgotPassword = async () => {
     if (!resetEmail) {
       toast.error("Please enter your email address");
       return;
@@ -291,7 +289,7 @@ const Auth = () => {
                             Enter your email address and we'll send you a link to reset your password.
                           </DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handleForgotPassword} className="space-y-5 mt-4">
+                        <div className="space-y-5 mt-4">
                           <div className="space-y-2">
                             <label htmlFor="reset-email" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
                               <Mail className="w-4 h-4 text-blue-600" />
@@ -304,6 +302,12 @@ const Auth = () => {
                                 placeholder="your@email.com"
                                 value={resetEmail}
                                 onChange={(e) => setResetEmail(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    void handleForgotPassword();
+                                  }
+                                }}
                                 required
                                 className="pl-11 h-12 border-2 border-gray-200 focus:border-blue-500 transition-all duration-300 rounded-xl bg-white/80 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-800/80 dark:text-gray-100 dark:placeholder:text-gray-500"
                               />
@@ -320,14 +324,15 @@ const Auth = () => {
                               Cancel
                             </Button>
                             <Button 
-                              type="submit" 
+                              type="button" 
                               disabled={isSendingReset}
                               className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
+                              onClick={() => void handleForgotPassword()}
                             >
                               {isSendingReset ? "Sending..." : "Send Reset Link"}
                             </Button>
                           </div>
-                        </form>
+                        </div>
                       </DialogContent>
                     </Dialog>
                   </div>
