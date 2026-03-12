@@ -13,6 +13,10 @@ type MailerEnv = {
 
 let transporter: Transporter | null = null;
 
+function resetTransporter() {
+  transporter = null;
+}
+
 function envBool(value: string | undefined): boolean | undefined {
   if (value == null) return undefined;
   const normalized = value.trim().toLowerCase();
@@ -41,6 +45,9 @@ function getTransporter() {
     host,
     port,
     secure,
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 50,
     // Avoid long-hanging requests when SMTP is blocked by host network policy
     connectionTimeout: timeoutMs,
     greetingTimeout: timeoutMs,
@@ -81,11 +88,30 @@ export async function sendPasswordResetEmail(params: {
   `;
 
   const tx = getTransporter();
-  await tx.sendMail({
+
+  const mail = {
     from: `${fromName} <${fromAddress}>`,
     to: params.to,
     subject,
     text,
     html,
-  });
+  };
+
+  const isTransient = (err: unknown) => {
+    const code = typeof err === "object" && err !== null && "code" in err ? (err as any).code : undefined;
+    return code === "ETIMEDOUT" || code === "ECONNRESET" || code === "EAI_AGAIN";
+  };
+
+  // Retry once on transient network errors (common on some hosts with SMTP)
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const transporterNow = getTransporter();
+      await transporterNow.sendMail(mail);
+      return;
+    } catch (err) {
+      if (attempt >= 2 || !isTransient(err)) throw err;
+      resetTransporter();
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
 }
