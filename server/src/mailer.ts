@@ -1,6 +1,9 @@
 import nodemailer, { Transporter } from "nodemailer";
 
 type MailerEnv = {
+  EMAIL_PROVIDER?: string;
+  EMAIL_FROM?: string;
+  RESEND_API_KEY?: string;
   SMTP_HOST?: string;
   SMTP_PORT?: string;
   SMTP_SECURE?: string;
@@ -60,16 +63,80 @@ function getTransporter() {
   return transporter;
 }
 
+function parseEmailFrom(value: string | undefined, fallbackName: string) {
+  const trimmed = (value ?? "").trim();
+  if (!trimmed) return { fromName: fallbackName, fromAddress: "" };
+
+  // Accept formats like:
+  // - email@domain.com
+  // - Name <email@domain.com>
+  const match = trimmed.match(/^(.*)<([^>]+)>$/);
+  if (match) {
+    const name = match[1].trim().replace(/^"|"$/g, "");
+    const address = match[2].trim();
+    return {
+      fromName: name || fallbackName,
+      fromAddress: address,
+    };
+  }
+  return { fromName: fallbackName, fromAddress: trimmed };
+}
+
+async function sendViaResend(params: {
+  apiKey: string;
+  from: string;
+  to: string;
+  subject: string;
+  text: string;
+  html: string;
+}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${params.apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: params.from,
+        to: [params.to],
+        subject: params.subject,
+        text: params.text,
+        html: params.html,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(text || `Resend failed: ${res.status}`);
+    }
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function sendPasswordResetEmail(params: {
   to: string;
   resetUrl: string;
 }) {
   const env = process.env as MailerEnv;
-  const fromAddress = env.SMTP_FROM ?? env.SMTP_USER;
-  const fromName = env.SMTP_FROM_NAME ?? "LOGs Online";
+  const defaultFromName = env.SMTP_FROM_NAME ?? "LOGs Online";
+
+  // Prefer API provider if configured
+  const provider = (env.EMAIL_PROVIDER ?? "").trim().toLowerCase();
+  const resendKey = (env.RESEND_API_KEY ?? "").trim();
+  const emailFromRaw = env.EMAIL_FROM;
+
+  const { fromName: parsedName, fromAddress: parsedAddress } = parseEmailFrom(emailFromRaw, defaultFromName);
+  const fromAddress = parsedAddress || env.SMTP_FROM || env.SMTP_USER || "";
+  const fromName = parsedName;
 
   if (!fromAddress) {
-    throw new Error("Missing SMTP_FROM (or SMTP_USER)");
+    throw new Error("Missing EMAIL_FROM (preferred) or SMTP_FROM/SMTP_USER");
   }
 
   const subject = "Reset your LOGs Online password";
@@ -86,6 +153,23 @@ export async function sendPasswordResetEmail(params: {
       <p style="margin: 0; color: #6b7280;">If you did not request this, you can safely ignore this email.</p>
     </div>
   `;
+
+  if (provider === "resend" || (!!resendKey && provider !== "smtp")) {
+    if (!resendKey) throw new Error("Missing RESEND_API_KEY env var");
+
+    // Resend requires a verified-from domain address. Use EMAIL_FROM when provided.
+    const fromForResend = (emailFromRaw ?? `${fromName} <${fromAddress}>`).trim();
+
+    await sendViaResend({
+      apiKey: resendKey,
+      from: fromForResend,
+      to: params.to,
+      subject,
+      text,
+      html,
+    });
+    return;
+  }
 
   const tx = getTransporter();
 

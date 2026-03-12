@@ -13,6 +13,10 @@ Setup
 3. copy `.env.example` to `.env` and edit (set `MONGODB_URL`, `JWT_SECRET`, `ECRS_SECRET_KEY`, `FRONTEND_URL`, and SMTP vars for password reset)
 4. npm run dev
 
+Password Reset Email
+
+- For hosted environments where SMTP may be blocked or unreliable, prefer using Resend (set `EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, and `EMAIL_FROM`).
+
 Seeding
 
 - Run `npx ts-node src/seed.ts` to create an admin (`admin@logsonline.com` / `LogsOnline2025!`) and a sample user.
