@@ -234,12 +234,10 @@ app.post("/api/auth/forgot-password", async (req: Request, res: Response) => {
         console.log("Password reset link (dev):", resetUrl);
       }
 
-      try {
-        await sendPasswordResetEmail({ to: user.email, resetUrl });
-      } catch (mailErr) {
+      // Fire-and-forget: do not block the HTTP response on SMTP
+      void sendPasswordResetEmail({ to: user.email, resetUrl }).catch((mailErr) => {
         console.error("Failed to send password reset email:", mailErr);
-        // Still return ok (do not reveal email existence / delivery status)
-      }
+      });
     }
 
     return res.json({ ok: true });

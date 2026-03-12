@@ -8,6 +8,7 @@ type MailerEnv = {
   SMTP_PASS?: string;
   SMTP_FROM?: string;
   SMTP_FROM_NAME?: string;
+  SMTP_TIMEOUT_MS?: string;
 };
 
 let transporter: Transporter | null = null;
@@ -30,6 +31,7 @@ function getTransporter() {
   const secure = envBool(env.SMTP_SECURE) ?? port === 465;
   const user = env.SMTP_USER;
   const pass = env.SMTP_PASS;
+  const timeoutMs = Number(env.SMTP_TIMEOUT_MS ?? "10000");
 
   if (!user || !pass) {
     throw new Error("Missing SMTP_USER/SMTP_PASS env vars");
@@ -39,6 +41,12 @@ function getTransporter() {
     host,
     port,
     secure,
+    // Avoid long-hanging requests when SMTP is blocked by host network policy
+    connectionTimeout: timeoutMs,
+    greetingTimeout: timeoutMs,
+    socketTimeout: timeoutMs,
+    // For STARTTLS (587), require TLS upgrade after connecting
+    ...(secure ? {} : { requireTLS: true }),
     auth: { user, pass },
   });
 
