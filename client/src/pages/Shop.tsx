@@ -50,6 +50,12 @@ interface User {
   [key: string]: unknown;
 }
 
+type PaymentMethodSettings = {
+  instantErcasEnabled: boolean;
+  quickPayEnabled: boolean;
+  manualDepositEnabled: boolean;
+};
+
 const initialProducts: Product[] = [];
 
 const Shop = () => {
@@ -122,6 +128,9 @@ const Shop = () => {
   const [showPurchaseSummaryDialog, setShowPurchaseSummaryDialog] = useState(false);
   const [showManualFundsDialog, setShowManualFundsDialog] = useState(false);
   const [showPaymentMethodDialog, setShowPaymentMethodDialog] = useState(false);
+  const [paymentMethodSettings, setPaymentMethodSettings] = useState<PaymentMethodSettings | null>(null);
+  const [paymentMethodSettingsLoading, setPaymentMethodSettingsLoading] = useState(false);
+  const [paymentMethodSettingsError, setPaymentMethodSettingsError] = useState(false);
   const [purchaseSummaryData, setPurchaseSummaryData] = useState<{
     product: Product | null;
     quantity: number;
@@ -129,6 +138,29 @@ const Shop = () => {
     balanceBefore: number;
     balanceAfter: number;
   } | null>(null);
+
+  // Load payment-method availability whenever the user opens the method selector.
+  // If this fails, we show NO payment buttons and ask the user to refresh.
+  useEffect(() => {
+    if (!showPaymentMethodDialog) return;
+
+    setPaymentMethodSettingsLoading(true);
+    setPaymentMethodSettingsError(false);
+    setPaymentMethodSettings(null);
+
+    apiFetch("/api/payment-methods")
+      .then((data) => {
+        setPaymentMethodSettings({
+          instantErcasEnabled: Boolean(data?.instantErcasEnabled),
+          quickPayEnabled: Boolean(data?.quickPayEnabled),
+          manualDepositEnabled: Boolean(data?.manualDepositEnabled),
+        });
+      })
+      .catch(() => {
+        setPaymentMethodSettingsError(true);
+      })
+      .finally(() => setPaymentMethodSettingsLoading(false));
+  }, [showPaymentMethodDialog]);
 
   useEffect(() => {
     const currentUser = localStorage.getItem("currentUser");
@@ -2146,26 +2178,59 @@ const Shop = () => {
               Choose how you want to add funds to your wallet.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Button onClick={() => initiateErcasPayment()} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-md">
-              <CreditCard className="mr-3 h-5 w-5" />
-              Instant payment (ercas)
-            </Button>
-            <Button onClick={() => {
-                setShowPaymentMethodDialog(false);
-                toast.info("Quick Pay integration coming soon!");
-            }} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-purple-600 hover:bg-purple-700 shadow-md">
-              <Zap className="mr-3 h-5 w-5" />
-              Quick Pay
-            </Button>
-            <Button onClick={() => {
-                setShowPaymentMethodDialog(false);
-                setShowManualFundsDialog(true);
-            }} variant="outline" className="w-full h-14 justify-start px-4 text-left font-semibold text-base border-2 hover:bg-gray-50 dark:hover:bg-gray-800">
-              <Banknote className="mr-3 h-5 w-5" />
-              Manual deposit
-            </Button>
-          </div>
+          {paymentMethodSettingsLoading ? (
+            <div className="py-6 text-sm text-gray-600 dark:text-gray-300">
+              Loading payment options...
+            </div>
+          ) : paymentMethodSettingsError || !paymentMethodSettings ? (
+            <div className="py-6 text-sm text-gray-700 dark:text-gray-200">
+              Unable to load payment options. Please refresh the page to make payment.
+            </div>
+          ) : (
+            <div className="grid gap-4 py-4">
+              {paymentMethodSettings.instantErcasEnabled && (
+                <Button onClick={() => initiateErcasPayment()} className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-blue-600 hover:bg-blue-700 shadow-md">
+                  <CreditCard className="mr-3 h-5 w-5" />
+                  Instant payment (ercas)
+                </Button>
+              )}
+
+              {paymentMethodSettings.quickPayEnabled && (
+                <Button
+                  onClick={() => {
+                    setShowPaymentMethodDialog(false);
+                    toast.info("Quick Pay integration coming soon!");
+                  }}
+                  className="w-full h-14 justify-start px-4 text-left font-semibold text-base bg-purple-600 hover:bg-purple-700 shadow-md"
+                >
+                  <Zap className="mr-3 h-5 w-5" />
+                  Quick Pay
+                </Button>
+              )}
+
+              {paymentMethodSettings.manualDepositEnabled && (
+                <Button
+                  onClick={() => {
+                    setShowPaymentMethodDialog(false);
+                    setShowManualFundsDialog(true);
+                  }}
+                  variant="outline"
+                  className="w-full h-14 justify-start px-4 text-left font-semibold text-base border-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+                >
+                  <Banknote className="mr-3 h-5 w-5" />
+                  Manual deposit
+                </Button>
+              )}
+
+              {!paymentMethodSettings.instantErcasEnabled &&
+                !paymentMethodSettings.quickPayEnabled &&
+                !paymentMethodSettings.manualDepositEnabled && (
+                  <div className="py-2 text-sm text-gray-700 dark:text-gray-200">
+                    Payment options are currently unavailable. Please refresh the page to make payment.
+                  </div>
+                )}
+            </div>
+          )}
           <DialogFooter>
              <Button variant="ghost" onClick={() => setShowPaymentMethodDialog(false)} className="w-full">Cancel</Button>
           </DialogFooter>

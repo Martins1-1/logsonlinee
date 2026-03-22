@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import mongoose from "mongoose";
 import axios from "axios";
-import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory, PasswordResetToken } from "./models";
+import { User, Admin, Cart, Payment, Product, CatalogProduct, PurchaseHistory, CatalogCategory, PasswordResetToken, PaymentMethodSettings } from "./models";
 import paymentsRouter from "./routes/payments";
 import { sendPasswordResetEmail } from "./mailer";
 
@@ -77,6 +77,24 @@ function requireAdmin(req: Request, res: Response, next: NextFunction) {
   } catch (err) {
     return res.status(401).json({ error: "Invalid token" });
   }
+}
+
+const PAYMENT_METHOD_SETTINGS_KEY = "payment_methods";
+
+async function getOrCreatePaymentMethodSettings() {
+  return PaymentMethodSettings.findOneAndUpdate(
+    { key: PAYMENT_METHOD_SETTINGS_KEY },
+    { $setOnInsert: { key: PAYMENT_METHOD_SETTINGS_KEY } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+}
+
+function pickPaymentMethodSettings(doc: any) {
+  return {
+    instantErcasEnabled: Boolean(doc?.instantErcasEnabled),
+    quickPayEnabled: Boolean(doc?.quickPayEnabled),
+    manualDepositEnabled: Boolean(doc?.manualDepositEnabled),
+  };
 }
 
 async function start() {
@@ -386,6 +404,54 @@ app.post("/api/users/:id/adjust-balance", requireAdmin, async (req: Request, res
 app.get("/api/payments", requireAdmin, async (req: Request, res: Response) => {
   const payments = await Payment.find().populate("user").lean();
   res.json(payments);
+});
+
+// Payment method availability (public read)
+app.get("/api/payment-methods", async (req: Request, res: Response) => {
+  try {
+    const settings = await getOrCreatePaymentMethodSettings();
+    return res.json({ ok: true, ...pickPaymentMethodSettings(settings) });
+  } catch (err) {
+    console.error("Error reading payment method settings:", err);
+    return res.status(500).json({ ok: false, error: "Failed to load payment methods" });
+  }
+});
+
+// Payment method availability (admin update)
+app.put("/api/payment-methods", requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const updates: Record<string, boolean> = {};
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "instantErcasEnabled")) {
+      if (typeof req.body.instantErcasEnabled !== "boolean") {
+        return res.status(400).json({ ok: false, error: "instantErcasEnabled must be boolean" });
+      }
+      updates.instantErcasEnabled = req.body.instantErcasEnabled;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, "quickPayEnabled")) {
+      if (typeof req.body.quickPayEnabled !== "boolean") {
+        return res.status(400).json({ ok: false, error: "quickPayEnabled must be boolean" });
+      }
+      updates.quickPayEnabled = req.body.quickPayEnabled;
+    }
+    if (Object.prototype.hasOwnProperty.call(req.body, "manualDepositEnabled")) {
+      if (typeof req.body.manualDepositEnabled !== "boolean") {
+        return res.status(400).json({ ok: false, error: "manualDepositEnabled must be boolean" });
+      }
+      updates.manualDepositEnabled = req.body.manualDepositEnabled;
+    }
+
+    const next = await PaymentMethodSettings.findOneAndUpdate(
+      { key: PAYMENT_METHOD_SETTINGS_KEY },
+      { $setOnInsert: { key: PAYMENT_METHOD_SETTINGS_KEY }, $set: updates },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    ).lean();
+
+    return res.json({ ok: true, ...pickPaymentMethodSettings(next) });
+  } catch (err) {
+    console.error("Error updating payment method settings:", err);
+    return res.status(500).json({ ok: false, error: "Failed to update payment methods" });
+  }
 });
 
 // Get payments for a specific user
@@ -866,6 +932,18 @@ app.get("/api/health", (req: Request, res: Response) => {
 app.post("/api/payments/initialize", async (req: Request, res: Response) => {
   const { amount, email, userId } = req.body;
   if (!amount || !email || !userId) return res.status(400).json({ error: "Missing fields" });
+
+  // Quick Pay (Paystack/card) can be disabled by admin
+  try {
+    const settings = await getOrCreatePaymentMethodSettings();
+    if (!settings?.quickPayEnabled) {
+      return res.status(503).json({ error: "Quick Pay is currently disabled" });
+    }
+  } catch (e) {
+    // If settings lookup fails, fail closed to avoid exposing disabled methods
+    return res.status(503).json({ error: "Payment options unavailable. Please refresh the page to make payment." });
+  }
+
   const reference = `ref_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
   try {
     // create pending payment record

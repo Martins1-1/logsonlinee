@@ -118,6 +118,14 @@ export interface ICatalogCategory extends Document {
   createdAt: Date;
 }
 
+export interface IPaymentMethodSettings extends Document {
+  key: string;
+  instantErcasEnabled: boolean;
+  quickPayEnabled: boolean;
+  manualDepositEnabled: boolean;
+  updatedAt: Date;
+}
+
 // Define ProductItemSchema first since it's used in CartItemSchema
 const ProductItemSchema = new Schema<IProductItem>({
   username: { type: String, required: true },
@@ -214,6 +222,19 @@ const CatalogProductSchema = new Schema<ICatalogProduct>({
   createdAt: { type: Date, default: Date.now },
 });
 
+// Payment method availability settings (singleton by key)
+const PaymentMethodSettingsSchema = new Schema<IPaymentMethodSettings>(
+  {
+    key: { type: String, required: true, unique: true, default: "payment_methods" },
+    instantErcasEnabled: { type: Boolean, default: true },
+    quickPayEnabled: { type: Boolean, default: true },
+    manualDepositEnabled: { type: Boolean, default: true },
+  },
+  { timestamps: { createdAt: false, updatedAt: true } }
+);
+
+PaymentMethodSettingsSchema.index({ key: 1 }, { unique: true });
+
 // Purchase History Schema
 const PurchaseHistorySchema = new Schema<IPurchaseHistory>({
   userId: { type: String, required: true },
@@ -249,3 +270,8 @@ const CatalogCategorySchema = new Schema<ICatalogCategory>({
 });
 
 export const CatalogCategory = mongoose.model<ICatalogCategory>("CatalogCategory", CatalogCategorySchema);
+
+export const PaymentMethodSettings = mongoose.model<IPaymentMethodSettings>(
+  "PaymentMethodSettings",
+  PaymentMethodSettingsSchema
+);

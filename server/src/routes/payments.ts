@@ -23,6 +23,29 @@ const ercaspay = new Ercaspay({
  */
 router.post('/ercas/initiate', async (req, res) => {
   try {
+    // Respect admin toggle: block NEW Ercas payments when disabled.
+    // (Do NOT block verification/webhooks so in-progress payments can complete.)
+    try {
+      const { PaymentMethodSettings } = await import('../models');
+      const settings = await PaymentMethodSettings.findOneAndUpdate(
+        { key: 'payment_methods' },
+        { $setOnInsert: { key: 'payment_methods' } },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      ).lean();
+      if (!settings?.instantErcasEnabled) {
+        return res.status(503).json({
+          success: false,
+          error: 'Instant payment (ercas) is currently disabled',
+        });
+      }
+    } catch {
+      // Fail closed if we cannot read settings.
+      return res.status(503).json({
+        success: false,
+        error: 'Payment options unavailable. Please refresh the page to make payment.',
+      });
+    }
+
     const { amount, currency = 'NGN', userId, email, callbackUrl } = req.body;
 
     // Validate required fields

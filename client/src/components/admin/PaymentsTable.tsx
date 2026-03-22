@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, AlertCircle, Search } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,10 +28,20 @@ type Payment = {
   userLocalId?: string; // For localStorage users
 };
 
+type PaymentMethodSettings = {
+  instantErcasEnabled: boolean;
+  quickPayEnabled: boolean;
+  manualDepositEnabled: boolean;
+};
+
 export default function PaymentsTable({ token }: { token: string }) {
   const [payments, setPayments] = useState<Payment[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [methodSettings, setMethodSettings] = useState<PaymentMethodSettings | null>(null);
+  const [methodSettingsLoading, setMethodSettingsLoading] = useState(false);
+  const [methodSettingsError, setMethodSettingsError] = useState<string | null>(null);
+  const [methodSettingsSaving, setMethodSettingsSaving] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
   const [searchEmail, setSearchEmail] = useState("");
@@ -54,7 +65,58 @@ export default function PaymentsTable({ token }: { token: string }) {
       });
   };
 
+  const fetchMethodSettings = () => {
+    setMethodSettingsLoading(true);
+    setMethodSettingsError(null);
+    apiFetch("/api/payment-methods")
+      .then((data) => {
+        setMethodSettings({
+          instantErcasEnabled: Boolean(data?.instantErcasEnabled),
+          quickPayEnabled: Boolean(data?.quickPayEnabled),
+          manualDepositEnabled: Boolean(data?.manualDepositEnabled),
+        });
+      })
+      .catch((e) => {
+        setMethodSettingsError(String(e));
+        setMethodSettings(null);
+      })
+      .finally(() => setMethodSettingsLoading(false));
+  };
+
+  const updateMethodSetting = async (key: keyof PaymentMethodSettings, value: boolean) => {
+    setMethodSettingsSaving(true);
+    try {
+      const next = await apiFetch("/api/payment-methods", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ [key]: value }),
+      });
+      setMethodSettings({
+        instantErcasEnabled: Boolean(next?.instantErcasEnabled),
+        quickPayEnabled: Boolean(next?.quickPayEnabled),
+        manualDepositEnabled: Boolean(next?.manualDepositEnabled),
+      });
+      toast({
+        title: "Updated",
+        description: "Payment method setting saved.",
+      });
+    } catch (e) {
+      toast({
+        title: "Error",
+        description: String(e),
+        variant: "destructive",
+      });
+      fetchMethodSettings();
+    } finally {
+      setMethodSettingsSaving(false);
+    }
+  };
+
   useEffect(() => {
+    fetchMethodSettings();
     fetchPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -90,23 +152,87 @@ export default function PaymentsTable({ token }: { token: string }) {
     }
   };
 
-  if (loading) return <div className="p-4 text-center text-gray-600">Loading payments...</div>;
-  if (error) return <div className="p-4 text-center text-red-600 bg-red-50 rounded-lg border border-red-200">Error: {error}</div>;
-  if (!payments || payments.length === 0) return <div className="p-4 text-center text-gray-600">No payments found.</div>;
-
-  // Filter payments based on search email
+  const safePayments = payments ?? [];
   const filteredPayments = searchEmail
-    ? payments.filter((p) => {
+    ? safePayments.filter((p) => {
         const userEmail = p.user?.email || p.email || "";
         return userEmail.toLowerCase().includes(searchEmail.toLowerCase());
       })
-    : payments;
+    : safePayments;
 
   return (
     <div className="space-y-4">
       <h2 className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-400 dark:to-blue-500">
-        Payments ({filteredPayments.length}{searchEmail ? ` of ${payments.length}` : ''})
+        Payments ({filteredPayments.length}{searchEmail ? ` of ${safePayments.length}` : ''})
       </h2>
+
+      {/* Payment method toggles */}
+      <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border-2 border-gray-200 dark:border-gray-800">
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-semibold text-gray-900 dark:text-gray-100">Payment Methods</div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchMethodSettings}
+            className="text-gray-500 hover:text-gray-700"
+            disabled={methodSettingsLoading || methodSettingsSaving}
+          >
+            Refresh
+          </Button>
+        </div>
+
+        {methodSettingsError ? (
+          <div className="mt-3 text-sm text-red-600 bg-red-50 dark:bg-red-950/30 dark:text-red-300 rounded-md border border-red-200 dark:border-red-900/40 p-3">
+            Failed to load payment method settings.
+          </div>
+        ) : methodSettingsLoading && !methodSettings ? (
+          <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">Loading...</div>
+        ) : methodSettings ? (
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Instant payment (ercas)</div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  {methodSettings.instantErcasEnabled ? "ON" : "OFF"}
+                </span>
+                <Switch
+                  checked={methodSettings.instantErcasEnabled}
+                  onCheckedChange={(checked) => updateMethodSetting("instantErcasEnabled", checked)}
+                  disabled={methodSettingsSaving}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Quick Pay</div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  {methodSettings.quickPayEnabled ? "ON" : "OFF"}
+                </span>
+                <Switch
+                  checked={methodSettings.quickPayEnabled}
+                  onCheckedChange={(checked) => updateMethodSetting("quickPayEnabled", checked)}
+                  disabled={methodSettingsSaving}
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Manual Deposit</div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                  {methodSettings.manualDepositEnabled ? "ON" : "OFF"}
+                </span>
+                <Switch
+                  checked={methodSettings.manualDepositEnabled}
+                  onCheckedChange={(checked) => updateMethodSetting("manualDepositEnabled", checked)}
+                  disabled={methodSettingsSaving}
+                />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 text-sm text-gray-600 dark:text-gray-300">No data.</div>
+        )}
+      </div>
       
       {/* Search Bar */}
       <div className="flex items-center gap-2 bg-white dark:bg-gray-900 p-3 rounded-lg border-2 border-gray-200 dark:border-gray-800">
@@ -130,7 +256,11 @@ export default function PaymentsTable({ token }: { token: string }) {
         )}
       </div>
 
-      {filteredPayments.length === 0 ? (
+      {loading ? (
+        <div className="p-4 text-center text-gray-600">Loading payments...</div>
+      ) : error ? (
+        <div className="p-4 text-center text-red-600 bg-red-50 rounded-lg border border-red-200">Error: {error}</div>
+      ) : filteredPayments.length === 0 ? (
         <div className="p-8 text-center text-gray-600 bg-gray-50 dark:bg-gray-900 rounded-xl border-2 border-gray-200 dark:border-gray-800">
           No payments found{searchEmail ? ` for "${searchEmail}"` : ""}.
         </div>
